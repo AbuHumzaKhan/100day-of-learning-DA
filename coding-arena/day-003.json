@@ -1,0 +1,106 @@
+{
+  "day": 3,
+  "track": "SQL",
+  "title": "SQL Day 3 Coding Arena — Business Rule Filtering",
+  "dataset_refs": [
+    "orders"
+  ],
+  "execution_targets": [
+    "SQL",
+    "Excel",
+    "PowerBI-DAX",
+    "Python"
+  ],
+  "questions": [
+    {
+      "id": "d3-a01",
+      "difficulty": "Basic",
+      "category": "Filtering",
+      "role": "Regional Manager",
+      "scenario": "The manager is reviewing East-region orders.",
+      "request": "Return order ID, customer, sales, and profit for East orders.",
+      "validation": "WHERE region='East'."
+    },
+    {
+      "id": "d3-a02",
+      "difficulty": "Basic",
+      "category": "Threshold",
+      "role": "Sales Manager",
+      "scenario": "High-value orders are defined as sales of at least 1000.",
+      "request": "Return order ID, customer, and sales for qualifying orders.",
+      "validation": "sales >= 1000."
+    },
+    {
+      "id": "d3-a03",
+      "difficulty": "Medium",
+      "category": "Boolean Logic",
+      "role": "Category Manager",
+      "scenario": "The manager wants Technology orders from the West.",
+      "request": "Return order ID, product, sales, and profit where category is Technology and region is West.",
+      "validation": "AND logic."
+    },
+    {
+      "id": "d3-a04",
+      "difficulty": "Medium",
+      "category": "Range",
+      "role": "Sales Operations",
+      "scenario": "Standard-value transactions are sales between 500 and 1500.",
+      "request": "Return order ID, customer, category, and sales for that range.",
+      "validation": "BETWEEN 500 AND 1500 inclusive."
+    },
+    {
+      "id": "d3-a05",
+      "difficulty": "Intermediate",
+      "category": "List Filter",
+      "role": "Commercial Manager",
+      "scenario": "The team is reviewing three strategic categories.",
+      "request": "Return order ID, category, product, and sales for Technology, Furniture, or Office Supplies.",
+      "validation": "IN list."
+    },
+    {
+      "id": "d3-a06",
+      "difficulty": "Intermediate",
+      "category": "Text Search",
+      "role": "Product Manager",
+      "scenario": "The team is investigating chair-related products.",
+      "request": "Return order ID, product name, sales, and profit where product name contains Chair.",
+      "validation": "LIKE '%Chair%'."
+    },
+    {
+      "id": "d3-a07",
+      "difficulty": "Advanced",
+      "category": "Compound Rule",
+      "role": "Commercial Director",
+      "scenario": "The director wants profitable high-value orders but excludes Furniture.",
+      "request": "Return order ID, category, sales, and profit where sales >= 1500, profit > 0, and category is not Furniture.",
+      "validation": "Correct AND/NOT logic."
+    },
+    {
+      "id": "d3-a08",
+      "difficulty": "Advanced",
+      "category": "Branch Logic",
+      "role": "Senior Analyst",
+      "scenario": "Two commercial cases must be reviewed together.",
+      "request": "Return transactions that are either West Technology or East Furniture, including order ID, category, region, and sales.",
+      "validation": "Parenthesized OR branches."
+    },
+    {
+      "id": "d3-a09",
+      "difficulty": "Expert",
+      "category": "Business Rule",
+      "role": "Finance Director",
+      "scenario": "Finance wants high-value transactions within selected regions while excluding loss-making orders.",
+      "request": "Return order ID, region, category, sales, and profit for East/West/South orders with sales >= 1000 and profit >= 0.",
+      "validation": "IN + threshold + Boolean conditions."
+    },
+    {
+      "id": "d3-a10",
+      "difficulty": "Expert",
+      "category": "Complex Filter",
+      "role": "Senior Analyst",
+      "scenario": "Leadership is investigating a focused set of commercial exceptions.",
+      "request": "Return order ID, customer, category, region, sales, and profit for orders in East/West, with sales between 750 and 2500 inclusive, profit > 0, and product names containing 'Desk' or 'Chair'.",
+      "validation": "Correct combination of IN, BETWEEN, AND, and parenthesized LIKE conditions."
+    }
+  ]
+}
