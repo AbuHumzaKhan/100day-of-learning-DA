@@ -1,0 +1,35 @@
+{
+  "day": 0,
+  "track": "SQL|Excel|PowerBI|Python",
+  "title": "",
+  "description": "",
+  "dataset_refs": [],
+  "topics": [
+    {
+      "id": "",
+      "sequence": 1,
+      "title": "",
+      "business_skill": "",
+      "teaching": {
+        "teacher": "",
+        "explain": "",
+        "detailedlearning": "",
+        "expose": "",
+        "example": "",
+        "business_question": "",
+        "expected_sql": null
+      },
+      "questions": [
+        {
+          "id": "",
+          "difficulty": "Basic|Medium|Intermediate|Advanced|Expert",
+          "role": "",
+          "scenario": "",
+          "request": "",
+          "output": [],
+          "validation": ""
+        }
+      ]
+    }
+  ]
+}
