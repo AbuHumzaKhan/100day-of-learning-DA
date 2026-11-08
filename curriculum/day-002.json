@@ -1,0 +1,278 @@
+{
+  "day": 2,
+  "track": "SQL",
+  "title": "SQL Day 2 — DISTINCT, Sorting & Aggregated Business Views",
+  "description": "Move from retrieving records into producing unique, ordered, top-N, grouped, and thresholded business results.",
+  "dataset_refs": [
+    "orders"
+  ],
+  "topics": [
+    {
+      "id": "sql-d2-t1",
+      "sequence": 1,
+      "title": "DISTINCT",
+      "business_skill": "Identify unique business values.",
+      "teaching": {
+        "teacher": "## DISTINCT\nDISTINCT removes duplicate combinations from the selected output. Use it when the business question asks for unique categories, regions, or customers.",
+        "explain": "SELECT DISTINCT category FROM orders; returns each category once.",
+        "detailedlearning": "DISTINCT applies to the entire selected combination. DISTINCT category, region means unique category-region pairs.",
+        "expose": "When a manager says 'list each unique...' think DISTINCT.",
+        "example": "SELECT DISTINCT category FROM orders;",
+        "business_question": "The regional sales manager wants a list of every unique product category represented in the transaction table.",
+        "expected_sql": "SELECT DISTINCT category FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d2-t1-q1",
+          "difficulty": "Basic",
+          "role": "Sales Manager",
+          "scenario": "The manager is preparing a category review.",
+          "request": "Return each unique category once.",
+          "output": [
+            "category"
+          ],
+          "validation": "No duplicate category values."
+        },
+        {
+          "id": "sql-d2-t1-q2",
+          "difficulty": "Medium",
+          "role": "Regional Manager",
+          "scenario": "Leadership wants to understand the regions represented in the order book.",
+          "request": "Return each unique region once.",
+          "output": [
+            "region"
+          ],
+          "validation": "No duplicate region values."
+        },
+        {
+          "id": "sql-d2-t1-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "The analyst is building a customer coverage check.",
+          "request": "Return each unique customer name once.",
+          "output": [
+            "customer_name"
+          ],
+          "validation": "Each customer appears at most once."
+        }
+      ]
+    },
+    {
+      "id": "sql-d2-t2",
+      "sequence": 2,
+      "title": "ORDER BY",
+      "business_skill": "Sort analytical results for ranking and review.",
+      "teaching": {
+        "teacher": "## ORDER BY\nORDER BY controls result ordering. ASC is ascending; DESC is descending.",
+        "explain": "ORDER BY sales DESC places the highest sales first.",
+        "detailedlearning": "Sorting is essential for rankings and management review. Add a deterministic secondary sort when ties matter.",
+        "expose": "Words like highest, lowest, largest, smallest, latest, and earliest are signals for ORDER BY.",
+        "example": "SELECT order_id, sales FROM orders ORDER BY sales DESC;",
+        "business_question": "The sales manager wants orders listed from the highest sales value to the lowest.",
+        "expected_sql": "SELECT order_id, customer_name, sales FROM orders ORDER BY sales DESC;"
+      },
+      "questions": [
+        {
+          "id": "sql-d2-t2-q1",
+          "difficulty": "Basic",
+          "role": "Sales Manager",
+          "scenario": "The manager wants the largest transactions first.",
+          "request": "Return order ID and sales sorted from highest to lowest sales.",
+          "output": [
+            "order_id",
+            "sales"
+          ],
+          "validation": "Sales must be descending."
+        },
+        {
+          "id": "sql-d2-t2-q2",
+          "difficulty": "Medium",
+          "role": "Finance Analyst",
+          "scenario": "Finance is reviewing the most profitable transactions first.",
+          "request": "Return order ID, customer name, and profit sorted from highest to lowest profit.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "profit"
+          ],
+          "validation": "Profit must be descending."
+        },
+        {
+          "id": "sql-d2-t2-q3",
+          "difficulty": "Intermediate",
+          "role": "Operations Manager",
+          "scenario": "Operations wants the largest quantities reviewed first.",
+          "request": "Return order ID, product name, and quantity sorted from highest to lowest quantity, then order ID ascending for ties.",
+          "output": [
+            "order_id",
+            "product_name",
+            "quantity"
+          ],
+          "validation": "Quantity DESC with order_id ASC tie-break."
+        }
+      ]
+    },
+    {
+      "id": "sql-d2-t3",
+      "sequence": 3,
+      "title": "LIMIT",
+      "business_skill": "Produce controlled Top-N result sets.",
+      "teaching": {
+        "teacher": "## LIMIT\nLIMIT restricts the number of rows returned. Combined with ORDER BY it creates a Top-N analysis.",
+        "explain": "ORDER BY sales DESC LIMIT 5 returns the five highest-sales orders.",
+        "detailedlearning": "LIMIT without ORDER BY is not a business ranking. Always sort first when the requirement says top or bottom.",
+        "expose": "'Top 5', 'first 10', and 'highest 20' require a ranking rule before LIMIT.",
+        "example": "SELECT order_id, sales FROM orders ORDER BY sales DESC LIMIT 5;",
+        "business_question": "The commercial director wants the five largest individual orders by sales.",
+        "expected_sql": "SELECT order_id, customer_name, sales FROM orders ORDER BY sales DESC LIMIT 5;"
+      },
+      "questions": [
+        {
+          "id": "sql-d2-t3-q1",
+          "difficulty": "Basic",
+          "role": "Sales Manager",
+          "scenario": "The manager needs a quick list of the three largest orders.",
+          "request": "Return the top three orders by sales.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "sales"
+          ],
+          "validation": "Exactly three rows, highest sales first."
+        },
+        {
+          "id": "sql-d2-t3-q2",
+          "difficulty": "Medium",
+          "role": "Finance Manager",
+          "scenario": "Finance wants the five orders with the highest profit.",
+          "request": "Return the top five orders by profit.",
+          "output": [
+            "order_id",
+            "sales",
+            "profit"
+          ],
+          "validation": "Exactly five rows, highest profit first."
+        },
+        {
+          "id": "sql-d2-t3-q3",
+          "difficulty": "Intermediate",
+          "role": "Operations Manager",
+          "scenario": "Operations is investigating the largest unit orders.",
+          "request": "Return the top ten orders by quantity with order ID, product name, and quantity.",
+          "output": [
+            "order_id",
+            "product_name",
+            "quantity"
+          ],
+          "validation": "Exactly ten rows, quantity descending."
+        }
+      ]
+    },
+    {
+      "id": "sql-d2-t4",
+      "sequence": 4,
+      "title": "GROUP BY",
+      "business_skill": "Convert transaction rows into business-level summaries.",
+      "teaching": {
+        "teacher": "## GROUP BY\nGROUP BY creates one result group per distinct value and allows aggregate functions such as SUM, AVG, COUNT, MIN, and MAX.",
+        "explain": "GROUP BY category with SUM(sales) produces one revenue total per category.",
+        "detailedlearning": "Every non-aggregated selected field generally needs to be grouped. Think of GROUP BY as changing the grain from transactions to business groups.",
+        "expose": "When the manager asks 'by region', 'by category', or 'per customer', GROUP BY is usually involved.",
+        "example": "SELECT category, SUM(sales) AS total_sales FROM orders GROUP BY category;",
+        "business_question": "The category manager wants total sales by product category.",
+        "expected_sql": "SELECT category, SUM(sales) AS total_sales FROM orders GROUP BY category;"
+      },
+      "questions": [
+        {
+          "id": "sql-d2-t4-q1",
+          "difficulty": "Basic",
+          "role": "Category Manager",
+          "scenario": "The manager wants category-level revenue.",
+          "request": "Return each category and its total sales.",
+          "output": [
+            "category",
+            "total_sales"
+          ],
+          "validation": "One row per category with SUM(sales)."
+        },
+        {
+          "id": "sql-d2-t4-q2",
+          "difficulty": "Medium",
+          "role": "Regional Director",
+          "scenario": "Leadership wants revenue by region.",
+          "request": "Return each region and total sales.",
+          "output": [
+            "region",
+            "total_sales"
+          ],
+          "validation": "One row per region with SUM(sales)."
+        },
+        {
+          "id": "sql-d2-t4-q3",
+          "difficulty": "Intermediate",
+          "role": "Customer Analytics Manager",
+          "scenario": "The team is identifying customers with the largest order-book value.",
+          "request": "Return each customer and total sales generated by that customer.",
+          "output": [
+            "customer_name",
+            "total_sales"
+          ],
+          "validation": "One row per customer with SUM(sales)."
+        }
+      ]
+    },
+    {
+      "id": "sql-d2-t5",
+      "sequence": 5,
+      "title": "HAVING",
+      "business_skill": "Filter grouped business results using aggregate thresholds.",
+      "teaching": {
+        "teacher": "## HAVING\nHAVING filters groups after aggregation. WHERE filters individual rows before grouping; HAVING filters grouped results after aggregation.",
+        "explain": "HAVING SUM(sales) > 100000 keeps only categories whose total sales exceed the threshold.",
+        "detailedlearning": "Use WHERE for row conditions and HAVING for aggregate conditions. This distinction is fundamental to analytical SQL.",
+        "expose": "If the condition contains SUM, AVG, COUNT, MIN, or MAX and applies to groups, think HAVING.",
+        "example": "SELECT category, SUM(sales) AS total_sales FROM orders GROUP BY category HAVING SUM(sales) > 100000;",
+        "business_question": "The commercial director wants only categories whose total sales exceed 100,000.",
+        "expected_sql": "SELECT category, SUM(sales) AS total_sales FROM orders GROUP BY category HAVING SUM(sales) > 100000;"
+      },
+      "questions": [
+        {
+          "id": "sql-d2-t5-q1",
+          "difficulty": "Basic",
+          "role": "Commercial Manager",
+          "scenario": "Management wants only categories generating more than 50,000 in sales.",
+          "request": "Return category and total sales for qualifying categories.",
+          "output": [
+            "category",
+            "total_sales"
+          ],
+          "validation": "Grouped sales must exceed 50000."
+        },
+        {
+          "id": "sql-d2-t5-q2",
+          "difficulty": "Medium",
+          "role": "Regional Manager",
+          "scenario": "The regional manager wants regions with at least 75,000 in sales.",
+          "request": "Return region and total sales for regions meeting the threshold.",
+          "output": [
+            "region",
+            "total_sales"
+          ],
+          "validation": "Grouped sales must be >= 75000."
+        },
+        {
+          "id": "sql-d2-t5-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "Leadership wants customers whose cumulative sales exceed 10,000.",
+          "request": "Return customer name and total sales for customers above the threshold, ordered from highest total sales.",
+          "output": [
+            "customer_name",
+            "total_sales"
+          ],
+          "validation": "SUM(sales) > 10000 and total_sales descending."
+        }
+      ]
+    }
+  ]
+}
