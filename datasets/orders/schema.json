@@ -1,0 +1,55 @@
+{
+  "name": "orders",
+  "description": "Deterministic retail order dataset for the trainer and coding arena.",
+  "row_count": 150,
+  "columns": [
+    [
+      "row_no",
+      "integer"
+    ],
+    [
+      "order_id",
+      "string"
+    ],
+    [
+      "order_date",
+      "date"
+    ],
+    [
+      "customer_name",
+      "string"
+    ],
+    [
+      "category",
+      "string"
+    ],
+    [
+      "product_name",
+      "string"
+    ],
+    [
+      "sales",
+      "decimal"
+    ],
+    [
+      "quantity",
+      "integer"
+    ],
+    [
+      "discount",
+      "decimal"
+    ],
+    [
+      "profit",
+      "decimal"
+    ],
+    [
+      "region",
+      "string"
+    ],
+    [
+      "ship_mode",
+      "string"
+    ]
+  ]
+}
