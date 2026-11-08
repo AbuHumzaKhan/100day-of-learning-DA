@@ -1,0 +1,106 @@
+{
+  "day": 2,
+  "track": "SQL",
+  "title": "SQL Day 2 Coding Arena — Ranking & Aggregation",
+  "dataset_refs": [
+    "orders"
+  ],
+  "execution_targets": [
+    "SQL",
+    "Excel",
+    "PowerBI-DAX",
+    "Python"
+  ],
+  "questions": [
+    {
+      "id": "d2-a01",
+      "difficulty": "Basic",
+      "category": "Unique Values",
+      "role": "Sales Manager",
+      "scenario": "The manager wants a clean list of product categories.",
+      "request": "Return each unique category once.",
+      "validation": "DISTINCT category."
+    },
+    {
+      "id": "d2-a02",
+      "difficulty": "Basic",
+      "category": "Sorting",
+      "role": "Sales Manager",
+      "scenario": "The manager wants the largest orders first.",
+      "request": "Return order ID, customer, and sales sorted highest to lowest.",
+      "validation": "sales DESC."
+    },
+    {
+      "id": "d2-a03",
+      "difficulty": "Medium",
+      "category": "Top-N",
+      "role": "Commercial Director",
+      "scenario": "Leadership only wants the five largest orders.",
+      "request": "Return the top five orders by sales.",
+      "validation": "ORDER BY sales DESC LIMIT 5."
+    },
+    {
+      "id": "d2-a04",
+      "difficulty": "Medium",
+      "category": "Aggregation",
+      "role": "Category Manager",
+      "scenario": "The manager wants category revenue.",
+      "request": "Return category and total sales by category.",
+      "validation": "GROUP BY category; SUM(sales)."
+    },
+    {
+      "id": "d2-a05",
+      "difficulty": "Intermediate",
+      "category": "Aggregation",
+      "role": "Regional Director",
+      "scenario": "Leadership needs a region-level revenue view.",
+      "request": "Return region and total sales, highest revenue first.",
+      "validation": "GROUP BY region and ORDER BY total_sales DESC."
+    },
+    {
+      "id": "d2-a06",
+      "difficulty": "Intermediate",
+      "category": "Customer KPI",
+      "role": "Customer Analytics Manager",
+      "scenario": "The team wants its highest-value customers.",
+      "request": "Return customer and total sales, highest total first.",
+      "validation": "GROUP BY customer_name and SUM(sales)."
+    },
+    {
+      "id": "d2-a07",
+      "difficulty": "Advanced",
+      "category": "HAVING",
+      "role": "Commercial Director",
+      "scenario": "Only high-revenue categories should appear in the executive report.",
+      "request": "Return categories whose total sales exceed 100000.",
+      "validation": "HAVING SUM(sales) > 100000."
+    },
+    {
+      "id": "d2-a08",
+      "difficulty": "Advanced",
+      "category": "HAVING + Ranking",
+      "role": "Regional VP",
+      "scenario": "The VP wants only strong regions.",
+      "request": "Return regions with total sales above 75000, ordered from highest to lowest.",
+      "validation": "HAVING threshold and descending aggregate order."
+    },
+    {
+      "id": "d2-a09",
+      "difficulty": "Expert",
+      "category": "Top Customers",
+      "role": "CFO",
+      "scenario": "The CFO wants the most commercially important customers.",
+      "request": "Return the top ten customers by total sales with customer name and total sales.",
+      "validation": "GROUP BY customer_name; SUM(sales); ORDER BY total_sales DESC; LIMIT 10."
+    },
+    {
+      "id": "d2-a10",
+      "difficulty": "Expert",
+      "category": "Executive KPI",
+      "role": "Senior Analyst",
+      "scenario": "Leadership wants a ranked category performance table containing only categories above a defined threshold.",
+      "request": "Return category, total sales, and average profit for categories with total sales above 50000, ordered by total sales descending.",
+      "validation": "Correct grouping, HAVING threshold, aggregate measures, and ordering."
+    }
+  ]
+}
