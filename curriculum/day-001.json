@@ -1,0 +1,306 @@
+{
+  "day": 1,
+  "track": "SQL",
+  "title": "SQL Day 1 — SELECT & Reading Business Data",
+  "description": "Build the foundation for retrieving and presenting business data with SELECT.",
+  "dataset_refs": [
+    "orders"
+  ],
+  "topics": [
+    {
+      "id": "sql-d1-t1",
+      "sequence": 1,
+      "title": "SELECT — Retrieving Business Data",
+      "business_skill": "Retrieve required fields from a business table.",
+      "teaching": {
+        "teacher": "# SQL SELECT\nSELECT is the starting point for analytical SQL. It tells the database which fields the analyst wants returned.\n\nBasic pattern:\nSELECT column1, column2 FROM table_name;\n\nStart by translating the manager's request into the exact fields required.",
+        "explain": "SELECT chooses the columns you want to see. FROM identifies the table containing them.",
+        "detailedlearning": "Avoid SELECT * when a report only needs a few fields. Explicit columns make the result easier to validate, document, and maintain.",
+        "expose": "Think in two questions: Where is the data? Which fields does the stakeholder need?",
+        "example": "SELECT order_id, customer_name, sales FROM orders;",
+        "business_question": "The sales manager needs a transaction review showing the order ID, customer name, sales, and profit. Return only those fields.",
+        "expected_sql": "SELECT order_id, customer_name, sales, profit FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d1-t1-q1",
+          "difficulty": "Basic",
+          "role": "Sales Manager",
+          "scenario": "The manager is reviewing this week's transactions.",
+          "request": "Return order ID, customer name, and sales.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "sales"
+          ],
+          "validation": "Return exactly the requested columns from orders."
+        },
+        {
+          "id": "sql-d1-t1-q2",
+          "difficulty": "Medium",
+          "role": "Finance Analyst",
+          "scenario": "Finance needs transaction-level profitability.",
+          "request": "Return order ID, sales, profit, and discount.",
+          "output": [
+            "order_id",
+            "sales",
+            "profit",
+            "discount"
+          ],
+          "validation": "Return the four requested fields."
+        },
+        {
+          "id": "sql-d1-t1-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "A regional review requires customer, product, geography, and financial fields.",
+          "request": "Return order ID, customer name, product name, region, sales, and profit.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "product_name",
+            "region",
+            "sales",
+            "profit"
+          ],
+          "validation": "Return exactly the six requested fields."
+        }
+      ]
+    },
+    {
+      "id": "sql-d1-t2",
+      "sequence": 2,
+      "title": "Selecting Multiple Columns",
+      "business_skill": "Assemble a useful analytical view from several fields.",
+      "teaching": {
+        "teacher": "## Multiple columns\nSeparate requested columns with commas. The order you specify is the order returned.",
+        "explain": "SELECT can return one field or many fields.",
+        "detailedlearning": "Column selection should follow the stakeholder's reporting requirement. Do not add unrelated fields merely because they exist.",
+        "expose": "Treat the SELECT list as the output contract.",
+        "example": "SELECT order_id, category, sales, profit FROM orders;",
+        "business_question": "The category manager wants a product-performance view containing product name, category, quantity, sales, and profit.",
+        "expected_sql": "SELECT product_name, category, quantity, sales, profit FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d1-t2-q1",
+          "difficulty": "Basic",
+          "role": "Category Manager",
+          "scenario": "The manager wants a category performance snapshot.",
+          "request": "Return category, sales, and profit.",
+          "output": [
+            "category",
+            "sales",
+            "profit"
+          ],
+          "validation": "Return the three requested fields."
+        },
+        {
+          "id": "sql-d1-t2-q2",
+          "difficulty": "Medium",
+          "role": "Operations Manager",
+          "scenario": "Operations is reviewing shipment-related transactions.",
+          "request": "Return order ID, order date, ship mode, and region.",
+          "output": [
+            "order_id",
+            "order_date",
+            "ship_mode",
+            "region"
+          ],
+          "validation": "Return the four requested fields."
+        },
+        {
+          "id": "sql-d1-t2-q3",
+          "difficulty": "Intermediate",
+          "role": "Commercial Director",
+          "scenario": "Leadership wants a compact transaction view for commercial review.",
+          "request": "Return order ID, customer name, category, sales, discount, profit, and region.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "category",
+            "sales",
+            "discount",
+            "profit",
+            "region"
+          ],
+          "validation": "Return all seven requested fields in the requested order."
+        }
+      ]
+    },
+    {
+      "id": "sql-d1-t3",
+      "sequence": 3,
+      "title": "Column Aliases",
+      "business_skill": "Give analytical outputs business-friendly names.",
+      "teaching": {
+        "teacher": "## Aliases\nUse AS to rename a returned column without changing the source data.\n\nExample:\nSELECT sales AS total_sales FROM orders;",
+        "explain": "An alias changes the label shown in the result.",
+        "detailedlearning": "Aliases improve report readability. Use stable snake_case or clear business labels depending on the platform contract.",
+        "expose": "Separate source field names from presentation names. The database column stays unchanged.",
+        "example": "SELECT sales AS revenue, profit AS gross_profit FROM orders;",
+        "business_question": "Finance wants the result labels to clearly identify sales as Revenue and profit as Profit.",
+        "expected_sql": "SELECT sales AS Revenue, profit AS Profit FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d1-t3-q1",
+          "difficulty": "Basic",
+          "role": "Finance Manager",
+          "scenario": "Finance wants a cleaner report header.",
+          "request": "Return sales as Revenue and profit as Profit.",
+          "output": [
+            "Revenue",
+            "Profit"
+          ],
+          "validation": "Use aliases for the requested result labels."
+        },
+        {
+          "id": "sql-d1-t3-q2",
+          "difficulty": "Medium",
+          "role": "Sales Analyst",
+          "scenario": "A dashboard dataset requires consistent field names.",
+          "request": "Return order ID as Order_ID and customer name as Customer.",
+          "output": [
+            "Order_ID",
+            "Customer"
+          ],
+          "validation": "Use aliases matching the requested names."
+        },
+        {
+          "id": "sql-d1-t3-q3",
+          "difficulty": "Intermediate",
+          "role": "BI Developer",
+          "scenario": "The BI layer needs semantic names for transaction metrics.",
+          "request": "Return sales as Total_Sales, quantity as Units, and discount as Discount_Rate.",
+          "output": [
+            "Total_Sales",
+            "Units",
+            "Discount_Rate"
+          ],
+          "validation": "Use aliases for all three measures."
+        }
+      ]
+    },
+    {
+      "id": "sql-d1-t4",
+      "sequence": 4,
+      "title": "Calculated Columns in SELECT",
+      "business_skill": "Create simple analytical values directly in a query.",
+      "teaching": {
+        "teacher": "## Calculated expressions\nSQL can calculate values while returning rows.\n\nExample:\nSELECT sales - profit AS estimated_cost FROM orders;\n\nThe source data is not changed.",
+        "explain": "An expression combines columns or constants to produce a new result.",
+        "detailedlearning": "Calculated fields are useful for quick analysis. Always define what the calculation represents before using it in a business decision.",
+        "expose": "Ask: What business metric can be derived from the available fields?",
+        "example": "SELECT order_id, sales - profit AS estimated_cost FROM orders;",
+        "business_question": "The finance analyst wants an estimated non-profit portion of each order using sales minus profit.",
+        "expected_sql": "SELECT order_id, sales, profit, sales - profit AS estimated_cost FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d1-t4-q1",
+          "difficulty": "Basic",
+          "role": "Finance Analyst",
+          "scenario": "Finance wants to see the portion of sales not represented by profit.",
+          "request": "Return order ID and sales minus profit as Estimated_Cost.",
+          "output": [
+            "order_id",
+            "estimated_cost"
+          ],
+          "validation": "Calculate sales - profit and alias it Estimated_Cost."
+        },
+        {
+          "id": "sql-d1-t4-q2",
+          "difficulty": "Medium",
+          "role": "Commercial Analyst",
+          "scenario": "Management wants to compare order economics.",
+          "request": "Return order ID, sales, profit, and profit as a percentage of sales.",
+          "output": [
+            "order_id",
+            "sales",
+            "profit",
+            "profit_margin"
+          ],
+          "validation": "Calculate profit / sales and expose it as Profit_Margin."
+        },
+        {
+          "id": "sql-d1-t4-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "A margin review needs a derived discount impact indicator.",
+          "request": "Return order ID, sales, discount, and sales multiplied by discount as Discount_Amount.",
+          "output": [
+            "order_id",
+            "sales",
+            "discount",
+            "discount_amount"
+          ],
+          "validation": "Calculate sales * discount and alias it Discount_Amount."
+        }
+      ]
+    },
+    {
+      "id": "sql-d1-t5",
+      "sequence": 5,
+      "title": "Building a Business Output",
+      "business_skill": "Translate a stakeholder request into a complete SELECT query.",
+      "teaching": {
+        "teacher": "## From request to query\nA production analyst starts with the required output, identifies the table, selects fields, then adds calculations or aliases only where needed.",
+        "explain": "A good SELECT query directly reflects the business request.",
+        "detailedlearning": "Before executing, verify table, fields, calculations, labels, and output order. This becomes the foundation for later WHERE, GROUP BY, JOIN, and window analysis.",
+        "expose": "SQL is a translation layer between business language and data structures.",
+        "example": "SELECT order_id, customer_name, sales, profit, sales - profit AS estimated_cost FROM orders;",
+        "business_question": "A senior analyst is preparing a transaction-level profitability extract. Return order ID, customer, category, sales, profit, and estimated cost (sales minus profit).",
+        "expected_sql": "SELECT order_id, customer_name, category, sales, profit, sales - profit AS estimated_cost FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d1-t5-q1",
+          "difficulty": "Basic",
+          "role": "Sales Manager",
+          "scenario": "The manager needs a transaction list for a morning review.",
+          "request": "Return order ID, customer name, category, sales, and profit.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "category",
+            "sales",
+            "profit"
+          ],
+          "validation": "Return the requested fields."
+        },
+        {
+          "id": "sql-d1-t5-q2",
+          "difficulty": "Medium",
+          "role": "Finance Manager",
+          "scenario": "Finance needs an order-level profitability extract.",
+          "request": "Return order ID, sales, profit, and sales minus profit as Estimated_Cost.",
+          "output": [
+            "order_id",
+            "sales",
+            "profit",
+            "estimated_cost"
+          ],
+          "validation": "Include the requested calculation and alias."
+        },
+        {
+          "id": "sql-d1-t5-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "Leadership needs a compact commercial extract for downstream reporting.",
+          "request": "Return order ID, customer, category, region, sales, profit, and profit/sales as Profit_Margin.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "category",
+            "region",
+            "sales",
+            "profit",
+            "profit_margin"
+          ],
+          "validation": "Return all requested fields and calculate profit divided by sales."
+        }
+      ]
+    }
+  ]
+}
