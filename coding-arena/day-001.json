@@ -1,0 +1,106 @@
+{
+  "day": 1,
+  "track": "SQL",
+  "title": "SQL Day 1 Coding Arena — Retrieval & Analytical Outputs",
+  "dataset_refs": [
+    "orders"
+  ],
+  "execution_targets": [
+    "SQL",
+    "Excel",
+    "PowerBI-DAX",
+    "Python"
+  ],
+  "questions": [
+    {
+      "id": "d1-a01",
+      "difficulty": "Basic",
+      "category": "Retrieval",
+      "role": "Sales Manager",
+      "scenario": "A morning sales review needs a transaction extract.",
+      "request": "Return order ID, customer, category, sales, and profit for every order.",
+      "validation": "Correct columns and row-level values from orders."
+    },
+    {
+      "id": "d1-a02",
+      "difficulty": "Basic",
+      "category": "Presentation",
+      "role": "Finance Analyst",
+      "scenario": "Finance needs readable metric names in an export.",
+      "request": "Return sales as Revenue and profit as Profit.",
+      "validation": "Correct aliases."
+    },
+    {
+      "id": "d1-a03",
+      "difficulty": "Medium",
+      "category": "Calculation",
+      "role": "Finance Manager",
+      "scenario": "Finance wants the non-profit portion of each transaction.",
+      "request": "Return order ID and sales minus profit as Estimated_Cost.",
+      "validation": "estimated_cost = sales - profit."
+    },
+    {
+      "id": "d1-a04",
+      "difficulty": "Medium",
+      "category": "Calculation",
+      "role": "Commercial Analyst",
+      "scenario": "Management wants an order-level margin view.",
+      "request": "Return order ID, sales, profit, and profit divided by sales as Profit_Margin.",
+      "validation": "profit_margin = profit / sales."
+    },
+    {
+      "id": "d1-a05",
+      "difficulty": "Intermediate",
+      "category": "Business Output",
+      "role": "Senior Analyst",
+      "scenario": "Leadership needs a compact transaction dataset.",
+      "request": "Return order ID, customer, region, sales, profit, and discount amount calculated as sales * discount.",
+      "validation": "Correct fields and discount amount."
+    },
+    {
+      "id": "d1-a06",
+      "difficulty": "Intermediate",
+      "category": "Customer View",
+      "role": "Customer Analytics Manager",
+      "scenario": "The customer team is preparing a transaction-level customer review.",
+      "request": "Return customer name, product name, quantity, and sales for each transaction.",
+      "validation": "Correct fields at transaction grain."
+    },
+    {
+      "id": "d1-a07",
+      "difficulty": "Advanced",
+      "category": "Metric Design",
+      "role": "Finance Director",
+      "scenario": "A profitability extract will feed a downstream dashboard.",
+      "request": "Return order ID, sales, profit, and a calculated profit margin. Name the calculated field Profit_Margin and keep the original fields.",
+      "validation": "Correct calculation and stable alias."
+    },
+    {
+      "id": "d1-a08",
+      "difficulty": "Advanced",
+      "category": "Data Contract",
+      "role": "BI Lead",
+      "scenario": "A downstream process expects a strict field order.",
+      "request": "Produce exactly Order_ID, Customer, Category, Region, Revenue, Profit in that order using aliases.",
+      "validation": "Exact six-field output and aliases."
+    },
+    {
+      "id": "d1-a09",
+      "difficulty": "Expert",
+      "category": "Analytical Reasoning",
+      "role": "Senior Analyst",
+      "scenario": "Leadership wants an auditable transaction extract.",
+      "request": "Return the requested business fields plus Estimated_Cost = sales - profit and Profit_Margin = profit / sales, with no unnecessary source columns.",
+      "validation": "Correct grain, calculations, aliases, and no extra columns."
+    },
+    {
+      "id": "d1-a10",
+      "difficulty": "Expert",
+      "category": "Stakeholder Translation",
+      "role": "Commercial Director",
+      "scenario": "The director gives a verbal requirement for a transaction profitability review.",
+      "request": "Build the final order-level extract containing order ID, customer, category, region, sales, profit, discount, discount amount, and profit margin.",
+      "validation": "All requested outputs are present and calculations are correct."
+    }
+  ]
+}
