@@ -1,0 +1,306 @@
+{
+  "day": 3,
+  "track": "SQL",
+  "title": "SQL Day 3 — Filtering & Business Rule Logic",
+  "description": "Translate stakeholder rules into row-level filters using WHERE, comparisons, Boolean logic, IN, BETWEEN, and LIKE.",
+  "dataset_refs": [
+    "orders"
+  ],
+  "topics": [
+    {
+      "id": "sql-d3-t1",
+      "sequence": 1,
+      "title": "WHERE — Selecting Relevant Records",
+      "business_skill": "Filter transaction rows using a business condition.",
+      "teaching": {
+        "teacher": "## WHERE\nWHERE keeps only rows that satisfy a condition. Example: SELECT order_id, sales FROM orders WHERE region = 'West';",
+        "explain": "WHERE is a row-level filter. FROM identifies the source and WHERE decides which rows remain.",
+        "detailedlearning": "Translate phrases such as only, from, belonging to, and transactions with into explicit Boolean conditions.",
+        "expose": "Ask which records should remain before writing the SELECT list.",
+        "example": "SELECT order_id, customer_name, sales FROM orders WHERE category = 'Technology';",
+        "business_question": "The regional sales manager wants all Technology orders. Return order ID, customer name, sales, and region.",
+        "expected_sql": "SELECT order_id, customer_name, sales, region FROM orders WHERE category = 'Technology';"
+      },
+      "questions": [
+        {
+          "id": "sql-d3-t1-q1",
+          "difficulty": "Basic",
+          "role": "Sales Manager",
+          "scenario": "The manager is reviewing East-region transactions.",
+          "request": "Return order ID, customer name, sales, and profit for East-region orders only.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "sales",
+            "profit"
+          ],
+          "validation": "region = 'East'."
+        },
+        {
+          "id": "sql-d3-t1-q2",
+          "difficulty": "Medium",
+          "role": "Category Manager",
+          "scenario": "The manager is investigating Technology transactions.",
+          "request": "Return order ID, product name, sales, quantity, and profit for Technology orders.",
+          "output": [
+            "order_id",
+            "product_name",
+            "sales",
+            "quantity",
+            "profit"
+          ],
+          "validation": "category = 'Technology'."
+        },
+        {
+          "id": "sql-d3-t1-q3",
+          "difficulty": "Intermediate",
+          "role": "Operations Manager",
+          "scenario": "Operations wants all First Class shipments.",
+          "request": "Return order ID, customer name, sales, and ship mode for First Class orders.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "sales",
+            "ship_mode"
+          ],
+          "validation": "ship_mode = 'First Class'."
+        }
+      ]
+    },
+    {
+      "id": "sql-d3-t2",
+      "sequence": 2,
+      "title": "Comparison Operators",
+      "business_skill": "Translate numeric thresholds into executable rules.",
+      "teaching": {
+        "teacher": "## Comparison operators\nUse =, >, <, >=, <=, and <> to express business thresholds. 'At least 1000' means sales >= 1000; 'above 1000' means sales > 1000.",
+        "explain": "The operator controls whether the boundary itself is included.",
+        "detailedlearning": "Always distinguish above from at least and below from at most. These boundary decisions affect KPI populations.",
+        "expose": "Stakeholder thresholds are logic, not just numbers.",
+        "example": "SELECT order_id, sales, profit FROM orders WHERE sales >= 1500;",
+        "business_question": "The commercial director defines a high-value order as sales of at least 1,500. Return those transactions.",
+        "expected_sql": "SELECT order_id, sales, profit FROM orders WHERE sales >= 1500;"
+      },
+      "questions": [
+        {
+          "id": "sql-d3-t2-q1",
+          "difficulty": "Basic",
+          "role": "Sales Manager",
+          "scenario": "A high-value order is defined as at least 1,000 in sales.",
+          "request": "Return order ID, customer name, and sales for high-value orders.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "sales"
+          ],
+          "validation": "sales >= 1000."
+        },
+        {
+          "id": "sql-d3-t2-q2",
+          "difficulty": "Medium",
+          "role": "Finance Analyst",
+          "scenario": "Finance is investigating transactions that lost money.",
+          "request": "Return order ID, category, sales, and profit where profit is below zero.",
+          "output": [
+            "order_id",
+            "category",
+            "sales",
+            "profit"
+          ],
+          "validation": "profit < 0."
+        },
+        {
+          "id": "sql-d3-t2-q3",
+          "difficulty": "Intermediate",
+          "role": "Inventory Manager",
+          "scenario": "The inventory team wants unusually large order quantities.",
+          "request": "Return order ID, product name, quantity, and sales for orders containing at least 10 units.",
+          "output": [
+            "order_id",
+            "product_name",
+            "quantity",
+            "sales"
+          ],
+          "validation": "quantity >= 10."
+        }
+      ]
+    },
+    {
+      "id": "sql-d3-t3",
+      "sequence": 3,
+      "title": "AND, OR & NOT",
+      "business_skill": "Combine multiple business conditions.",
+      "teaching": {
+        "teacher": "## Boolean logic\nAND requires every condition to be true. OR requires at least one condition. NOT excludes a condition. Use parentheses when combining OR branches.",
+        "explain": "WHERE region='West' AND category='Technology' means both conditions must hold.",
+        "detailedlearning": "Translate complex stakeholder rules into logical branches before coding. Example: (West + Technology) OR (East + Furniture).",
+        "expose": "The hard part is business logic, not syntax.",
+        "example": "SELECT order_id, sales FROM orders WHERE region='West' AND category='Technology';",
+        "business_question": "The regional director wants Technology orders sold in the West.",
+        "expected_sql": "SELECT order_id, customer_name, category, region, sales FROM orders WHERE region = 'West' AND category = 'Technology';"
+      },
+      "questions": [
+        {
+          "id": "sql-d3-t3-q1",
+          "difficulty": "Basic",
+          "role": "Regional Manager",
+          "scenario": "The manager wants Technology orders from the West.",
+          "request": "Return order ID, product name, sales, and profit for records matching both conditions.",
+          "output": [
+            "order_id",
+            "product_name",
+            "sales",
+            "profit"
+          ],
+          "validation": "category='Technology' AND region='West'."
+        },
+        {
+          "id": "sql-d3-t3-q2",
+          "difficulty": "Medium",
+          "role": "Commercial Director",
+          "scenario": "The director wants either West Technology or East Furniture transactions.",
+          "request": "Return order ID, category, region, and sales for either business condition.",
+          "output": [
+            "order_id",
+            "category",
+            "region",
+            "sales"
+          ],
+          "validation": "(West + Technology) OR (East + Furniture)."
+        },
+        {
+          "id": "sql-d3-t3-q3",
+          "difficulty": "Intermediate",
+          "role": "Product Manager",
+          "scenario": "The manager is excluding Furniture while reviewing orders above 500.",
+          "request": "Return order ID, category, sales, and profit for sales above 500 that are not Furniture.",
+          "output": [
+            "order_id",
+            "category",
+            "sales",
+            "profit"
+          ],
+          "validation": "sales > 500 AND category <> 'Furniture'."
+        }
+      ]
+    },
+    {
+      "id": "sql-d3-t4",
+      "sequence": 4,
+      "title": "IN & BETWEEN",
+      "business_skill": "Filter against allowed lists and inclusive ranges.",
+      "teaching": {
+        "teacher": "## IN and BETWEEN\nIN checks membership in a list: region IN ('East','West'). BETWEEN checks an inclusive range: sales BETWEEN 500 AND 1500.",
+        "explain": "IN replaces repeated OR conditions. BETWEEN includes both endpoints.",
+        "detailedlearning": "Use IN for business classifications and BETWEEN for ranges. Remember that BETWEEN 500 AND 1500 includes 500 and 1500.",
+        "expose": "Phrases like one of, either, between, and within a range are signals for these operators.",
+        "example": "SELECT order_id, region, sales FROM orders WHERE region IN ('East','West');",
+        "business_question": "Sales operations is preparing a combined report for East, West, and South. Return order ID, customer name, region, and sales.",
+        "expected_sql": "SELECT order_id, customer_name, region, sales FROM orders WHERE region IN ('East','West','South');"
+      },
+      "questions": [
+        {
+          "id": "sql-d3-t4-q1",
+          "difficulty": "Basic",
+          "role": "Regional Sales Manager",
+          "scenario": "The manager is preparing a combined East and West report.",
+          "request": "Return order ID, customer name, region, and sales for East or West orders.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "region",
+            "sales"
+          ],
+          "validation": "region IN ('East','West')."
+        },
+        {
+          "id": "sql-d3-t4-q2",
+          "difficulty": "Medium",
+          "role": "Sales Operations Analyst",
+          "scenario": "Standard-value transactions are defined as sales between 500 and 1500.",
+          "request": "Return order ID, customer name, sales, and category for orders in this band.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "sales",
+            "category"
+          ],
+          "validation": "sales BETWEEN 500 AND 1500 inclusive."
+        },
+        {
+          "id": "sql-d3-t4-q3",
+          "difficulty": "Intermediate",
+          "role": "Commercial Manager",
+          "scenario": "The team is reviewing three strategic categories.",
+          "request": "Return order ID, category, product name, and sales for Technology, Furniture, or Office Supplies.",
+          "output": [
+            "order_id",
+            "category",
+            "product_name",
+            "sales"
+          ],
+          "validation": "category IN the three requested categories."
+        }
+      ]
+    },
+    {
+      "id": "sql-d3-t5",
+      "sequence": 5,
+      "title": "LIKE — Text Pattern Matching",
+      "business_skill": "Search text using partial patterns.",
+      "teaching": {
+        "teacher": "## LIKE\nLIKE matches text patterns. % means any sequence of characters and _ means exactly one character. Use 'A%' for starts with A and '%Chair%' for contains Chair.",
+        "explain": "LIKE is useful when the exact stored text is unknown but a pattern is known.",
+        "detailedlearning": "Pattern position matters: starts with, ends with, and contains require different wildcard placement.",
+        "expose": "Translate 'starts with', 'ends with', and 'contains' into wildcard patterns.",
+        "example": "SELECT order_id, product_name, sales FROM orders WHERE product_name LIKE '%Chair%';",
+        "business_question": "The product manager wants transactions for products whose names contain Chair.",
+        "expected_sql": "SELECT order_id, product_name, category, sales FROM orders WHERE product_name LIKE '%Chair%';"
+      },
+      "questions": [
+        {
+          "id": "sql-d3-t5-q1",
+          "difficulty": "Basic",
+          "role": "Customer Analytics Manager",
+          "scenario": "The team wants customer names beginning with A.",
+          "request": "Return order ID, customer name, and sales for matching customers.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "sales"
+          ],
+          "validation": "customer_name LIKE 'A%'."
+        },
+        {
+          "id": "sql-d3-t5-q2",
+          "difficulty": "Medium",
+          "role": "Product Manager",
+          "scenario": "The team is investigating chair-related products.",
+          "request": "Return order ID, product name, category, sales, and profit where product name contains Chair.",
+          "output": [
+            "order_id",
+            "product_name",
+            "category",
+            "sales",
+            "profit"
+          ],
+          "validation": "product_name LIKE '%Chair%'."
+        },
+        {
+          "id": "sql-d3-t5-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "Customer review requires names containing John anywhere in the stored name.",
+          "request": "Return order ID, customer name, sales, and region for matching records.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "sales",
+            "region"
+          ],
+          "validation": "customer_name LIKE '%John%'."
+        }
+      ]
+    }
+  ]
+}
