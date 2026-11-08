@@ -1,0 +1,23 @@
+{
+  "name": "100day-of-learning-DA",
+  "version": "1.0.0",
+  "description": "Content database for the 100-Day Data Analyst Business Trainer.",
+  "owner": "AbuHumzaKhan",
+  "learning_sequence": {
+    "days_1_25": "SQL",
+    "days_26_50": "Excel",
+    "days_51_75": "Power BI & DAX",
+    "days_76_100": "Python & Pandas"
+  },
+  "daily_learning": {
+    "topics_per_day": 5,
+    "business_questions_per_topic": 3,
+    "total_questions": 1500
+  },
+  "coding_arena": {
+    "questions_per_day": 10,
+    "range": "10-20",
+    "difficulty_levels": ["Basic","Medium","Intermediate","Advanced","Expert"]
+  },
+  "content_contract": "1 JSON resource per learning day and 1 JSON resource per coding-arena day."
+}
