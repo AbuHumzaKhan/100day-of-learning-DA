@@ -15,7 +15,8 @@ The learner application reads these resources at runtime. Learner completion sta
 | Learning questions | **45** |
 | Coding Arena questions | **30** |
 | Primary dataset | **orders** |
-| Dataset rows | **150** |
+| Primary dataset rows | **150** |
+| Supporting datasets | **customers (20), product-catalog (10)** |
 | Days 4–100 | **Locked / not published** |
 
 **Only Days 1–3 are open right now.**
@@ -61,6 +62,49 @@ Progression is sequential: a learner can move from Day 1 → Day 2 → Day 3 onl
 
 **Business capability:** translate business rules into reliable SQL filters.
 
+## Coding Arena — business scenario model
+
+Every Coding Arena challenge now contains both a coding requirement and a business decision context:
+
+- **Role:** who needs the analysis
+- **Scenario:** what is happening in the organization
+- **Business objective:** why the result matters
+- **Request:** what the analyst has been asked to produce
+- **Required output:** expected result structure
+- **Constraints:** data and analytical rules
+- **Success criteria:** how the answer will be validated
+- **Decision use:** how the output may be used by the stakeholder
+
+This prevents the arena from becoming a collection of isolated SQL syntax exercises.
+
+## Dataset model
+
+### orders
+
+- 150 rows
+- 12 columns
+- one row per order transaction
+- January–May 2026 dates
+- categorical dimensions and numeric measures
+- zero and negative profit edge cases
+- deterministic values for repeatable validation
+
+### customers
+
+- 20 rows
+- one row per customer
+- segment, region, state, and primary category
+- designed for customer segmentation and join practice
+
+### product-catalog
+
+- 10 rows
+- one row per product
+- category, product family, list price, and standard margin
+- designed for product benchmarking and join practice
+
+Relationships are documented in `datasets/index.json`.
+
 ## Repository structure
 
 ```text
@@ -81,7 +125,15 @@ Progression is sequential: a learner can move from Day 1 → Day 2 → Day 3 onl
 │   └── day-003.json
 └── datasets/
     ├── index.json
-    └── orders/
+    ├── orders/
+    │   ├── README.md
+    │   ├── data.csv
+    │   └── schema.json
+    ├── customers/
+    │   ├── README.md
+    │   ├── data.csv
+    │   └── schema.json
+    └── product-catalog/
         ├── README.md
         ├── data.csv
         └── schema.json
@@ -109,6 +161,7 @@ Every Coding Arena day contains:
 - execution targets
 - 10 coding challenges
 - progressive difficulty
+- business scenario context
 - validation criteria
 
 ## Learning modes
@@ -120,19 +173,7 @@ The curriculum supports:
 - **detailedlearning** — deeper practical reasoning
 - **expose** — the analyst mindset behind the technique
 
-## Dataset contract
-
-The primary dataset is **orders**:
-
-- 150 rows
-- 12 columns
-- one row per order transaction
-- January–May 2026 dates
-- categorical dimensions and numeric measures
-- zero and negative profit edge cases
-- deterministic values for repeatable validation
-
-See [datasets/orders/README.md](datasets/orders/README.md) for the field dictionary and usage rules.
+The JSON already stores separate content for these modes. The frontend must render the selected mode instead of merely changing the active tab.
 
 ## Publishing a new day
 
