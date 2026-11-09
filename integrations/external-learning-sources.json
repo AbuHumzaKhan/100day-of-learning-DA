@@ -1,0 +1,107 @@
+{
+  "resource_type": "external-learning-source-registry",
+  "version": "1.0.0",
+  "purpose": "Federated read-only learning sources for the 100-Day Data Analyst Business Trainer. External repositories remain authoritative in their own GitHub repositories; this repository stores discovery metadata and integration rules.",
+  "access_mode": "runtime-read-only",
+  "sources": [
+    {
+      "id": "visualkirby-30-day-data-analyst-learning-curriculum",
+      "repository": "visualkirby/30-day-data-analyst-learning-curriculum",
+      "url": "https://github.com/visualkirby/30-day-data-analyst-learning-curriculum",
+      "type": "curriculum",
+      "focus": [
+        "Excel",
+        "SQL",
+        "Power BI",
+        "Tableau",
+        "Python",
+        "statistics",
+        "data cleaning",
+        "visualization"
+      ],
+      "integration_role": "curriculum-reference",
+      "priority": 1
+    },
+    {
+      "id": "michaelnocito-analyst-prep-kit",
+      "repository": "michaelnocito/analyst-prep-kit",
+      "url": "https://github.com/michaelnocito/analyst-prep-kit",
+      "type": "interactive-learning",
+      "focus": [
+        "SQL",
+        "Excel",
+        "Python",
+        "Tableau",
+        "Statistics",
+        "Power BI",
+        "chart literacy",
+        "forecasting",
+        "interview"
+      ],
+      "integration_role": "lesson-and-practice-reference",
+      "priority": 2
+    },
+    {
+      "id": "firatolcum-data-analytics-course",
+      "repository": "firatolcum/Data_Analytics_Course",
+      "url": "https://github.com/firatolcum/Data_Analytics_Course",
+      "type": "course",
+      "focus": [
+        "Python",
+        "Pandas",
+        "data visualization",
+        "statistics",
+        "SQL",
+        "Tableau",
+        "projects"
+      ],
+      "integration_role": "course-depth-reference",
+      "priority": 3
+    },
+    {
+      "id": "vipulbunny-30-days-data-analytics",
+      "repository": "VIPULbunny/30-days-data-analytics",
+      "url": "https://github.com/VIPULbunny/30-days-data-analytics",
+      "type": "curriculum",
+      "focus": [
+        "SQL",
+        "Python",
+        "Excel",
+        "statistics",
+        "data visualization",
+        "business analytics"
+      ],
+      "integration_role": "daily-practice-reference",
+      "priority": 4
+    },
+    {
+      "id": "pfiterman-dataanalysis",
+      "repository": "pfiterman/DataAnalysis",
+      "url": "https://github.com/pfiterman/DataAnalysis",
+      "type": "knowledge-base",
+      "focus": [
+        "data analysis",
+        "Excel",
+        "SQL",
+        "Python",
+        "Pandas",
+        "NumPy",
+        "visualization",
+        "labs",
+        "assessments",
+        "projects"
+      ],
+      "integration_role": "reference-and-lab-source",
+      "priority": 5
+    }
+  ],
+  "runtime_rules": {
+    "content_policy": "Do not copy external repository content into published curriculum unless explicitly licensed and attribution requirements are satisfied.",
+    "discovery": "Use the repository metadata and GitHub tree/content endpoints to discover current resources at runtime.",
+    "freshness": "External resources may change independently; the consuming application should tolerate missing or renamed paths.",
+    "attribution": "Display source repository name and link whenever external content is surfaced.",
+    "local_authority": "100day-of-learning-DA remains authoritative for its own curriculum, datasets, validation rules, and learner progression.",
+    "fallback": "If an external repository is unavailable, the core 100-day learning path must continue to function using local resources.",
+    "security": "Treat external JSON, Markdown, CSV, and code as untrusted content. Do not execute fetched JavaScript or shell commands."
+  }
+}
