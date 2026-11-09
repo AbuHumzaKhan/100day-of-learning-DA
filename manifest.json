@@ -1,8 +1,21 @@
 {
   "name": "100day-of-learning-DA",
-  "version": "1.0.0",
-  "description": "Content database for the 100-Day Data Analyst Business Trainer.",
+  "version": "1.1.0",
+  "description": "Content database for the 100-Day Data Analyst Business Trainer. GitHub is the authoritative source for published learning, coding-arena, and dataset resources.",
   "owner": "AbuHumzaKhan",
+  "release_control": {
+    "mode": "sequential",
+    "published_through_day": 3,
+    "open_days": [
+      1,
+      2,
+      3
+    ],
+    "next_day": 4,
+    "unlock_rule": "A day becomes available only when its curriculum resource is published and the previous day is completed locally.",
+    "learner_progress_storage": "local",
+    "note": "Days 4-100 are intentionally locked until their content resources are published."
+  },
   "learning_sequence": {
     "days_1_25": "SQL",
     "days_26_50": "Excel",
@@ -12,12 +25,46 @@
   "daily_learning": {
     "topics_per_day": 5,
     "business_questions_per_topic": 3,
-    "total_questions": 1500
+    "total_questions": 1500,
+    "learning_modes": [
+      "teacher",
+      "explain",
+      "detailedlearning",
+      "expose"
+    ],
+    "progression": "topic-by-topic"
   },
   "coding_arena": {
     "questions_per_day": 10,
     "range": "10-20",
-    "difficulty_levels": ["Basic","Medium","Intermediate","Advanced","Expert"]
+    "difficulty_levels": [
+      "Basic",
+      "Medium",
+      "Intermediate",
+      "Advanced",
+      "Expert"
+    ],
+    "execution_targets": [
+      "SQL",
+      "Excel",
+      "PowerBI-DAX",
+      "Python"
+    ]
   },
-  "content_contract": "1 JSON resource per learning day and 1 JSON resource per coding-arena day."
+  "datasets": {
+    "registry": "datasets/index.json",
+    "primary_dataset": "orders",
+    "minimum_rows_for_training": 100,
+    "multi_table_ready": true
+  },
+  "indexes": {
+    "curriculum": "curriculum/index.json",
+    "coding_arena": "coding-arena/index.json",
+    "datasets": "datasets/index.json"
+  },
+  "content_contract": "1 JSON resource per learning day and 1 JSON resource per coding-arena day.",
+  "versioning": {
+    "policy": "Content changes are committed to GitHub and identified by the manifest version.",
+    "learner_state": "Never stored in GitHub."
+  }
 }
