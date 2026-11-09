@@ -11,8 +11,62 @@
       "grain": "one row per order transaction",
       "row_count": 150,
       "status": "active",
-      "used_by_days": [1, 2, 3],
-      "used_by_coding_arena_days": [1, 2, 3]
+      "used_by_days": [
+        1,
+        2,
+        3
+      ],
+      "used_by_coding_arena_days": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "customers",
+      "name": "Customer Master",
+      "path": "datasets/customers",
+      "data": "datasets/customers/data.csv",
+      "schema": "datasets/customers/schema.json",
+      "documentation": "datasets/customers/README.md",
+      "grain": "one row per customer",
+      "row_count": 20,
+      "status": "active",
+      "used_by_days": [],
+      "used_by_coding_arena_days": [],
+      "relationship_notes": [
+        "customers.customer_name can be matched to orders.customer_name for join practice."
+      ]
+    },
+    {
+      "id": "product-catalog",
+      "name": "Product Catalog",
+      "path": "datasets/product-catalog",
+      "data": "datasets/product-catalog/data.csv",
+      "schema": "datasets/product-catalog/schema.json",
+      "documentation": "datasets/product-catalog/README.md",
+      "grain": "one row per product",
+      "row_count": 10,
+      "status": "active",
+      "used_by_days": [],
+      "used_by_coding_arena_days": [],
+      "relationship_notes": [
+        "product-catalog.product_name is represented in orders.product_name for product benchmarking and join practice."
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "from": "orders.customer_name",
+      "to": "customers.customer_name",
+      "type": "many-to-one",
+      "purpose": "customer segmentation and regional analysis"
+    },
+    {
+      "from": "orders.product_name",
+      "to": "product-catalog.product_name",
+      "type": "many-to-one",
+      "purpose": "product master benchmarking"
     }
   ]
 }
