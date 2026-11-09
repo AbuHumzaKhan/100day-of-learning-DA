@@ -19,7 +19,16 @@
       "role": "Regional Manager",
       "scenario": "The manager is reviewing East-region orders.",
       "request": "Return order ID, customer, sales, and profit for East orders.",
-      "validation": "WHERE region='East'."
+      "validation": "WHERE region='East'.",
+      "business_objective": "Help the regional manager make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return order ID, customer, sales, and profit for East orders.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "WHERE region='East'.",
+      "decision_use": "Use the resulting output as an auditable input for the filtering review."
     },
     {
       "id": "d3-a02",
@@ -28,7 +37,16 @@
       "role": "Sales Manager",
       "scenario": "High-value orders are defined as sales of at least 1000.",
       "request": "Return order ID, customer, and sales for qualifying orders.",
-      "validation": "sales >= 1000."
+      "validation": "sales >= 1000.",
+      "business_objective": "Help the sales manager make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return order ID, customer, and sales for qualifying orders.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "sales >= 1000.",
+      "decision_use": "Use the resulting output as an auditable input for the threshold review."
     },
     {
       "id": "d3-a03",
@@ -37,7 +55,16 @@
       "role": "Category Manager",
       "scenario": "The manager wants Technology orders from the West.",
       "request": "Return order ID, product, sales, and profit where category is Technology and region is West.",
-      "validation": "AND logic."
+      "validation": "AND logic.",
+      "business_objective": "Help the category manager make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return order ID, product, sales, and profit where category is Technology and region is West.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "AND logic.",
+      "decision_use": "Use the resulting output as an auditable input for the boolean logic review."
     },
     {
       "id": "d3-a04",
@@ -46,7 +73,16 @@
       "role": "Sales Operations",
       "scenario": "Standard-value transactions are sales between 500 and 1500.",
       "request": "Return order ID, customer, category, and sales for that range.",
-      "validation": "BETWEEN 500 AND 1500 inclusive."
+      "validation": "BETWEEN 500 AND 1500 inclusive.",
+      "business_objective": "Help the sales operations make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return order ID, customer, category, and sales for that range.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "BETWEEN 500 AND 1500 inclusive.",
+      "decision_use": "Use the resulting output as an auditable input for the range review."
     },
     {
       "id": "d3-a05",
@@ -55,7 +91,16 @@
       "role": "Commercial Manager",
       "scenario": "The team is reviewing three strategic categories.",
       "request": "Return order ID, category, product, and sales for Technology, Furniture, or Office Supplies.",
-      "validation": "IN list."
+      "validation": "IN list.",
+      "business_objective": "Help the commercial manager make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return order ID, category, product, and sales for Technology, Furniture, or Office Supplies.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "IN list.",
+      "decision_use": "Use the resulting output as an auditable input for the list filter review."
     },
     {
       "id": "d3-a06",
@@ -64,7 +109,16 @@
       "role": "Product Manager",
       "scenario": "The team is investigating chair-related products.",
       "request": "Return order ID, product name, sales, and profit where product name contains Chair.",
-      "validation": "LIKE '%Chair%'."
+      "validation": "LIKE '%Chair%'.",
+      "business_objective": "Help the product manager make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return order ID, product name, sales, and profit where product name contains Chair.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "LIKE '%Chair%'.",
+      "decision_use": "Use the resulting output as an auditable input for the text search review."
     },
     {
       "id": "d3-a07",
@@ -73,7 +127,16 @@
       "role": "Commercial Director",
       "scenario": "The director wants profitable high-value orders but excludes Furniture.",
       "request": "Return order ID, category, sales, and profit where sales >= 1500, profit > 0, and category is not Furniture.",
-      "validation": "Correct AND/NOT logic."
+      "validation": "Correct AND/NOT logic.",
+      "business_objective": "Help the commercial director make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return order ID, category, sales, and profit where sales >= 1500, profit > 0, and category is not Furniture.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "Correct AND/NOT logic.",
+      "decision_use": "Use the resulting output as an auditable input for the compound rule review."
     },
     {
       "id": "d3-a08",
@@ -82,7 +145,16 @@
       "role": "Senior Analyst",
       "scenario": "Two commercial cases must be reviewed together.",
       "request": "Return transactions that are either West Technology or East Furniture, including order ID, category, region, and sales.",
-      "validation": "Parenthesized OR branches."
+      "validation": "Parenthesized OR branches.",
+      "business_objective": "Help the senior analyst make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return transactions that are either West Technology or East Furniture, including order ID, category, region, and sales.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "Parenthesized OR branches.",
+      "decision_use": "Use the resulting output as an auditable input for the branch logic review."
     },
     {
       "id": "d3-a09",
@@ -91,7 +163,16 @@
       "role": "Finance Director",
       "scenario": "Finance wants high-value transactions within selected regions while excluding loss-making orders.",
       "request": "Return order ID, region, category, sales, and profit for East/West/South orders with sales >= 1000 and profit >= 0.",
-      "validation": "IN + threshold + Boolean conditions."
+      "validation": "IN + threshold + Boolean conditions.",
+      "business_objective": "Help the finance director make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return order ID, region, category, sales, and profit for East/West/South orders with sales >= 1000 and profit >= 0.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "IN + threshold + Boolean conditions.",
+      "decision_use": "Use the resulting output as an auditable input for the business rule review."
     },
     {
       "id": "d3-a10",
@@ -100,7 +181,31 @@
       "role": "Senior Analyst",
       "scenario": "Leadership is investigating a focused set of commercial exceptions.",
       "request": "Return order ID, customer, category, region, sales, and profit for orders in East/West, with sales between 750 and 2500 inclusive, profit > 0, and product names containing 'Desk' or 'Chair'.",
-      "validation": "Correct combination of IN, BETWEEN, AND, and parenthesized LIKE conditions."
+      "validation": "Correct combination of IN, BETWEEN, AND, and parenthesized LIKE conditions.",
+      "business_objective": "Help the senior analyst make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return order ID, customer, category, region, sales, and profit for orders in East/West, with sales between 750 and 2500 inclusive, profit > 0, and product names containing 'Desk' or 'Chair'.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "Correct combination of IN, BETWEEN, AND, and parenthesized LIKE conditions.",
+      "decision_use": "Use the resulting output as an auditable input for the complex filter review."
     }
-  ]
+  ],
+  "content_version": "1.2",
+  "question_contract": {
+    "required_fields": [
+      "role",
+      "scenario",
+      "business_objective",
+      "request",
+      "required_output",
+      "constraints",
+      "success_criteria",
+      "decision_use",
+      "validation"
+    ],
+    "note": "Every challenge is framed as a realistic stakeholder request and is designed to be executable against the referenced dataset."
+  }
 }
