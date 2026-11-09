@@ -20,7 +20,8 @@
         "visualization"
       ],
       "integration_role": "curriculum-reference",
-      "priority": 1
+      "priority": 1,
+      "default_branch": "master"
     },
     {
       "id": "michaelnocito-analyst-prep-kit",
@@ -39,7 +40,8 @@
         "interview"
       ],
       "integration_role": "lesson-and-practice-reference",
-      "priority": 2
+      "priority": 2,
+      "default_branch": "main"
     },
     {
       "id": "firatolcum-data-analytics-course",
@@ -56,23 +58,8 @@
         "projects"
       ],
       "integration_role": "course-depth-reference",
-      "priority": 3
-    },
-    {
-      "id": "vipulbunny-30-days-data-analytics",
-      "repository": "VIPULbunny/30-days-data-analytics",
-      "url": "https://github.com/VIPULbunny/30-days-data-analytics",
-      "type": "curriculum",
-      "focus": [
-        "SQL",
-        "Python",
-        "Excel",
-        "statistics",
-        "data visualization",
-        "business analytics"
-      ],
-      "integration_role": "daily-practice-reference",
-      "priority": 4
+      "priority": 3,
+      "default_branch": "master"
     },
     {
       "id": "pfiterman-dataanalysis",
@@ -92,16 +79,36 @@
         "projects"
       ],
       "integration_role": "reference-and-lab-source",
-      "priority": 5
+      "priority": 5,
+      "default_branch": "main"
+    },
+    {
+      "id": "semilore-james-data-scenarios",
+      "repository": "Semilore-James/DATA-SCENARIOS",
+      "url": "https://github.com/Semilore-James/DATA-SCENARIOS",
+      "type": "assignment-curriculum",
+      "focus": [
+        "SQL",
+        "Excel",
+        "Power BI",
+        "Python",
+        "business scenarios",
+        "success criteria",
+        "progression"
+      ],
+      "integration_role": "scenario-and-practice-reference",
+      "priority": 4,
+      "default_branch": "main"
     }
   ],
   "runtime_rules": {
     "content_policy": "Do not copy external repository content into published curriculum unless explicitly licensed and attribution requirements are satisfied.",
-    "discovery": "Use the repository metadata and GitHub tree/content endpoints to discover current resources at runtime.",
+    "discovery": "Use repository metadata, default_branch, and GitHub Contents API to discover current resources at runtime. Never assume every source uses main.",
     "freshness": "External resources may change independently; the consuming application should tolerate missing or renamed paths.",
     "attribution": "Display source repository name and link whenever external content is surfaced.",
     "local_authority": "100day-of-learning-DA remains authoritative for its own curriculum, datasets, validation rules, and learner progression.",
     "fallback": "If an external repository is unavailable, the core 100-day learning path must continue to function using local resources.",
-    "security": "Treat external JSON, Markdown, CSV, and code as untrusted content. Do not execute fetched JavaScript or shell commands."
+    "security": "Treat external JSON, Markdown, CSV, and code as untrusted content. Do not execute fetched JavaScript or shell commands.",
+    "health_check": "Validate each configured repository before surfacing it. Unavailable sources are skipped and reported without breaking local curriculum."
   }
 }
