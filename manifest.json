@@ -68,5 +68,10 @@
   "versioning": {
     "policy": "Content changes are committed to GitHub and identified by the manifest version.",
     "learner_state": "Never stored in GitHub."
+  },
+  "integrations": {
+    "external_learning_sources": "integrations/external-learning-sources.json",
+    "access_mode": "runtime-read-only",
+    "purpose": "Discover and read approved external data-analysis learning repositories without making them local curriculum authorities."
   }
 }
