@@ -1,0 +1,35 @@
+{
+  "resource_type": "coding-arena-index",
+  "published_through_day": 3,
+  "open_days": [1, 2, 3],
+  "days": [
+    {
+      "day": 1,
+      "file": "day-001.json",
+      "track": "SQL",
+      "title": "SQL Day 1 Coding Arena — Retrieval & Analytical Outputs",
+      "dataset_refs": ["orders"],
+      "questions": 10,
+      "status": "open"
+    },
+    {
+      "day": 2,
+      "file": "day-002.json",
+      "track": "SQL",
+      "title": "SQL Day 2 Coding Arena — Ranking & Aggregation",
+      "dataset_refs": ["orders"],
+      "questions": 10,
+      "status": "open"
+    },
+    {
+      "day": 3,
+      "file": "day-003.json",
+      "track": "SQL",
+      "title": "SQL Day 3 Coding Arena — Business Rule Filtering",
+      "dataset_refs": ["orders"],
+      "questions": 10,
+      "status": "open"
+    }
+  ],
+  "execution_targets": ["SQL", "Excel", "PowerBI-DAX", "Python"]
+}
