@@ -1,6 +1,6 @@
 {
   "name": "100day-of-learning-DA",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Content database for the 100-Day Data Analyst Business Trainer. GitHub is the authoritative source for published learning, coding-arena, and dataset resources.",
   "owner": "AbuHumzaKhan",
   "release_control": {
@@ -72,6 +72,8 @@
   "integrations": {
     "external_learning_sources": "integrations/external-learning-sources.json",
     "access_mode": "runtime-read-only",
-    "purpose": "Discover and read approved external data-analysis learning repositories without making them local curriculum authorities."
+    "health_check": true,
+    "fallback": "local_curriculum",
+    "purpose": "Discover approved external data-analysis learning repositories without making external content authoritative."
   }
 }
