@@ -19,7 +19,16 @@
       "role": "Sales Manager",
       "scenario": "A morning sales review needs a transaction extract.",
       "request": "Return order ID, customer, category, sales, and profit for every order.",
-      "validation": "Correct columns and row-level values from orders."
+      "validation": "Correct columns and row-level values from orders.",
+      "business_objective": "Help the sales manager make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return order ID, customer, category, sales, and profit for every order.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "Correct columns and row-level values from orders.",
+      "decision_use": "Use the resulting output as an auditable input for the retrieval review."
     },
     {
       "id": "d1-a02",
@@ -28,7 +37,16 @@
       "role": "Finance Analyst",
       "scenario": "Finance needs readable metric names in an export.",
       "request": "Return sales as Revenue and profit as Profit.",
-      "validation": "Correct aliases."
+      "validation": "Correct aliases.",
+      "business_objective": "Help the finance analyst make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return sales as Revenue and profit as Profit.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "Correct aliases.",
+      "decision_use": "Use the resulting output as an auditable input for the presentation review."
     },
     {
       "id": "d1-a03",
@@ -37,7 +55,16 @@
       "role": "Finance Manager",
       "scenario": "Finance wants the non-profit portion of each transaction.",
       "request": "Return order ID and sales minus profit as Estimated_Cost.",
-      "validation": "estimated_cost = sales - profit."
+      "validation": "estimated_cost = sales - profit.",
+      "business_objective": "Help the finance manager make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return order ID and sales minus profit as Estimated_Cost.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "estimated_cost = sales - profit.",
+      "decision_use": "Use the resulting output as an auditable input for the calculation review."
     },
     {
       "id": "d1-a04",
@@ -46,7 +73,16 @@
       "role": "Commercial Analyst",
       "scenario": "Management wants an order-level margin view.",
       "request": "Return order ID, sales, profit, and profit divided by sales as Profit_Margin.",
-      "validation": "profit_margin = profit / sales."
+      "validation": "profit_margin = profit / sales.",
+      "business_objective": "Help the commercial analyst make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return order ID, sales, profit, and profit divided by sales as Profit_Margin.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "profit_margin = profit / sales.",
+      "decision_use": "Use the resulting output as an auditable input for the calculation review."
     },
     {
       "id": "d1-a05",
@@ -55,7 +91,16 @@
       "role": "Senior Analyst",
       "scenario": "Leadership needs a compact transaction dataset.",
       "request": "Return order ID, customer, region, sales, profit, and discount amount calculated as sales * discount.",
-      "validation": "Correct fields and discount amount."
+      "validation": "Correct fields and discount amount.",
+      "business_objective": "Help the senior analyst make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return order ID, customer, region, sales, profit, and discount amount calculated as sales * discount.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "Correct fields and discount amount.",
+      "decision_use": "Use the resulting output as an auditable input for the business output review."
     },
     {
       "id": "d1-a06",
@@ -64,7 +109,16 @@
       "role": "Customer Analytics Manager",
       "scenario": "The customer team is preparing a transaction-level customer review.",
       "request": "Return customer name, product name, quantity, and sales for each transaction.",
-      "validation": "Correct fields at transaction grain."
+      "validation": "Correct fields at transaction grain.",
+      "business_objective": "Help the customer analytics manager make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return customer name, product name, quantity, and sales for each transaction.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "Correct fields at transaction grain.",
+      "decision_use": "Use the resulting output as an auditable input for the customer view review."
     },
     {
       "id": "d1-a07",
@@ -73,7 +127,16 @@
       "role": "Finance Director",
       "scenario": "A profitability extract will feed a downstream dashboard.",
       "request": "Return order ID, sales, profit, and a calculated profit margin. Name the calculated field Profit_Margin and keep the original fields.",
-      "validation": "Correct calculation and stable alias."
+      "validation": "Correct calculation and stable alias.",
+      "business_objective": "Help the finance director make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return order ID, sales, profit, and a calculated profit margin. Name the calculated field Profit_Margin and keep the original fields.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "Correct calculation and stable alias.",
+      "decision_use": "Use the resulting output as an auditable input for the metric design review."
     },
     {
       "id": "d1-a08",
@@ -82,7 +145,16 @@
       "role": "BI Lead",
       "scenario": "A downstream process expects a strict field order.",
       "request": "Produce exactly Order_ID, Customer, Category, Region, Revenue, Profit in that order using aliases.",
-      "validation": "Exact six-field output and aliases."
+      "validation": "Exact six-field output and aliases.",
+      "business_objective": "Help the bi lead make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Produce exactly Order_ID, Customer, Category, Region, Revenue, Profit in that order using aliases.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "Exact six-field output and aliases.",
+      "decision_use": "Use the resulting output as an auditable input for the data contract review."
     },
     {
       "id": "d1-a09",
@@ -91,7 +163,16 @@
       "role": "Senior Analyst",
       "scenario": "Leadership wants an auditable transaction extract.",
       "request": "Return the requested business fields plus Estimated_Cost = sales - profit and Profit_Margin = profit / sales, with no unnecessary source columns.",
-      "validation": "Correct grain, calculations, aliases, and no extra columns."
+      "validation": "Correct grain, calculations, aliases, and no extra columns.",
+      "business_objective": "Help the senior analyst make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return the requested business fields plus Estimated_Cost = sales - profit and Profit_Margin = profit / sales, with no unnecessary source columns.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "Correct grain, calculations, aliases, and no extra columns.",
+      "decision_use": "Use the resulting output as an auditable input for the analytical reasoning review."
     },
     {
       "id": "d1-a10",
@@ -100,7 +181,31 @@
       "role": "Commercial Director",
       "scenario": "The director gives a verbal requirement for a transaction profitability review.",
       "request": "Build the final order-level extract containing order ID, customer, category, region, sales, profit, discount, discount amount, and profit margin.",
-      "validation": "All requested outputs are present and calculations are correct."
+      "validation": "All requested outputs are present and calculations are correct.",
+      "business_objective": "Help the commercial director make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Build the final order-level extract containing order ID, customer, category, region, sales, profit, discount, discount amount, and profit margin.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "All requested outputs are present and calculations are correct.",
+      "decision_use": "Use the resulting output as an auditable input for the stakeholder translation review."
     }
-  ]
+  ],
+  "content_version": "1.2",
+  "question_contract": {
+    "required_fields": [
+      "role",
+      "scenario",
+      "business_objective",
+      "request",
+      "required_output",
+      "constraints",
+      "success_criteria",
+      "decision_use",
+      "validation"
+    ],
+    "note": "Every challenge is framed as a realistic stakeholder request and is designed to be executable against the referenced dataset."
+  }
 }
