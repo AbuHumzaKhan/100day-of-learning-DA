@@ -1,0 +1,11 @@
+product_id,product_name,category,product_family,list_price,standard_margin
+PROD-001,Office Chair,Furniture,Mid-Market Chair,299,0.08
+PROD-002,Desk,Furniture,Executive Desk,799,0.10
+PROD-003,Printer,Technology,Laser Printer,649,0.12
+PROD-004,Monitor,Technology,Business Monitor,459,0.09
+PROD-005,Bookcase,Furniture,Storage Bookcase,389,0.15
+PROD-006,Tablet,Technology,Business Tablet,899,0.11
+PROD-007,Storage Cabinet,Furniture,Filing Cabinet,529,0.13
+PROD-008,Conference Chair,Furniture,Meeting Chair,349,0.07
+PROD-009,Notebook,Office Supplies,Professional Notebook,24,0.18
+PROD-010,Laptop,Technology,Business Laptop,1299,0.06
