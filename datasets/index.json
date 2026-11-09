@@ -1,0 +1,18 @@
+{
+  "resource_type": "dataset-index",
+  "datasets": [
+    {
+      "id": "orders",
+      "name": "Retail Orders",
+      "path": "datasets/orders",
+      "data": "datasets/orders/data.csv",
+      "schema": "datasets/orders/schema.json",
+      "documentation": "datasets/orders/README.md",
+      "grain": "one row per order transaction",
+      "row_count": 150,
+      "status": "active",
+      "used_by_days": [1, 2, 3],
+      "used_by_coding_arena_days": [1, 2, 3]
+    }
+  ]
+}
