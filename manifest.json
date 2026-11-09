@@ -1,6 +1,6 @@
 {
   "name": "100day-of-learning-DA",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Content database for the 100-Day Data Analyst Business Trainer. GitHub is the authoritative source for published learning, coding-arena, and dataset resources.",
   "owner": "AbuHumzaKhan",
   "release_control": {
@@ -49,13 +49,15 @@
       "Excel",
       "PowerBI-DAX",
       "Python"
-    ]
+    ],
+    "business_scenario_contract": true
   },
   "datasets": {
     "registry": "datasets/index.json",
     "primary_dataset": "orders",
     "minimum_rows_for_training": 100,
-    "multi_table_ready": true
+    "multi_table_ready": true,
+    "dataset_count": 3
   },
   "indexes": {
     "curriculum": "curriculum/index.json",
