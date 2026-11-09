@@ -1,0 +1,33 @@
+{
+  "name": "product-catalog",
+  "description": "Product master data for product mix, pricing, and margin analysis.",
+  "row_count": 10,
+  "grain": "one row per product",
+  "primary_key": "product_id",
+  "columns": [
+    [
+      "product_id",
+      "string"
+    ],
+    [
+      "product_name",
+      "string"
+    ],
+    [
+      "category",
+      "string"
+    ],
+    [
+      "product_family",
+      "string"
+    ],
+    [
+      "list_price",
+      "decimal"
+    ],
+    [
+      "standard_margin",
+      "decimal"
+    ]
+  ]
+}
