@@ -1,0 +1,21 @@
+customer_id,customer_name,segment,region,state,primary_category
+CUST-001,John Carter,Enterprise,West,California,Technology
+CUST-002,Maya Singh,Consumer,South,Texas,Office Supplies
+CUST-003,Omar Ali,Corporate,North,Illinois,Furniture
+CUST-004,Sara Ahmed,Consumer,East,New York,Technology
+CUST-005,David Miller,Corporate,West,Washington,Office Supplies
+CUST-006,Priya Shah,Enterprise,South,Florida,Technology
+CUST-007,John Smith,Corporate,North,Ohio,Furniture
+CUST-008,Noor Fatima,Consumer,East,New York,Office Supplies
+CUST-009,Arjun Verma,Enterprise,West,Arizona,Technology
+CUST-010,Aisha Khan,Corporate,South,Georgia,Furniture
+CUST-011,Robert Wilson,Consumer,North,Michigan,Office Supplies
+CUST-012,Emily Davis,Enterprise,East,Virginia,Technology
+CUST-013,Daniel Brown,Corporate,West,Colorado,Furniture
+CUST-014,Fatima Hassan,Consumer,South,Texas,Office Supplies
+CUST-015,Michael Jones,Enterprise,North,Ohio,Technology
+CUST-016,Ananya Rao,Corporate,East,Florida,Furniture
+CUST-017,James Taylor,Consumer,West,Oregon,Office Supplies
+CUST-018,Hiba Malik,Enterprise,South,California,Technology
+CUST-019,William Clark,Corporate,North,Illinois,Furniture
+CUST-020,Zoya Khan,Consumer,East,New Jersey,Office Supplies
