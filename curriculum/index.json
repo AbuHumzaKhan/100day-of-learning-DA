@@ -1,0 +1,39 @@
+{
+  "resource_type": "curriculum-index",
+  "published_through_day": 3,
+  "open_days": [1, 2, 3],
+  "locked_days": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100],
+  "days": [
+    {
+      "day": 1,
+      "file": "day-001.json",
+      "track": "SQL",
+      "title": "SQL Day 1 — SELECT & Reading Business Data",
+      "dataset_refs": ["orders"],
+      "topics": 5,
+      "business_questions": 15,
+      "status": "open"
+    },
+    {
+      "day": 2,
+      "file": "day-002.json",
+      "track": "SQL",
+      "title": "SQL Day 2 — DISTINCT, Sorting & Aggregated Business Views",
+      "dataset_refs": ["orders"],
+      "topics": 5,
+      "business_questions": 15,
+      "status": "open"
+    },
+    {
+      "day": 3,
+      "file": "day-003.json",
+      "track": "SQL",
+      "title": "SQL Day 3 — Filtering & Business Rule Logic",
+      "dataset_refs": ["orders"],
+      "topics": 5,
+      "business_questions": 15,
+      "status": "open"
+    }
+  ],
+  "release_rule": "A learner may open a published day only when the previous day is completed locally."
+}
