@@ -1,0 +1,33 @@
+{
+  "name": "customers",
+  "description": "Customer master data for segmentation, regional analysis, and customer-level SQL practice.",
+  "row_count": 20,
+  "grain": "one row per customer",
+  "primary_key": "customer_id",
+  "columns": [
+    [
+      "customer_id",
+      "string"
+    ],
+    [
+      "customer_name",
+      "string"
+    ],
+    [
+      "segment",
+      "string"
+    ],
+    [
+      "region",
+      "string"
+    ],
+    [
+      "state",
+      "string"
+    ],
+    [
+      "primary_category",
+      "string"
+    ]
+  ]
+}
