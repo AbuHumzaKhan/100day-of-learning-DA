@@ -19,7 +19,16 @@
       "role": "Sales Manager",
       "scenario": "The manager wants a clean list of product categories.",
       "request": "Return each unique category once.",
-      "validation": "DISTINCT category."
+      "validation": "DISTINCT category.",
+      "business_objective": "Help the sales manager make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return each unique category once.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "DISTINCT category.",
+      "decision_use": "Use the resulting output as an auditable input for the unique values review."
     },
     {
       "id": "d2-a02",
@@ -28,7 +37,16 @@
       "role": "Sales Manager",
       "scenario": "The manager wants the largest orders first.",
       "request": "Return order ID, customer, and sales sorted highest to lowest.",
-      "validation": "sales DESC."
+      "validation": "sales DESC.",
+      "business_objective": "Help the sales manager make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return order ID, customer, and sales sorted highest to lowest.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "sales DESC.",
+      "decision_use": "Use the resulting output as an auditable input for the sorting review."
     },
     {
       "id": "d2-a03",
@@ -37,7 +55,16 @@
       "role": "Commercial Director",
       "scenario": "Leadership only wants the five largest orders.",
       "request": "Return the top five orders by sales.",
-      "validation": "ORDER BY sales DESC LIMIT 5."
+      "validation": "ORDER BY sales DESC LIMIT 5.",
+      "business_objective": "Help the commercial director make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return the top five orders by sales.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "ORDER BY sales DESC LIMIT 5.",
+      "decision_use": "Use the resulting output as an auditable input for the top-n review."
     },
     {
       "id": "d2-a04",
@@ -46,7 +73,16 @@
       "role": "Category Manager",
       "scenario": "The manager wants category revenue.",
       "request": "Return category and total sales by category.",
-      "validation": "GROUP BY category; SUM(sales)."
+      "validation": "GROUP BY category; SUM(sales).",
+      "business_objective": "Help the category manager make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return category and total sales by category.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "GROUP BY category; SUM(sales).",
+      "decision_use": "Use the resulting output as an auditable input for the aggregation review."
     },
     {
       "id": "d2-a05",
@@ -55,7 +91,16 @@
       "role": "Regional Director",
       "scenario": "Leadership needs a region-level revenue view.",
       "request": "Return region and total sales, highest revenue first.",
-      "validation": "GROUP BY region and ORDER BY total_sales DESC."
+      "validation": "GROUP BY region and ORDER BY total_sales DESC.",
+      "business_objective": "Help the regional director make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return region and total sales, highest revenue first.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "GROUP BY region and ORDER BY total_sales DESC.",
+      "decision_use": "Use the resulting output as an auditable input for the aggregation review."
     },
     {
       "id": "d2-a06",
@@ -64,7 +109,16 @@
       "role": "Customer Analytics Manager",
       "scenario": "The team wants its highest-value customers.",
       "request": "Return customer and total sales, highest total first.",
-      "validation": "GROUP BY customer_name and SUM(sales)."
+      "validation": "GROUP BY customer_name and SUM(sales).",
+      "business_objective": "Help the customer analytics manager make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return customer and total sales, highest total first.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "GROUP BY customer_name and SUM(sales).",
+      "decision_use": "Use the resulting output as an auditable input for the customer kpi review."
     },
     {
       "id": "d2-a07",
@@ -73,7 +127,16 @@
       "role": "Commercial Director",
       "scenario": "Only high-revenue categories should appear in the executive report.",
       "request": "Return categories whose total sales exceed 100000.",
-      "validation": "HAVING SUM(sales) > 100000."
+      "validation": "HAVING SUM(sales) > 100000.",
+      "business_objective": "Help the commercial director make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return categories whose total sales exceed 100000.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "HAVING SUM(sales) > 100000.",
+      "decision_use": "Use the resulting output as an auditable input for the having review."
     },
     {
       "id": "d2-a08",
@@ -82,7 +145,16 @@
       "role": "Regional VP",
       "scenario": "The VP wants only strong regions.",
       "request": "Return regions with total sales above 75000, ordered from highest to lowest.",
-      "validation": "HAVING threshold and descending aggregate order."
+      "validation": "HAVING threshold and descending aggregate order.",
+      "business_objective": "Help the regional vp make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return regions with total sales above 75000, ordered from highest to lowest.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "HAVING threshold and descending aggregate order.",
+      "decision_use": "Use the resulting output as an auditable input for the having + ranking review."
     },
     {
       "id": "d2-a09",
@@ -91,7 +163,16 @@
       "role": "CFO",
       "scenario": "The CFO wants the most commercially important customers.",
       "request": "Return the top ten customers by total sales with customer name and total sales.",
-      "validation": "GROUP BY customer_name; SUM(sales); ORDER BY total_sales DESC; LIMIT 10."
+      "validation": "GROUP BY customer_name; SUM(sales); ORDER BY total_sales DESC; LIMIT 10.",
+      "business_objective": "Help the cfo make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return the top ten customers by total sales with customer name and total sales.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "GROUP BY customer_name; SUM(sales); ORDER BY total_sales DESC; LIMIT 10.",
+      "decision_use": "Use the resulting output as an auditable input for the top customers review."
     },
     {
       "id": "d2-a10",
@@ -100,7 +181,31 @@
       "role": "Senior Analyst",
       "scenario": "Leadership wants a ranked category performance table containing only categories above a defined threshold.",
       "request": "Return category, total sales, and average profit for categories with total sales above 50000, ordered by total sales descending.",
-      "validation": "Correct grouping, HAVING threshold, aggregate measures, and ordering."
+      "validation": "Correct grouping, HAVING threshold, aggregate measures, and ordering.",
+      "business_objective": "Help the senior analyst make a decision from the order-level data without changing the source dataset.",
+      "required_output": "Return category, total sales, and average profit for categories with total sales above 50000, ordered by total sales descending.",
+      "constraints": [
+        "Use the orders dataset at its stated transaction grain.",
+        "Return only fields required by the stakeholder request.",
+        "Keep calculations reproducible and use the exact business rule stated in the request."
+      ],
+      "success_criteria": "Correct grouping, HAVING threshold, aggregate measures, and ordering.",
+      "decision_use": "Use the resulting output as an auditable input for the executive kpi review."
     }
-  ]
+  ],
+  "content_version": "1.2",
+  "question_contract": {
+    "required_fields": [
+      "role",
+      "scenario",
+      "business_objective",
+      "request",
+      "required_output",
+      "constraints",
+      "success_criteria",
+      "decision_use",
+      "validation"
+    ],
+    "note": "Every challenge is framed as a realistic stakeholder request and is designed to be executable against the referenced dataset."
+  }
 }
