@@ -1,0 +1,287 @@
+{
+  "day": 4,
+  "track": "SQL",
+  "title": "SQL Day 4 — Aggregations, GROUP BY & KPI Analysis",
+  "description": "Turn transaction rows into management KPIs using COUNT, SUM, AVG, MIN, MAX, GROUP BY, and HAVING.",
+  "dataset_refs": [
+    "orders"
+  ],
+  "topics": [
+    {
+      "id": "sql-d4-t1",
+      "sequence": 1,
+      "title": "COUNT & COUNT DISTINCT",
+      "business_skill": "Measure transaction volume and unique business entities.",
+      "teaching": {
+        "teacher": "## COUNT\\nCOUNT(*) counts rows; COUNT(column) counts non-null values; COUNT(DISTINCT customer_id) counts unique customers.",
+        "explain": "Choose the counting grain first: rows, populated values, or unique entities.",
+        "detailedlearning": "A business request for orders, customers, products, or transactions implies a different counting unit.",
+        "expose": "Never report a count until you can state exactly what one counted row represents.",
+        "example": "SELECT COUNT(*) AS order_rows, COUNT(DISTINCT customer_id) AS unique_customers FROM orders;",
+        "business_question": "The sales director wants total transaction rows and unique customers.",
+        "expected_sql": "SELECT COUNT(*) AS order_rows, COUNT(DISTINCT customer_id) AS unique_customers FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d4-t1-q1",
+          "difficulty": "Basic",
+          "role": "Sales Manager",
+          "scenario": "Management wants the number of sales transactions.",
+          "request": "Return the total number of order records.",
+          "output": [
+            "order_count"
+          ],
+          "validation": "COUNT(*)"
+        },
+        {
+          "id": "sql-d4-t1-q2",
+          "difficulty": "Medium",
+          "role": "Customer Manager",
+          "scenario": "The team wants the active customer population represented in the dataset.",
+          "request": "Return the number of distinct customer IDs.",
+          "output": [
+            "unique_customers"
+          ],
+          "validation": "COUNT(DISTINCT customer_id)"
+        },
+        {
+          "id": "sql-d4-t1-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "Finance is checking whether order volume and customer volume are being confused.",
+          "request": "Return both total order rows and distinct customers in one result.",
+          "output": [
+            "order_count",
+            "unique_customers"
+          ],
+          "validation": "Two separate counts at different grains."
+        }
+      ]
+    },
+    {
+      "id": "sql-d4-t2",
+      "sequence": 2,
+      "title": "SUM, AVG, MIN & MAX",
+      "business_skill": "Calculate core numeric KPIs.",
+      "teaching": {
+        "teacher": "## Numeric aggregates\\nSUM totals a measure, AVG calculates the arithmetic mean, MIN finds the smallest value, and MAX finds the largest.",
+        "explain": "Aggregates collapse many rows into one summary unless a grouping column is included.",
+        "detailedlearning": "Use meaningful aliases and keep the measure definition explicit.",
+        "expose": "Averages can hide skew; use them deliberately rather than assuming they represent a typical transaction.",
+        "example": "SELECT SUM(sales) AS total_sales, AVG(sales) AS avg_sales, MIN(sales) AS min_sales, MAX(sales) AS max_sales FROM orders;",
+        "business_question": "The CFO wants a basic sales KPI snapshot.",
+        "expected_sql": "SELECT SUM(sales) AS total_sales, AVG(sales) AS avg_sales, MIN(sales) AS min_sales, MAX(sales) AS max_sales FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d4-t2-q1",
+          "difficulty": "Basic",
+          "role": "Finance Manager",
+          "scenario": "Finance needs the total sales value.",
+          "request": "Return total sales.",
+          "output": [
+            "total_sales"
+          ],
+          "validation": "SUM(sales)"
+        },
+        {
+          "id": "sql-d4-t2-q2",
+          "difficulty": "Medium",
+          "role": "Sales Manager",
+          "scenario": "The manager wants to understand order-value spread.",
+          "request": "Return average, minimum, and maximum sales per order.",
+          "output": [
+            "avg_sales",
+            "min_sales",
+            "max_sales"
+          ],
+          "validation": "AVG/MIN/MAX sales"
+        },
+        {
+          "id": "sql-d4-t2-q3",
+          "difficulty": "Intermediate",
+          "role": "CFO",
+          "scenario": "The monthly review requires a compact sales KPI block.",
+          "request": "Return total sales, total profit, average sales, and maximum sales.",
+          "output": [
+            "total_sales",
+            "total_profit",
+            "avg_sales",
+            "max_sales"
+          ],
+          "validation": "Four aggregate measures."
+        }
+      ]
+    },
+    {
+      "id": "sql-d4-t3",
+      "sequence": 3,
+      "title": "GROUP BY — KPI by Business Dimension",
+      "business_skill": "Compare metrics across regions, categories, or segments.",
+      "teaching": {
+        "teacher": "## GROUP BY\\nGROUP BY creates one result group for each distinct combination of grouping columns.",
+        "explain": "Every selected non-aggregated column must define the grouping grain.",
+        "detailedlearning": "Think of GROUP BY as changing the question from 'What is the total?' to 'What is the total for each X?'.",
+        "expose": "State the dimension before writing the aggregate.",
+        "example": "SELECT region, SUM(sales) AS total_sales FROM orders GROUP BY region;",
+        "business_question": "The regional director wants sales by region.",
+        "expected_sql": "SELECT region, SUM(sales) AS total_sales FROM orders GROUP BY region;"
+      },
+      "questions": [
+        {
+          "id": "sql-d4-t3-q1",
+          "difficulty": "Basic",
+          "role": "Regional Manager",
+          "scenario": "Leadership wants regional performance.",
+          "request": "Return total sales for each region.",
+          "output": [
+            "region",
+            "total_sales"
+          ],
+          "validation": "GROUP BY region"
+        },
+        {
+          "id": "sql-d4-t3-q2",
+          "difficulty": "Medium",
+          "role": "Category Manager",
+          "scenario": "The category team wants category-level profitability.",
+          "request": "Return total sales and total profit for each category.",
+          "output": [
+            "category",
+            "total_sales",
+            "total_profit"
+          ],
+          "validation": "GROUP BY category"
+        },
+        {
+          "id": "sql-d4-t3-q3",
+          "difficulty": "Intermediate",
+          "role": "Commercial Director",
+          "scenario": "The director wants segment performance by region.",
+          "request": "Return region, segment, total sales, and total profit for each region-segment combination.",
+          "output": [
+            "region",
+            "segment",
+            "total_sales",
+            "total_profit"
+          ],
+          "validation": "GROUP BY region, segment"
+        }
+      ]
+    },
+    {
+      "id": "sql-d4-t4",
+      "sequence": 4,
+      "title": "HAVING — Filtering Aggregated Results",
+      "business_skill": "Apply thresholds to grouped KPIs.",
+      "teaching": {
+        "teacher": "## HAVING\\nHAVING filters groups after aggregation; WHERE filters individual rows before aggregation.",
+        "explain": "Use WHERE for source-row conditions and HAVING for conditions on aggregate results.",
+        "detailedlearning": "If the condition contains SUM, COUNT, AVG, MIN, or MAX, HAVING is usually the relevant clause.",
+        "expose": "Do not replace HAVING with WHERE when the business rule is about a group KPI.",
+        "example": "SELECT region, SUM(sales) AS total_sales FROM orders GROUP BY region HAVING SUM(sales) >= 10000;",
+        "business_question": "The director wants only regions with at least 10,000 in sales.",
+        "expected_sql": "SELECT region, SUM(sales) AS total_sales FROM orders GROUP BY region HAVING SUM(sales) >= 10000;"
+      },
+      "questions": [
+        {
+          "id": "sql-d4-t4-q1",
+          "difficulty": "Basic",
+          "role": "Sales Director",
+          "scenario": "Only regions above a sales threshold should appear.",
+          "request": "Return regions whose total sales are at least 10,000.",
+          "output": [
+            "region",
+            "total_sales"
+          ],
+          "validation": "HAVING SUM(sales) >= 10000"
+        },
+        {
+          "id": "sql-d4-t4-q2",
+          "difficulty": "Medium",
+          "role": "Finance Manager",
+          "scenario": "Finance wants categories with negative aggregate profit.",
+          "request": "Return categories whose total profit is below zero.",
+          "output": [
+            "category",
+            "total_profit"
+          ],
+          "validation": "HAVING SUM(profit) < 0"
+        },
+        {
+          "id": "sql-d4-t4-q3",
+          "difficulty": "Intermediate",
+          "role": "Customer Manager",
+          "scenario": "Management wants customer accounts generating more than 5,000 in sales.",
+          "request": "Return customer IDs with total sales above 5,000.",
+          "output": [
+            "customer_id",
+            "total_sales"
+          ],
+          "validation": "GROUP BY customer_id; HAVING SUM(sales) > 5000"
+        }
+      ]
+    },
+    {
+      "id": "sql-d4-t5",
+      "sequence": 5,
+      "title": "Business KPI Summary",
+      "business_skill": "Combine multiple aggregates into a management-ready result.",
+      "teaching": {
+        "teacher": "## KPI summary\\nA useful management query combines the required measures at the requested grain and gives each output a clear name.",
+        "explain": "Start with grain, then measures, then filters, then ordering.",
+        "detailedlearning": "Avoid returning unnecessary columns because every extra dimension can change the aggregation grain.",
+        "expose": "A technically valid query can still be a bad report if the grain is ambiguous.",
+        "example": "SELECT region, COUNT(*) AS orders, SUM(sales) AS sales, SUM(profit) AS profit FROM orders GROUP BY region;",
+        "business_question": "The COO wants regional orders, sales, and profit.",
+        "expected_sql": "SELECT region, COUNT(*) AS orders, SUM(sales) AS sales, SUM(profit) AS profit FROM orders GROUP BY region;"
+      },
+      "questions": [
+        {
+          "id": "sql-d4-t5-q1",
+          "difficulty": "Basic",
+          "role": "COO",
+          "scenario": "Leadership wants a regional KPI table.",
+          "request": "Return region, order count, sales, and profit.",
+          "output": [
+            "region",
+            "orders",
+            "sales",
+            "profit"
+          ],
+          "validation": "Grouped regional KPI summary"
+        },
+        {
+          "id": "sql-d4-t5-q2",
+          "difficulty": "Medium",
+          "role": "Sales Manager",
+          "scenario": "The manager wants category performance in one view.",
+          "request": "Return category, order count, total sales, and average discount.",
+          "output": [
+            "category",
+            "orders",
+            "sales",
+            "avg_discount"
+          ],
+          "validation": "GROUP BY category"
+        },
+        {
+          "id": "sql-d4-t5-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "A review pack needs region-level profitability and volume.",
+          "request": "Return region, distinct customers, order count, sales, profit, and average discount.",
+          "output": [
+            "region",
+            "unique_customers",
+            "orders",
+            "sales",
+            "profit",
+            "avg_discount"
+          ],
+          "validation": "All measures grouped by region"
+        }
+      ]
+    }
+  ]
+}
