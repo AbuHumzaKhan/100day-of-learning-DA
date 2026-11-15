@@ -1,15 +1,119 @@
 {
   "resource_type": "curriculum-index",
-  "published_through_day": 3,
-  "open_days": [1, 2, 3],
-  "locked_days": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100],
+  "published_through_day": 10,
+  "open_days": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "locked_days": [
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    94,
+    95,
+    96,
+    97,
+    98,
+    99,
+    100
+  ],
   "days": [
     {
       "day": 1,
       "file": "day-001.json",
       "track": "SQL",
       "title": "SQL Day 1 — SELECT & Reading Business Data",
-      "dataset_refs": ["orders"],
+      "dataset_refs": [
+        "orders"
+      ],
       "topics": 5,
       "business_questions": 15,
       "status": "open"
@@ -19,7 +123,9 @@
       "file": "day-002.json",
       "track": "SQL",
       "title": "SQL Day 2 — DISTINCT, Sorting & Aggregated Business Views",
-      "dataset_refs": ["orders"],
+      "dataset_refs": [
+        "orders"
+      ],
       "topics": 5,
       "business_questions": 15,
       "status": "open"
@@ -29,11 +135,97 @@
       "file": "day-003.json",
       "track": "SQL",
       "title": "SQL Day 3 — Filtering & Business Rule Logic",
-      "dataset_refs": ["orders"],
+      "dataset_refs": [
+        "orders"
+      ],
+      "topics": 5,
+      "business_questions": 15,
+      "status": "open"
+    },
+    {
+      "day": 4,
+      "file": "day-004.json",
+      "track": "SQL",
+      "title": "SQL Day 4 — Aggregations, GROUP BY & KPI Analysis",
+      "dataset_refs": [
+        "orders"
+      ],
+      "topics": 5,
+      "business_questions": 15,
+      "status": "open"
+    },
+    {
+      "day": 5,
+      "file": "day-005.json",
+      "track": "SQL",
+      "title": "SQL Day 5 — CASE WHEN & Business Classification",
+      "dataset_refs": [
+        "orders"
+      ],
+      "topics": 5,
+      "business_questions": 15,
+      "status": "open"
+    },
+    {
+      "day": 6,
+      "file": "day-006.json",
+      "track": "SQL",
+      "title": "SQL Day 6 — NULLs, Data Quality & Conditional Logic",
+      "dataset_refs": [
+        "orders"
+      ],
+      "topics": 5,
+      "business_questions": 15,
+      "status": "open"
+    },
+    {
+      "day": 7,
+      "file": "day-007.json",
+      "track": "SQL",
+      "title": "SQL Day 7 — Dates, Time Analysis & Period KPIs",
+      "dataset_refs": [
+        "orders"
+      ],
+      "topics": 5,
+      "business_questions": 15,
+      "status": "open"
+    },
+    {
+      "day": 8,
+      "file": "day-008.json",
+      "track": "SQL",
+      "title": "SQL Day 8 — Multi-Table JOINs, Join Validation & Data Integrity",
+      "dataset_refs": [
+        "orders"
+      ],
+      "topics": 5,
+      "business_questions": 15,
+      "status": "open"
+    },
+    {
+      "day": 9,
+      "file": "day-009.json",
+      "track": "SQL",
+      "title": "SQL Day 9 — Subqueries, EXISTS & Layered Business Analysis",
+      "dataset_refs": [
+        "orders"
+      ],
+      "topics": 5,
+      "business_questions": 15,
+      "status": "open"
+    },
+    {
+      "day": 10,
+      "file": "day-010.json",
+      "track": "SQL",
+      "title": "SQL Day 10 — Advanced Subqueries, Correlated Logic & CTE Foundations",
+      "dataset_refs": [
+        "orders"
+      ],
       "topics": 5,
       "business_questions": 15,
       "status": "open"
     }
   ],
-  "release_rule": "A learner may open a published day only when the previous day is completed locally."
+  "release_rule": "Days 1-10 are published and available. Day 11 onward is locked until its curriculum resource is published."
 }
