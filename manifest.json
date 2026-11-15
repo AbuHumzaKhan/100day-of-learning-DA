@@ -82,5 +82,21 @@
     "health_check": true,
     "fallback": "local_curriculum",
     "purpose": "Discover approved external data-analysis learning repositories without making external content authoritative."
+  },
+  "runtime_engines": {
+    "architecture": "modular-engine-matrix",
+    "manager": "engines/engine-manager.js",
+    "engines": {
+      "content": "GitHub JSON runtime loader",
+      "release": "Sequential published-day control",
+      "progress": "Local learner state",
+      "sql": "Browser-local read-only SQLite"
+    },
+    "extension_targets": [
+      "Excel",
+      "PowerBI-DAX",
+      "Python"
+    ],
+    "lazy_loading": true
   }
 }
