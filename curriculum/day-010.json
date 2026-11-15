@@ -1,0 +1,278 @@
+{
+  "day": 10,
+  "track": "SQL",
+  "title": "SQL Day 10 — Advanced Subqueries, Correlated Logic & CTE Foundations",
+  "description": "Move from nested SQL to readable multi-step analysis using derived tables, correlated subqueries, nested aggregation, and CTEs.",
+  "dataset_refs": [
+    "orders"
+  ],
+  "topics": [
+    {
+      "id": "sql-d10-t1",
+      "sequence": 1,
+      "title": "Derived Tables — Subquery as a Dataset",
+      "business_skill": "Create a temporary result set that can be queried like a table.",
+      "teaching": {
+        "teacher": "## Derived table\\nA subquery in FROM produces a temporary result set that the outer query can filter, join, or aggregate.",
+        "explain": "Use derived tables when an intermediate dataset is itself part of the business logic.",
+        "detailedlearning": "Give the derived table an alias and keep its output columns focused.",
+        "expose": "A derived table is useful when you need to aggregate first and analyze second.",
+        "example": "SELECT region,total_sales FROM (SELECT region,SUM(sales) AS total_sales FROM orders GROUP BY region) x;",
+        "business_question": "The director wants to rank regions after first calculating regional sales.",
+        "expected_sql": "SELECT region,total_sales FROM (SELECT region,SUM(sales) AS total_sales FROM orders GROUP BY region) x ORDER BY total_sales DESC;"
+      },
+      "questions": [
+        {
+          "id": "sql-d10-t1-q1",
+          "difficulty": "Basic",
+          "role": "Regional Manager",
+          "scenario": "Management wants a regional sales table sorted highest first.",
+          "request": "First calculate regional sales, then return the result in descending sales order.",
+          "output": [
+            "region",
+            "total_sales"
+          ],
+          "validation": "Derived table"
+        },
+        {
+          "id": "sql-d10-t1-q2",
+          "difficulty": "Medium",
+          "role": "Finance Manager",
+          "scenario": "Finance wants only categories whose aggregated profit is positive.",
+          "request": "Create a category profit dataset and filter it to positive-profit categories.",
+          "output": [
+            "category",
+            "total_profit"
+          ],
+          "validation": "Derived table then WHERE"
+        },
+        {
+          "id": "sql-d10-t1-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "The report needs customer totals and a ranking-ready intermediate dataset.",
+          "request": "Create a customer-level sales dataset containing customer ID and total sales.",
+          "output": [
+            "customer_id",
+            "total_sales"
+          ],
+          "validation": "Derived aggregation"
+        }
+      ]
+    },
+    {
+      "id": "sql-d10-t2",
+      "sequence": 2,
+      "title": "Correlated Subqueries",
+      "business_skill": "Compare each row against a related benchmark calculated for that row's group.",
+      "teaching": {
+        "teacher": "## Correlated subquery\\nThe inner query references a column from the outer query, so it is evaluated in the context of the current outer row.",
+        "explain": "This supports rules such as 'orders above their customer's average order value'.",
+        "detailedlearning": "Identify the outer row and the related population before writing the correlation.",
+        "expose": "Correlation is powerful but can be expensive on large datasets; consider CTE/window alternatives later.",
+        "example": "SELECT o.order_id,o.customer_id,o.sales FROM orders o WHERE o.sales > (SELECT AVG(o2.sales) FROM orders o2 WHERE o2.customer_id=o.customer_id);",
+        "business_question": "The manager wants orders above their customer's average order value.",
+        "expected_sql": "SELECT o.order_id,o.customer_id,o.sales FROM orders o WHERE o.sales > (SELECT AVG(o2.sales) FROM orders o2 WHERE o2.customer_id=o.customer_id);"
+      },
+      "questions": [
+        {
+          "id": "sql-d10-t2-q1",
+          "difficulty": "Basic",
+          "role": "Customer Manager",
+          "scenario": "The team wants orders above each customer's own average order value.",
+          "request": "Return order ID, customer ID, and sales for orders above that customer's average.",
+          "output": [
+            "order_id",
+            "customer_id",
+            "sales"
+          ],
+          "validation": "Correlated AVG by customer_id"
+        },
+        {
+          "id": "sql-d10-t2-q2",
+          "difficulty": "Medium",
+          "role": "Regional Manager",
+          "scenario": "The manager wants orders above the average order value within their region.",
+          "request": "Return order ID, region, and sales above the corresponding regional average.",
+          "output": [
+            "order_id",
+            "region",
+            "sales"
+          ],
+          "validation": "Correlated AVG by region"
+        },
+        {
+          "id": "sql-d10-t2-q3",
+          "difficulty": "Advanced",
+          "role": "Senior Analyst",
+          "scenario": "Product management wants products whose order sales exceed the average sale for that product.",
+          "request": "Return order ID, product ID, and sales above the product-level average.",
+          "output": [
+            "order_id",
+            "product_id",
+            "sales"
+          ],
+          "validation": "Correlated subquery by product_id"
+        }
+      ]
+    },
+    {
+      "id": "sql-d10-t3",
+      "sequence": 3,
+      "title": "Correlated EXISTS",
+      "business_skill": "Test related business conditions for each outer record.",
+      "teaching": {
+        "teacher": "## Correlated EXISTS\\nEXISTS can reference outer columns to test whether a related record satisfying a condition exists.",
+        "explain": "This is useful for questions such as customers who have at least one profitable order.",
+        "detailedlearning": "The inner query should contain the relationship plus the specific business condition.",
+        "expose": "EXISTS stops conceptually at the first match, making it ideal for existence tests.",
+        "example": "SELECT c.customer_id,c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id=c.customer_id AND o.profit>0);",
+        "business_question": "Customer leadership wants customers with at least one profitable order.",
+        "expected_sql": "SELECT c.customer_id,c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id=c.customer_id AND o.profit>0);"
+      },
+      "questions": [
+        {
+          "id": "sql-d10-t3-q1",
+          "difficulty": "Basic",
+          "role": "Customer Director",
+          "scenario": "The director wants customers with at least one profitable transaction.",
+          "request": "Return customers for whom a profitable order exists.",
+          "output": [
+            "customer_id",
+            "customer_name"
+          ],
+          "validation": "EXISTS profit > 0"
+        },
+        {
+          "id": "sql-d10-t3-q2",
+          "difficulty": "Medium",
+          "role": "Sales Director",
+          "scenario": "Leadership wants customers with at least one Technology order.",
+          "request": "Return customers with a Technology purchase.",
+          "output": [
+            "customer_id",
+            "customer_name"
+          ],
+          "validation": "EXISTS category='Technology'"
+        },
+        {
+          "id": "sql-d10-t3-q3",
+          "difficulty": "Intermediate",
+          "role": "Retention Manager",
+          "scenario": "The team wants customers with no recent? Use no date assumption. Instead customers with no loss-making order.",
+          "request": "Return customers for whom no loss-making order exists.",
+          "output": [
+            "customer_id",
+            "customer_name"
+          ],
+          "validation": "NOT EXISTS profit < 0"
+        }
+      ]
+    },
+    {
+      "id": "sql-d10-t4",
+      "sequence": 4,
+      "title": "Nested Aggregation",
+      "business_skill": "Aggregate an aggregated dataset to answer second-level KPI questions.",
+      "teaching": {
+        "teacher": "## Nested aggregation\\nFirst calculate a metric at one grain, then aggregate that result at a higher level.",
+        "explain": "Examples include average customer sales, maximum regional sales, or average category profit.",
+        "detailedlearning": "The inner query establishes the correct lower-level grain.",
+        "expose": "Do not calculate an average of raw rows when the business asks for an average of customer totals.",
+        "example": "SELECT AVG(customer_sales) FROM (SELECT customer_id,SUM(sales) AS customer_sales FROM orders GROUP BY customer_id) x;",
+        "business_question": "The director wants the average total sales per customer.",
+        "expected_sql": "SELECT AVG(customer_sales) AS avg_customer_sales FROM (SELECT customer_id,SUM(sales) AS customer_sales FROM orders GROUP BY customer_id) x;"
+      },
+      "questions": [
+        {
+          "id": "sql-d10-t4-q1",
+          "difficulty": "Basic",
+          "role": "Customer Director",
+          "scenario": "Management wants average total sales per customer.",
+          "request": "Return the average of customer-level sales totals.",
+          "output": [
+            "avg_customer_sales"
+          ],
+          "validation": "Aggregate customers first, then AVG"
+        },
+        {
+          "id": "sql-d10-t4-q2",
+          "difficulty": "Medium",
+          "role": "Regional Director",
+          "scenario": "Leadership wants the average regional sales total.",
+          "request": "Return the average of region-level sales totals.",
+          "output": [
+            "avg_region_sales"
+          ],
+          "validation": "Aggregate regions first, then AVG"
+        },
+        {
+          "id": "sql-d10-t4-q3",
+          "difficulty": "Advanced",
+          "role": "Senior Analyst",
+          "scenario": "The executive report needs the maximum customer sales total.",
+          "request": "Return the highest total sales generated by any customer.",
+          "output": [
+            "max_customer_sales"
+          ],
+          "validation": "Customer aggregation then MAX"
+        }
+      ]
+    },
+    {
+      "id": "sql-d10-t5",
+      "sequence": 5,
+      "title": "CTE Foundations",
+      "business_skill": "Replace complex nested queries with named, readable analysis layers.",
+      "teaching": {
+        "teacher": "## CTE\\nWITH creates a named temporary result set that can be referenced by the following query.",
+        "explain": "CTEs improve readability by giving each business calculation a name.",
+        "detailedlearning": "Use one CTE per logical transformation and then write the final SELECT against those layers.",
+        "expose": "A CTE is a readability and modularity tool; it does not automatically materialize data.",
+        "example": "WITH regional_sales AS (SELECT region,SUM(sales) AS total_sales FROM orders GROUP BY region) SELECT * FROM regional_sales ORDER BY total_sales DESC;",
+        "business_question": "The director wants a clean query that first calculates regional sales and then sorts them.",
+        "expected_sql": "WITH regional_sales AS (SELECT region,SUM(sales) AS total_sales FROM orders GROUP BY region) SELECT region,total_sales FROM regional_sales ORDER BY total_sales DESC;"
+      },
+      "questions": [
+        {
+          "id": "sql-d10-t5-q1",
+          "difficulty": "Basic",
+          "role": "Regional Director",
+          "scenario": "The report needs a named regional sales layer.",
+          "request": "Create a CTE for regional sales and return the results.",
+          "output": [
+            "region",
+            "total_sales"
+          ],
+          "validation": "WITH regional_sales"
+        },
+        {
+          "id": "sql-d10-t5-q2",
+          "difficulty": "Medium",
+          "role": "Finance Director",
+          "scenario": "Finance wants categories above the average category profit using readable SQL.",
+          "request": "Build a category-profit CTE, calculate its average, and return categories above that benchmark.",
+          "output": [
+            "category",
+            "total_profit"
+          ],
+          "validation": "CTE plus scalar benchmark"
+        },
+        {
+          "id": "sql-d10-t5-q3",
+          "difficulty": "Advanced",
+          "role": "Senior Analyst",
+          "scenario": "The executive KPI needs customer totals joined to customer attributes.",
+          "request": "Create a customer-sales CTE and join it to customers to return customer name, segment, and total sales.",
+          "output": [
+            "customer_id",
+            "customer_name",
+            "segment",
+            "total_sales"
+          ],
+          "validation": "CTE + JOIN"
+        }
+      ]
+    }
+  ]
+}
