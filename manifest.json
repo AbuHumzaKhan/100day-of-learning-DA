@@ -1,20 +1,27 @@
 {
   "name": "100day-of-learning-DA",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Content database for the 100-Day Data Analyst Business Trainer. GitHub is the authoritative source for published learning, coding-arena, and dataset resources.",
   "owner": "AbuHumzaKhan",
   "release_control": {
     "mode": "sequential",
-    "published_through_day": 3,
+    "published_through_day": 10,
     "open_days": [
       1,
       2,
-      3
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
     ],
-    "next_day": 4,
+    "next_day": 11,
     "unlock_rule": "A day becomes available only when its curriculum resource is published and the previous day is completed locally.",
     "learner_progress_storage": "local",
-    "note": "Days 4-100 are intentionally locked until their content resources are published."
+    "note": "Days 1-10 are published. Day 11 onward remains locked until its curriculum resource is published."
   },
   "learning_sequence": {
     "days_1_25": "SQL",
