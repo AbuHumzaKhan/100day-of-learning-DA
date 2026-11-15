@@ -1,0 +1,282 @@
+{
+  "day": 9,
+  "track": "SQL",
+  "title": "SQL Day 9 — Subqueries, EXISTS & Layered Business Analysis",
+  "description": "Use nested queries to answer questions that depend on another result set or business population.",
+  "dataset_refs": [
+    "orders"
+  ],
+  "topics": [
+    {
+      "id": "sql-d9-t1",
+      "sequence": 1,
+      "title": "Subquery Fundamentals",
+      "business_skill": "Use a query result as an input to another query.",
+      "teaching": {
+        "teacher": "## Subqueries\\nA subquery is a query nested inside another statement and can provide a value or set of rows to the outer query.",
+        "explain": "Use subqueries when the business rule depends on a separately calculated population.",
+        "detailedlearning": "Keep inner queries focused and make the outer query express the final business request.",
+        "expose": "Nested SQL should have a clear reason; do not add subqueries when a simpler query is sufficient.",
+        "example": "SELECT order_id, sales FROM orders WHERE sales > (SELECT AVG(sales) FROM orders);",
+        "business_question": "The manager wants orders above the overall average sales value.",
+        "expected_sql": "SELECT order_id, sales FROM orders WHERE sales > (SELECT AVG(sales) FROM orders);"
+      },
+      "questions": [
+        {
+          "id": "sql-d9-t1-q1",
+          "difficulty": "Basic",
+          "role": "Sales Manager",
+          "scenario": "Management wants orders above the overall average order value.",
+          "request": "Return order ID and sales for orders above average sales.",
+          "output": [
+            "order_id",
+            "sales"
+          ],
+          "validation": "Scalar subquery AVG(sales)"
+        },
+        {
+          "id": "sql-d9-t1-q2",
+          "difficulty": "Medium",
+          "role": "Finance Manager",
+          "scenario": "Finance wants orders above average profit.",
+          "request": "Return order ID, sales, and profit for orders whose profit exceeds the overall average profit.",
+          "output": [
+            "order_id",
+            "sales",
+            "profit"
+          ],
+          "validation": "Subquery AVG(profit)"
+        },
+        {
+          "id": "sql-d9-t1-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "The team wants orders above the average sales of their market.",
+          "request": "Use a subquery-based approach to compare an order with a market-level average.",
+          "output": [
+            "order_id",
+            "market",
+            "sales"
+          ],
+          "validation": "Correlated or layered subquery by market"
+        }
+      ]
+    },
+    {
+      "id": "sql-d9-t2",
+      "sequence": 2,
+      "title": "Scalar Subqueries",
+      "business_skill": "Use one calculated value as a business threshold.",
+      "teaching": {
+        "teacher": "## Scalar subquery\\nA scalar subquery returns one value, such as an overall average, maximum, or total.",
+        "explain": "The outer query can compare each row to that single calculated benchmark.",
+        "detailedlearning": "Ensure the subquery returns exactly one value when scalar context requires it.",
+        "expose": "If the inner query returns multiple rows, scalar comparison will fail.",
+        "example": "WHERE sales > (SELECT AVG(sales) FROM orders)",
+        "business_question": "The director defines high-value orders relative to the overall average.",
+        "expected_sql": "SELECT order_id, sales FROM orders WHERE sales > (SELECT AVG(sales) FROM orders);"
+      },
+      "questions": [
+        {
+          "id": "sql-d9-t2-q1",
+          "difficulty": "Basic",
+          "role": "Commercial Director",
+          "scenario": "High-value means above average sales.",
+          "request": "Return high-value orders.",
+          "output": [
+            "order_id",
+            "sales"
+          ],
+          "validation": "Scalar AVG subquery"
+        },
+        {
+          "id": "sql-d9-t2-q2",
+          "difficulty": "Medium",
+          "role": "Finance Director",
+          "scenario": "The director wants orders above maximum discount's benchmark? Actually use average discount as benchmark.",
+          "request": "Return orders with discount above the overall average discount.",
+          "output": [
+            "order_id",
+            "discount"
+          ],
+          "validation": "Scalar AVG(discount) subquery"
+        },
+        {
+          "id": "sql-d9-t2-q3",
+          "difficulty": "Intermediate",
+          "role": "Sales Director",
+          "scenario": "Leadership wants regions whose sales exceed the average regional sales.",
+          "request": "Calculate regional totals and keep regions above the average of those regional totals.",
+          "output": [
+            "region",
+            "total_sales"
+          ],
+          "validation": "Nested aggregation"
+        }
+      ]
+    },
+    {
+      "id": "sql-d9-t3",
+      "sequence": 3,
+      "title": "IN & NOT IN",
+      "business_skill": "Filter rows based on membership in another result set.",
+      "teaching": {
+        "teacher": "## IN\\nIN compares a value against a set returned by a subquery. NOT IN excludes members, but NULLs require care.",
+        "explain": "Use IN when the business population is defined by another query.",
+        "detailedlearning": "Prefer NOT EXISTS when NULL behavior could make NOT IN misleading.",
+        "expose": "Membership logic is about set comparison, not text matching.",
+        "example": "SELECT * FROM orders WHERE customer_id IN (SELECT customer_id FROM customers WHERE segment='Corporate');",
+        "business_question": "The sales manager wants orders belonging to Corporate customers.",
+        "expected_sql": "SELECT o.order_id, o.customer_id, o.sales FROM orders o WHERE o.customer_id IN (SELECT customer_id FROM customers WHERE segment='Corporate');"
+      },
+      "questions": [
+        {
+          "id": "sql-d9-t3-q1",
+          "difficulty": "Basic",
+          "role": "Sales Manager",
+          "scenario": "Management wants orders from Corporate customers.",
+          "request": "Return order ID, customer ID, and sales for customers in the Corporate segment.",
+          "output": [
+            "order_id",
+            "customer_id",
+            "sales"
+          ],
+          "validation": "IN subquery"
+        },
+        {
+          "id": "sql-d9-t3-q2",
+          "difficulty": "Medium",
+          "role": "Customer Manager",
+          "scenario": "The team wants orders from customers in selected segments.",
+          "request": "Return orders for customers in Corporate or Consumer segments.",
+          "output": [
+            "order_id",
+            "customer_id",
+            "sales"
+          ],
+          "validation": "IN over subquery"
+        },
+        {
+          "id": "sql-d9-t3-q3",
+          "difficulty": "Intermediate",
+          "role": "Finance Analyst",
+          "scenario": "Finance wants transactions belonging to customers above a defined sales population.",
+          "request": "Return orders for customer IDs whose customer-level sales exceed 5000.",
+          "output": [
+            "order_id",
+            "customer_id",
+            "sales"
+          ],
+          "validation": "Subquery with GROUP BY/HAVING"
+        }
+      ]
+    },
+    {
+      "id": "sql-d9-t4",
+      "sequence": 4,
+      "title": "EXISTS & NOT EXISTS",
+      "business_skill": "Test whether related records exist without needing to return them.",
+      "teaching": {
+        "teacher": "## EXISTS\\nEXISTS returns true when the correlated subquery finds at least one related row.",
+        "explain": "It is useful for relationship-based business rules such as customers who have orders.",
+        "detailedlearning": "Correlate the inner query to the outer row using a key.",
+        "expose": "EXISTS asks 'does at least one related record exist?', not 'how many?'.",
+        "example": "SELECT c.customer_id FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id=c.customer_id);",
+        "business_question": "Customer management wants customers who have placed at least one order.",
+        "expected_sql": "SELECT c.customer_id, c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id=c.customer_id);"
+      },
+      "questions": [
+        {
+          "id": "sql-d9-t4-q1",
+          "difficulty": "Basic",
+          "role": "Customer Manager",
+          "scenario": "The team wants customers with at least one order.",
+          "request": "Return customer ID and customer name for customers who have orders.",
+          "output": [
+            "customer_id",
+            "customer_name"
+          ],
+          "validation": "EXISTS correlated on customer_id"
+        },
+        {
+          "id": "sql-d9-t4-q2",
+          "difficulty": "Medium",
+          "role": "Sales Manager",
+          "scenario": "The manager wants customers who have purchased Technology products.",
+          "request": "Return customers for whom at least one Technology order exists.",
+          "output": [
+            "customer_id",
+            "customer_name"
+          ],
+          "validation": "EXISTS with category condition"
+        },
+        {
+          "id": "sql-d9-t4-q3",
+          "difficulty": "Intermediate",
+          "role": "Data Quality Manager",
+          "scenario": "The customer master contains records that have never generated an order.",
+          "request": "Return customers with no orders.",
+          "output": [
+            "customer_id",
+            "customer_name"
+          ],
+          "validation": "NOT EXISTS correlated subquery"
+        }
+      ]
+    },
+    {
+      "id": "sql-d9-t5",
+      "sequence": 5,
+      "title": "Layered Subquery Analysis",
+      "business_skill": "Combine subqueries, joins, and aggregation for multi-step business questions.",
+      "teaching": {
+        "teacher": "## Layered analysis\\nBreak a complex request into population, metric, and final comparison layers.",
+        "explain": "One layer can define a benchmark while another returns the business result.",
+        "detailedlearning": "Use subqueries when the intermediate result is conceptually a separate business calculation.",
+        "expose": "Complexity becomes manageable when each layer has one responsibility.",
+        "example": "SELECT region,total_sales FROM (SELECT region,SUM(sales) total_sales FROM orders GROUP BY region) x WHERE total_sales > (SELECT AVG(total_sales) FROM (SELECT region,SUM(sales) total_sales FROM orders GROUP BY region) y);",
+        "business_question": "The director wants regions whose sales are above the average regional sales.",
+        "expected_sql": "Use a derived regional-sales table, calculate its average, and filter regions above that benchmark."
+      },
+      "questions": [
+        {
+          "id": "sql-d9-t5-q1",
+          "difficulty": "Basic",
+          "role": "Regional Director",
+          "scenario": "The director wants above-average regions.",
+          "request": "Return regions whose total sales exceed the average regional total.",
+          "output": [
+            "region",
+            "total_sales"
+          ],
+          "validation": "Aggregate then benchmark"
+        },
+        {
+          "id": "sql-d9-t5-q2",
+          "difficulty": "Medium",
+          "role": "Finance Director",
+          "scenario": "Finance wants categories above average category profit.",
+          "request": "Return categories whose total profit exceeds the average category profit.",
+          "output": [
+            "category",
+            "total_profit"
+          ],
+          "validation": "Nested category aggregation"
+        },
+        {
+          "id": "sql-d9-t5-q3",
+          "difficulty": "Advanced",
+          "role": "Senior Analyst",
+          "scenario": "The executive review compares customer performance to the average customer.",
+          "request": "Return customers whose total sales exceed the average customer total sales, including customer name.",
+          "output": [
+            "customer_id",
+            "customer_name",
+            "total_sales"
+          ],
+          "validation": "Customer aggregate benchmark plus customer join"
+        }
+      ]
+    }
+  ]
+}
