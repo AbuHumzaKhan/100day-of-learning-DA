@@ -1,0 +1,296 @@
+{
+  "day": 7,
+  "track": "SQL",
+  "title": "SQL Day 7 — Dates, Time Analysis & Period KPIs",
+  "description": "Convert date fields into useful reporting periods and analyze order timing with SQL date functions.",
+  "dataset_refs": [
+    "orders"
+  ],
+  "topics": [
+    {
+      "id": "sql-d7-t1",
+      "sequence": 1,
+      "title": "Date Components",
+      "business_skill": "Extract year, month, and day information for reporting.",
+      "teaching": {
+        "teacher": "## Date parts\\nDate functions vary by SQL engine, but the business goal is the same: derive calendar components from a date.",
+        "explain": "Year and month are common reporting dimensions; use engine-specific functions such as YEAR() and MONTH() where supported.",
+        "detailedlearning": "Keep the original date available when row-level detail is needed and derive reporting fields separately.",
+        "expose": "Date transformations should preserve the underlying date meaning.",
+        "example": "SELECT order_id, YEAR(order_date) AS order_year, MONTH(order_date) AS order_month FROM orders;",
+        "business_question": "The BI manager wants order year and month for each transaction.",
+        "expected_sql": "SELECT order_id, order_date, YEAR(order_date) AS order_year, MONTH(order_date) AS order_month FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d7-t1-q1",
+          "difficulty": "Basic",
+          "role": "BI Manager",
+          "scenario": "The report needs calendar year for every order.",
+          "request": "Return order ID, order date, and order year.",
+          "output": [
+            "order_id",
+            "order_date",
+            "order_year"
+          ],
+          "validation": "YEAR(order_date)"
+        },
+        {
+          "id": "sql-d7-t1-q2",
+          "difficulty": "Medium",
+          "role": "Sales Manager",
+          "scenario": "The manager wants month numbers for trend analysis.",
+          "request": "Return order ID, order date, and order month.",
+          "output": [
+            "order_id",
+            "order_date",
+            "order_month"
+          ],
+          "validation": "MONTH(order_date)"
+        },
+        {
+          "id": "sql-d7-t1-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "The trend table needs year and month together.",
+          "request": "Return order year, order month, and order count by period.",
+          "output": [
+            "order_year",
+            "order_month",
+            "orders"
+          ],
+          "validation": "GROUP BY year/month"
+        }
+      ]
+    },
+    {
+      "id": "sql-d7-t2",
+      "sequence": 2,
+      "title": "Month-Level Aggregation",
+      "business_skill": "Build monthly sales and profit trends.",
+      "teaching": {
+        "teacher": "## Monthly KPI\\nGroup transactions by the derived month period and aggregate measures.",
+        "explain": "The grouping key must identify a complete reporting period, normally year plus month.",
+        "detailedlearning": "Grouping only by month number can mix January across multiple years.",
+        "expose": "A monthly trend should not accidentally combine different years.",
+        "example": "SELECT YEAR(order_date) AS order_year, MONTH(order_date) AS order_month, SUM(sales) AS sales FROM orders GROUP BY YEAR(order_date), MONTH(order_date);",
+        "business_question": "The sales director wants monthly sales and profit.",
+        "expected_sql": "SELECT YEAR(order_date) AS order_year, MONTH(order_date) AS order_month, SUM(sales) AS sales, SUM(profit) AS profit FROM orders GROUP BY YEAR(order_date), MONTH(order_date);"
+      },
+      "questions": [
+        {
+          "id": "sql-d7-t2-q1",
+          "difficulty": "Basic",
+          "role": "Sales Director",
+          "scenario": "Leadership wants monthly sales.",
+          "request": "Return year, month, and total sales.",
+          "output": [
+            "order_year",
+            "order_month",
+            "sales"
+          ],
+          "validation": "Group by YEAR and MONTH"
+        },
+        {
+          "id": "sql-d7-t2-q2",
+          "difficulty": "Medium",
+          "role": "Finance Manager",
+          "scenario": "Finance wants monthly profitability.",
+          "request": "Return year, month, total sales, and total profit.",
+          "output": [
+            "order_year",
+            "order_month",
+            "sales",
+            "profit"
+          ],
+          "validation": "Monthly KPI aggregation"
+        },
+        {
+          "id": "sql-d7-t2-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "The executive trend requires monthly order volume and distinct customers.",
+          "request": "Return year, month, orders, and unique customers.",
+          "output": [
+            "order_year",
+            "order_month",
+            "orders",
+            "unique_customers"
+          ],
+          "validation": "COUNT and COUNT DISTINCT by period"
+        }
+      ]
+    },
+    {
+      "id": "sql-d7-t3",
+      "sequence": 3,
+      "title": "Date Ranges & Relative Periods",
+      "business_skill": "Filter transactions to business reporting windows.",
+      "teaching": {
+        "teacher": "## Date filters\\nUse explicit date boundaries for reliable period filtering; prefer half-open ranges when timestamps are involved.",
+        "explain": "A period request such as 'January' should become a precise start and end condition.",
+        "detailedlearning": "Avoid ambiguous text date comparisons and remember that timestamps can contain time components.",
+        "expose": "Date filtering errors often come from unclear boundaries.",
+        "example": "WHERE order_date >= '2025-01-01' AND order_date < '2025-02-01'",
+        "business_question": "Finance wants transactions from January 2025.",
+        "expected_sql": "SELECT order_id, order_date, sales FROM orders WHERE order_date >= '2025-01-01' AND order_date < '2025-02-01';"
+      },
+      "questions": [
+        {
+          "id": "sql-d7-t3-q1",
+          "difficulty": "Basic",
+          "role": "Finance Analyst",
+          "scenario": "Finance wants one calendar month.",
+          "request": "Return orders from January 2025 using explicit date boundaries.",
+          "output": [
+            "order_id",
+            "order_date",
+            "sales"
+          ],
+          "validation": ">= start and < next period"
+        },
+        {
+          "id": "sql-d7-t3-q2",
+          "difficulty": "Medium",
+          "role": "Sales Manager",
+          "scenario": "The manager wants Q1 transactions.",
+          "request": "Return orders from January through March 2025.",
+          "output": [
+            "order_id",
+            "order_date",
+            "sales"
+          ],
+          "validation": "Q1 date range"
+        },
+        {
+          "id": "sql-d7-t3-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "The monthly close needs a precise period filter.",
+          "request": "Return total sales for February 2025 without including March.",
+          "output": [
+            "total_sales"
+          ],
+          "validation": "Feb start and Mar start boundary"
+        }
+      ]
+    },
+    {
+      "id": "sql-d7-t4",
+      "sequence": 4,
+      "title": "Order Date vs Ship Date",
+      "business_skill": "Analyze operational timing between business dates.",
+      "teaching": {
+        "teacher": "## Multiple date fields\\nA transaction can have several dates, each answering a different business question.",
+        "explain": "Order date measures when demand was created; ship date measures fulfillment timing.",
+        "detailedlearning": "Choose the correct date field before filtering or grouping.",
+        "expose": "Using the wrong date can make a correct SQL query answer the wrong business question.",
+        "example": "SELECT order_id, order_date, ship_date FROM orders;",
+        "business_question": "Operations wants to inspect the relationship between order and ship dates.",
+        "expected_sql": "SELECT order_id, order_date, ship_date FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d7-t4-q1",
+          "difficulty": "Basic",
+          "role": "Operations Manager",
+          "scenario": "Operations wants both demand and fulfillment dates.",
+          "request": "Return order ID, order date, and ship date.",
+          "output": [
+            "order_id",
+            "order_date",
+            "ship_date"
+          ],
+          "validation": "Select both date fields"
+        },
+        {
+          "id": "sql-d7-t4-q2",
+          "difficulty": "Medium",
+          "role": "Fulfillment Manager",
+          "scenario": "The team wants orders placed in a specified period regardless of ship date.",
+          "request": "Filter using order_date only and return ship_date for comparison.",
+          "output": [
+            "order_id",
+            "order_date",
+            "ship_date"
+          ],
+          "validation": "Filter on order_date"
+        },
+        {
+          "id": "sql-d7-t4-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "The operations report must compare monthly order volume based on order date.",
+          "request": "Return year/month and order count using order_date, not ship_date.",
+          "output": [
+            "order_year",
+            "order_month",
+            "orders"
+          ],
+          "validation": "Use order_date as reporting date"
+        }
+      ]
+    },
+    {
+      "id": "sql-d7-t5",
+      "sequence": 5,
+      "title": "Date-Driven KPI Reporting",
+      "business_skill": "Combine time dimensions with business metrics.",
+      "teaching": {
+        "teacher": "## Time-based KPI\\nA useful time report combines a stable period grain with the measures stakeholders actually monitor.",
+        "explain": "Define the period, aggregate the KPIs, and order chronologically.",
+        "detailedlearning": "Use year plus month or another unambiguous period key; never rely on alphabetical month names for chronology.",
+        "expose": "Correct chronology is part of report correctness.",
+        "example": "SELECT YEAR(order_date) AS yr, MONTH(order_date) AS mo, SUM(sales) AS sales, SUM(profit) AS profit FROM orders GROUP BY YEAR(order_date), MONTH(order_date) ORDER BY yr, mo;",
+        "business_question": "The CEO wants a chronological monthly sales and profit trend.",
+        "expected_sql": "SELECT YEAR(order_date) AS yr, MONTH(order_date) AS mo, COUNT(*) AS orders, SUM(sales) AS sales, SUM(profit) AS profit FROM orders GROUP BY YEAR(order_date), MONTH(order_date) ORDER BY yr, mo;"
+      },
+      "questions": [
+        {
+          "id": "sql-d7-t5-q1",
+          "difficulty": "Basic",
+          "role": "CEO",
+          "scenario": "Leadership wants a monthly sales trend.",
+          "request": "Return year, month, and sales ordered chronologically.",
+          "output": [
+            "yr",
+            "mo",
+            "sales"
+          ],
+          "validation": "ORDER BY year, month"
+        },
+        {
+          "id": "sql-d7-t5-q2",
+          "difficulty": "Medium",
+          "role": "Finance Director",
+          "scenario": "Finance wants monthly sales, profit, and margin proxy.",
+          "request": "Return year, month, sales, profit, and profit/sales.",
+          "output": [
+            "yr",
+            "mo",
+            "sales",
+            "profit",
+            "profit_margin"
+          ],
+          "validation": "Monthly calculated KPI"
+        },
+        {
+          "id": "sql-d7-t5-q3",
+          "difficulty": "Advanced",
+          "role": "Senior Analyst",
+          "scenario": "The executive dashboard needs monthly volume, customers, sales, and profit.",
+          "request": "Return year, month, orders, unique customers, sales, and profit in chronological order.",
+          "output": [
+            "yr",
+            "mo",
+            "orders",
+            "unique_customers",
+            "sales",
+            "profit"
+          ],
+          "validation": "Complete monthly KPI"
+        }
+      ]
+    }
+  ]
+}
