@@ -8,18 +8,18 @@ The learner application reads these resources at runtime. Learner completion sta
 
 | Resource | Status |
 |---|---|
-| Published learning days | **Day 1–Day 3** |
+| Published learning days | **Day 1–Day 10** |
 | Track | **SQL** |
 | Topics per day | **5** |
 | Business questions per topic | **3** |
-| Learning questions | **45** |
+| Learning questions | **150** |
 | Coding Arena questions | **30** |
 | Primary dataset | **orders** |
 | Primary dataset rows | **150** |
 | Supporting datasets | **customers (20), product-catalog (10)** |
-| Days 4–100 | **Locked / not published** |
+| Days 11–100 | **Locked / not published** |
 
-**Only Days 1–3 are open right now.**
+**Days 1–10 are open right now. Day 11+ remains locked until its resources are published.**
 
 Progression is sequential: a learner can move from Day 1 → Day 2 → Day 3 only after completing the previous day. Future days remain locked until their GitHub resources are published.
 
@@ -225,8 +225,8 @@ GitHub controls **content**. The learner's browser controls **progress**.
 Current release:
 
 ```text
-OPEN       Day 1 → Day 2 → Day 3
-LOCKED     Day 4 → Day 100
+OPEN       Day 1 → Day 2 → … → Day 10
+LOCKED     Day 11 → Day 100
 ```
 
 A future day should be considered open only when its curriculum resource and required learning resources are actually published.
@@ -241,3 +241,17 @@ A future day should be considered open only when its curriculum resource and req
 - **GitHub-first:** versioned repository resources are authoritative.
 - **Offline-friendly:** learner state does not depend on a hosted database.
 - **Scalable:** the same content contract should support all 100 days.
+
+
+## Academy Engine Matrix
+
+The frontend now includes a modular runtime engine layer:
+
+- **Content Engine:** discovers curriculum resources from GitHub indexes.
+- **Release Engine:** respects the published-day boundary and release metadata.
+- **Progress Engine:** tracks learner completion locally without writing learner state to GitHub.
+- **SQL Engine:** runs read-only SQL locally in the browser against the 150-row orders dataset.
+- **Code Console:** provides executable SQL practice, result tables, timing, and schema inspection.
+- **Engine Manager:** provides a plug-in contract for future Excel, Power BI/DAX, and Python engines.
+
+Heavy execution engines are designed for lazy loading so a future track does not force every learner to download every runtime.
