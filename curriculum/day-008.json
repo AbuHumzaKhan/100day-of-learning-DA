@@ -1,0 +1,291 @@
+{
+  "day": 8,
+  "track": "SQL",
+  "title": "SQL Day 8 — Multi-Table JOINs, Join Validation & Data Integrity",
+  "description": "Combine related business tables safely and detect row multiplication, unmatched records, and grain problems.",
+  "dataset_refs": [
+    "orders"
+  ],
+  "topics": [
+    {
+      "id": "sql-d8-t1",
+      "sequence": 1,
+      "title": "INNER JOIN",
+      "business_skill": "Combine records that have matching keys in both tables.",
+      "teaching": {
+        "teacher": "## INNER JOIN\\nINNER JOIN returns only rows with matching join keys on both sides.",
+        "explain": "The ON clause defines how records relate; the selected columns define the business output.",
+        "detailedlearning": "Before joining, identify the primary/foreign-key relationship and expected grain.",
+        "expose": "A join is a data relationship, not merely a way to add columns.",
+        "example": "SELECT o.order_id, c.customer_name FROM orders o INNER JOIN customers c ON o.customer_id = c.customer_id;",
+        "business_question": "The manager wants order details with customer names.",
+        "expected_sql": "SELECT o.order_id, c.customer_name, o.sales FROM orders o INNER JOIN customers c ON o.customer_id = c.customer_id;"
+      },
+      "questions": [
+        {
+          "id": "sql-d8-t1-q1",
+          "difficulty": "Basic",
+          "role": "Sales Manager",
+          "scenario": "Sales needs customer names alongside order transactions.",
+          "request": "Return order ID, customer name, and sales using the customer relationship.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "sales"
+          ],
+          "validation": "INNER JOIN orders to customers on customer_id"
+        },
+        {
+          "id": "sql-d8-t1-q2",
+          "difficulty": "Medium",
+          "role": "Customer Manager",
+          "scenario": "The team wants customer segment on every order.",
+          "request": "Return order ID, customer name, segment, and sales.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "segment",
+            "sales"
+          ],
+          "validation": "Join customer attributes"
+        },
+        {
+          "id": "sql-d8-t1-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "A customer-level sales review requires transaction and customer data.",
+          "request": "Return customer ID, customer name, segment, total sales, and order count.",
+          "output": [
+            "customer_id",
+            "customer_name",
+            "segment",
+            "total_sales",
+            "orders"
+          ],
+          "validation": "JOIN then GROUP BY customer"
+        }
+      ]
+    },
+    {
+      "id": "sql-d8-t2",
+      "sequence": 2,
+      "title": "Table Aliases & Qualified Columns",
+      "business_skill": "Write readable joins without ambiguous column references.",
+      "teaching": {
+        "teacher": "## Aliases\\nShort aliases such as o and c make multi-table SQL readable and prevent ambiguity.",
+        "explain": "Qualify shared column names with their table alias.",
+        "detailedlearning": "Use aliases consistently, especially when multiple tables contain order_id, customer_id, or region.",
+        "expose": "Readable SQL is easier to audit and less likely to reference the wrong column.",
+        "example": "SELECT o.order_id, c.customer_name FROM orders AS o JOIN customers AS c ON o.customer_id = c.customer_id;",
+        "business_question": "The senior analyst wants a clean customer-order query.",
+        "expected_sql": "SELECT o.order_id, o.sales, c.customer_name, c.segment FROM orders AS o JOIN customers AS c ON o.customer_id = c.customer_id;"
+      },
+      "questions": [
+        {
+          "id": "sql-d8-t2-q1",
+          "difficulty": "Basic",
+          "role": "Senior Analyst",
+          "scenario": "A join contains repeated column names.",
+          "request": "Use aliases and fully qualify order and customer columns.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "sales"
+          ],
+          "validation": "Qualified columns"
+        },
+        {
+          "id": "sql-d8-t2-q2",
+          "difficulty": "Medium",
+          "role": "BI Developer",
+          "scenario": "The query will be maintained by multiple analysts.",
+          "request": "Write the customer-order join using clear aliases and qualified columns.",
+          "output": [
+            "order_id",
+            "customer_name",
+            "segment",
+            "sales"
+          ],
+          "validation": "Readable alias pattern"
+        },
+        {
+          "id": "sql-d8-t2-q3",
+          "difficulty": "Intermediate",
+          "role": "Data Lead",
+          "scenario": "The team is standardizing SQL style.",
+          "request": "Return customer-level sales using aliases for every table reference.",
+          "output": [
+            "customer_id",
+            "customer_name",
+            "sales"
+          ],
+          "validation": "Consistent aliases and qualification"
+        }
+      ]
+    },
+    {
+      "id": "sql-d8-t3",
+      "sequence": 3,
+      "title": "LEFT JOIN & Unmatched Records",
+      "business_skill": "Preserve the primary table while identifying missing relationships.",
+      "teaching": {
+        "teacher": "## LEFT JOIN\\nLEFT JOIN keeps every row from the left table and adds matching data when available.",
+        "explain": "It is ideal for completeness checks because unmatched right-side records produce NULLs.",
+        "detailedlearning": "Use the left table as the population you must preserve.",
+        "expose": "Moving a filter on the right table into WHERE can accidentally turn a LEFT JOIN into an INNER JOIN.",
+        "example": "SELECT o.order_id, c.customer_name FROM orders o LEFT JOIN customers c ON o.customer_id=c.customer_id;",
+        "business_question": "Data quality wants every order, including orders with no customer match.",
+        "expected_sql": "SELECT o.order_id, o.customer_id, c.customer_name FROM orders o LEFT JOIN customers c ON o.customer_id=c.customer_id;"
+      },
+      "questions": [
+        {
+          "id": "sql-d8-t3-q1",
+          "difficulty": "Basic",
+          "role": "Data Quality Manager",
+          "scenario": "Every order must remain visible even when customer data is missing.",
+          "request": "Return all orders with customer name when available.",
+          "output": [
+            "order_id",
+            "customer_id",
+            "customer_name"
+          ],
+          "validation": "LEFT JOIN"
+        },
+        {
+          "id": "sql-d8-t3-q2",
+          "difficulty": "Medium",
+          "role": "Customer Operations Manager",
+          "scenario": "The team wants unmatched order customer IDs.",
+          "request": "Return order IDs whose customer record does not exist.",
+          "output": [
+            "order_id",
+            "customer_id"
+          ],
+          "validation": "LEFT JOIN plus c.customer_id IS NULL"
+        },
+        {
+          "id": "sql-d8-t3-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "Management needs order coverage by customer match status.",
+          "request": "Return matched and unmatched order counts.",
+          "output": [
+            "matched_orders",
+            "unmatched_orders"
+          ],
+          "validation": "Conditional aggregation after LEFT JOIN"
+        }
+      ]
+    },
+    {
+      "id": "sql-d8-t4",
+      "sequence": 4,
+      "title": "Join Grain & Row Multiplication",
+      "business_skill": "Detect duplicate metrics caused by one-to-many joins.",
+      "teaching": {
+        "teacher": "## Join grain\\nJoining tables at incompatible grains can multiply rows and inflate SUM or COUNT results.",
+        "explain": "Always ask how many rows can match each row on the other side.",
+        "detailedlearning": "Validate row counts before and after joins and compare expected keys.",
+        "expose": "A query can run successfully while producing incorrect KPIs.",
+        "example": "SELECT COUNT(*) FROM orders o JOIN customers c ON o.customer_id=c.customer_id;",
+        "business_question": "The analyst suspects a join has inflated sales.",
+        "expected_sql": "Compare row counts and sales before and after the join, grouped at the expected grain."
+      },
+      "questions": [
+        {
+          "id": "sql-d8-t4-q1",
+          "difficulty": "Basic",
+          "role": "Senior Analyst",
+          "scenario": "A customer join may have changed transaction volume.",
+          "request": "Return the order-row count before the join and after joining customers.",
+          "output": [
+            "before_rows",
+            "after_rows"
+          ],
+          "validation": "Compare counts at order grain"
+        },
+        {
+          "id": "sql-d8-t4-q2",
+          "difficulty": "Medium",
+          "role": "Finance Analyst",
+          "scenario": "Total sales increased unexpectedly after a join.",
+          "request": "Compare total sales before and after the customer join.",
+          "output": [
+            "sales_before",
+            "sales_after"
+          ],
+          "validation": "Detect inflated aggregate"
+        },
+        {
+          "id": "sql-d8-t4-q3",
+          "difficulty": "Advanced",
+          "role": "Data Lead",
+          "scenario": "A many-to-one customer relationship is expected.",
+          "request": "Identify customer IDs that appear more than once in the customer table.",
+          "output": [
+            "customer_id",
+            "duplicate_rows"
+          ],
+          "validation": "GROUP BY customer_id HAVING COUNT(*) > 1"
+        }
+      ]
+    },
+    {
+      "id": "sql-d8-t5",
+      "sequence": 5,
+      "title": "Validated Multi-Table KPI",
+      "business_skill": "Build a joined KPI only after validating relationships.",
+      "teaching": {
+        "teacher": "## Join validation\\nA production KPI should include relationship checks before aggregation.",
+        "explain": "Validate key uniqueness, unmatched rates, and row counts before trusting joined totals.",
+        "detailedlearning": "Use separate validation queries or CTE layers to make assumptions explicit.",
+        "expose": "Correct joins are part of KPI governance.",
+        "example": "SELECT c.segment, COUNT(DISTINCT o.order_id) AS orders, SUM(o.sales) AS sales FROM orders o JOIN customers c ON o.customer_id=c.customer_id GROUP BY c.segment;",
+        "business_question": "The customer director wants segment-level order and sales KPIs.",
+        "expected_sql": "SELECT c.segment, COUNT(DISTINCT o.order_id) AS orders, SUM(o.sales) AS sales FROM orders o JOIN customers c ON o.customer_id=c.customer_id GROUP BY c.segment;"
+      },
+      "questions": [
+        {
+          "id": "sql-d8-t5-q1",
+          "difficulty": "Basic",
+          "role": "Customer Director",
+          "scenario": "Management wants sales by customer segment.",
+          "request": "Return segment, order count, and total sales.",
+          "output": [
+            "segment",
+            "orders",
+            "sales"
+          ],
+          "validation": "Join then GROUP BY segment"
+        },
+        {
+          "id": "sql-d8-t5-q2",
+          "difficulty": "Medium",
+          "role": "Sales Director",
+          "scenario": "Leadership wants segment profitability.",
+          "request": "Return segment, orders, sales, and profit.",
+          "output": [
+            "segment",
+            "orders",
+            "sales",
+            "profit"
+          ],
+          "validation": "Validated joined KPI"
+        },
+        {
+          "id": "sql-d8-t5-q3",
+          "difficulty": "Advanced",
+          "role": "Senior Analyst",
+          "scenario": "The executive report needs segment KPIs while guarding against duplicate customer keys.",
+          "request": "Build the segment KPI and use a distinct order count to protect the order metric.",
+          "output": [
+            "segment",
+            "orders",
+            "sales"
+          ],
+          "validation": "COUNT DISTINCT order_id plus grouped sales"
+        }
+      ]
+    }
+  ]
+}
