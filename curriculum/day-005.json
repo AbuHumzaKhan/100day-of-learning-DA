@@ -1,0 +1,294 @@
+{
+  "day": 5,
+  "track": "SQL",
+  "title": "SQL Day 5 — CASE WHEN & Business Classification",
+  "description": "Convert raw values into business categories and conditional metrics with CASE WHEN.",
+  "dataset_refs": [
+    "orders"
+  ],
+  "topics": [
+    {
+      "id": "sql-d5-t1",
+      "sequence": 1,
+      "title": "CASE WHEN Fundamentals",
+      "business_skill": "Create business classifications from row-level rules.",
+      "teaching": {
+        "teacher": "## CASE WHEN\\nCASE evaluates conditions and returns a chosen result for the first matching WHEN.",
+        "explain": "It turns raw numeric or text values into labels used by business teams.",
+        "detailedlearning": "Order conditions from most specific to least specific and include ELSE when an unmatched value needs a defined category.",
+        "expose": "CASE is business-rule encoding, so validate the rules and boundaries before coding.",
+        "example": "CASE WHEN sales >= 1500 THEN 'High' WHEN sales >= 500 THEN 'Medium' ELSE 'Low' END AS sales_band",
+        "business_question": "The manager wants orders classified as High, Medium, or Low value.",
+        "expected_sql": "SELECT order_id, sales, CASE WHEN sales >= 1500 THEN 'High' WHEN sales >= 500 THEN 'Medium' ELSE 'Low' END AS sales_band FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d5-t1-q1",
+          "difficulty": "Basic",
+          "role": "Sales Manager",
+          "scenario": "Sales wants three order-value bands.",
+          "request": "Classify each order as High when sales are at least 1500, Medium when sales are at least 500, otherwise Low.",
+          "output": [
+            "order_id",
+            "sales",
+            "sales_band"
+          ],
+          "validation": "Three CASE bands"
+        },
+        {
+          "id": "sql-d5-t1-q2",
+          "difficulty": "Medium",
+          "role": "Finance Analyst",
+          "scenario": "Finance wants profit status labels.",
+          "request": "Classify rows as Loss for profit below zero and Profit for zero or above.",
+          "output": [
+            "order_id",
+            "profit",
+            "profit_status"
+          ],
+          "validation": "CASE on profit"
+        },
+        {
+          "id": "sql-d5-t1-q3",
+          "difficulty": "Intermediate",
+          "role": "Operations Manager",
+          "scenario": "Operations needs a shipment priority label.",
+          "request": "Classify orders as Premium for First Class, Standard for Second Class, and Economy otherwise.",
+          "output": [
+            "order_id",
+            "ship_mode",
+            "shipping_class"
+          ],
+          "validation": "CASE on ship_mode"
+        }
+      ]
+    },
+    {
+      "id": "sql-d5-t2",
+      "sequence": 2,
+      "title": "CASE with Multiple Conditions",
+      "business_skill": "Encode compound business rules.",
+      "teaching": {
+        "teacher": "## Compound CASE\\nEach WHEN can contain AND/OR logic, allowing multi-factor classifications.",
+        "explain": "CASE can evaluate several columns together to create a business segment.",
+        "detailedlearning": "Use parentheses for OR branches and test boundary cases deliberately.",
+        "expose": "Complex CASE statements should be written from business rules, not improvised while typing.",
+        "example": "CASE WHEN sales >= 1000 AND profit > 0 THEN 'High Value Profitable' WHEN sales >= 1000 THEN 'High Value Loss' ELSE 'Other' END",
+        "business_question": "Commercial leadership wants high-value orders split by profitability.",
+        "expected_sql": "SELECT order_id, sales, profit, CASE WHEN sales >= 1000 AND profit > 0 THEN 'High Value Profitable' WHEN sales >= 1000 THEN 'High Value Loss' ELSE 'Other' END AS segment FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d5-t2-q1",
+          "difficulty": "Basic",
+          "role": "Commercial Manager",
+          "scenario": "High-value orders must be separated by profit status.",
+          "request": "Classify orders as High Value Profitable, High Value Loss, or Other.",
+          "output": [
+            "order_id",
+            "sales",
+            "profit",
+            "segment"
+          ],
+          "validation": "Compound CASE"
+        },
+        {
+          "id": "sql-d5-t2-q2",
+          "difficulty": "Medium",
+          "role": "Regional Director",
+          "scenario": "Leadership wants West Technology orders identified separately.",
+          "request": "Create a label for rows that are both West and Technology, with Other for all remaining rows.",
+          "output": [
+            "order_id",
+            "region",
+            "category",
+            "business_flag"
+          ],
+          "validation": "region='West' AND category='Technology'"
+        },
+        {
+          "id": "sql-d5-t2-q3",
+          "difficulty": "Intermediate",
+          "role": "Finance Manager",
+          "scenario": "Finance defines healthy transactions as sales at least 1000 and profit margin proxy profit/sales at least 10%.",
+          "request": "Create Healthy, High Sales Low Margin, and Other labels using sales and profit.",
+          "output": [
+            "order_id",
+            "sales",
+            "profit",
+            "status"
+          ],
+          "validation": "CASE with sales and profit/sales"
+        }
+      ]
+    },
+    {
+      "id": "sql-d5-t3",
+      "sequence": 3,
+      "title": "Conditional Aggregation",
+      "business_skill": "Calculate KPI subsets inside one grouped query.",
+      "teaching": {
+        "teacher": "## Conditional aggregation\\nSUM(CASE WHEN ... THEN ... ELSE ... END) and COUNT(CASE WHEN ... THEN 1 END) let one query calculate multiple conditional KPIs.",
+        "explain": "Instead of filtering the entire dataset, conditionally include rows in individual measures.",
+        "detailedlearning": "This is powerful for dashboards because several business segments can be compared in one row.",
+        "expose": "The condition belongs inside the aggregate when you need multiple subsets side by side.",
+        "example": "SUM(CASE WHEN profit < 0 THEN sales ELSE 0 END) AS loss_sales",
+        "business_question": "The CFO wants profitable and loss-making sales side by side.",
+        "expected_sql": "SELECT SUM(CASE WHEN profit >= 0 THEN sales ELSE 0 END) AS profitable_sales, SUM(CASE WHEN profit < 0 THEN sales ELSE 0 END) AS loss_sales FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d5-t3-q1",
+          "difficulty": "Basic",
+          "role": "Finance Manager",
+          "scenario": "Finance needs profitable sales and loss sales.",
+          "request": "Return profitable sales and loss-making sales as separate metrics.",
+          "output": [
+            "profitable_sales",
+            "loss_sales"
+          ],
+          "validation": "Conditional SUM"
+        },
+        {
+          "id": "sql-d5-t3-q2",
+          "difficulty": "Medium",
+          "role": "Sales Manager",
+          "scenario": "The manager wants order counts by value band in one result.",
+          "request": "Return counts for High, Medium, and Low sales bands.",
+          "output": [
+            "high_orders",
+            "medium_orders",
+            "low_orders"
+          ],
+          "validation": "Conditional COUNT/SUM"
+        },
+        {
+          "id": "sql-d5-t3-q3",
+          "difficulty": "Intermediate",
+          "role": "Regional Manager",
+          "scenario": "The region review needs total sales and loss sales for each region.",
+          "request": "Return region, total sales, loss sales, and profitable sales.",
+          "output": [
+            "region",
+            "total_sales",
+            "loss_sales",
+            "profitable_sales"
+          ],
+          "validation": "GROUP BY region with conditional aggregates"
+        }
+      ]
+    },
+    {
+      "id": "sql-d5-t4",
+      "sequence": 4,
+      "title": "CASE in ORDER BY",
+      "business_skill": "Prioritize results using business-defined ranking.",
+      "teaching": {
+        "teacher": "## Business ordering\\nCASE can create a custom sort priority when alphabetical or numeric ordering is not appropriate.",
+        "explain": "Create a ranking expression that maps business priority to a number.",
+        "detailedlearning": "Use CASE in ORDER BY when stakeholders specify an explicit sequence.",
+        "expose": "Display labels and sort logic can be different fields.",
+        "example": "ORDER BY CASE WHEN category='Technology' THEN 1 WHEN category='Furniture' THEN 2 ELSE 3 END",
+        "business_question": "Management wants Technology first, Furniture second, and all other categories afterward.",
+        "expected_sql": "SELECT category, SUM(sales) AS sales FROM orders GROUP BY category ORDER BY CASE WHEN category='Technology' THEN 1 WHEN category='Furniture' THEN 2 ELSE 3 END;"
+      },
+      "questions": [
+        {
+          "id": "sql-d5-t4-q1",
+          "difficulty": "Basic",
+          "role": "Category Manager",
+          "scenario": "Technology must appear first in the management report.",
+          "request": "Sort category results with Technology first, Furniture second, and remaining categories after them.",
+          "output": [
+            "category",
+            "sales"
+          ],
+          "validation": "Custom CASE ordering"
+        },
+        {
+          "id": "sql-d5-t4-q2",
+          "difficulty": "Medium",
+          "role": "Finance Manager",
+          "scenario": "Loss-making regions should be reviewed before profitable regions.",
+          "request": "Sort regions so negative-profit regions appear first.",
+          "output": [
+            "region",
+            "profit"
+          ],
+          "validation": "CASE in ORDER BY"
+        },
+        {
+          "id": "sql-d5-t4-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "A review queue prioritizes High Value Loss, High Value Profitable, then Other.",
+          "request": "Sort order-level classifications in that business priority.",
+          "output": [
+            "order_id",
+            "status"
+          ],
+          "validation": "Custom business priority ordering"
+        }
+      ]
+    },
+    {
+      "id": "sql-d5-t5",
+      "sequence": 5,
+      "title": "CASE-Driven Management KPI",
+      "business_skill": "Build a business-ready classification and KPI query.",
+      "teaching": {
+        "teacher": "## KPI classification\\nCombine classification with aggregation to turn raw transactions into management segments.",
+        "explain": "The classification must be consistent at row level before aggregating it.",
+        "detailedlearning": "A robust pattern is: classify rows in a subquery/CTE, then aggregate the classified result.",
+        "expose": "Separating classification from aggregation improves readability and validation.",
+        "example": "WITH classified AS (SELECT *, CASE WHEN sales>=1500 THEN 'High' ELSE 'Standard' END AS band FROM orders) SELECT band, COUNT(*) AS orders, SUM(sales) AS sales FROM classified GROUP BY band;",
+        "business_question": "The sales director wants order volume and sales by value band.",
+        "expected_sql": "WITH classified AS (SELECT *, CASE WHEN sales>=1500 THEN 'High' ELSE 'Standard' END AS band FROM orders) SELECT band, COUNT(*) AS orders, SUM(sales) AS sales FROM classified GROUP BY band;"
+      },
+      "questions": [
+        {
+          "id": "sql-d5-t5-q1",
+          "difficulty": "Basic",
+          "role": "Sales Director",
+          "scenario": "Management wants sales by order-value band.",
+          "request": "Return band, order count, and total sales for High versus Standard orders using the stated threshold.",
+          "output": [
+            "band",
+            "orders",
+            "sales"
+          ],
+          "validation": "CASE then GROUP BY"
+        },
+        {
+          "id": "sql-d5-t5-q2",
+          "difficulty": "Medium",
+          "role": "Finance Director",
+          "scenario": "Finance wants profit performance by profit status.",
+          "request": "Return profit status, order count, sales, and profit.",
+          "output": [
+            "profit_status",
+            "orders",
+            "sales",
+            "profit"
+          ],
+          "validation": "Classify then aggregate"
+        },
+        {
+          "id": "sql-d5-t5-q3",
+          "difficulty": "Advanced",
+          "role": "Senior Analyst",
+          "scenario": "The executive dashboard needs regional value-band performance.",
+          "request": "Return region, value band, order count, sales, and profit.",
+          "output": [
+            "region",
+            "band",
+            "orders",
+            "sales",
+            "profit"
+          ],
+          "validation": "Two-dimensional classified aggregation"
+        }
+      ]
+    }
+  ]
+}
