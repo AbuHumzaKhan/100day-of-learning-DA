@@ -1,0 +1,277 @@
+{
+  "day": 6,
+  "track": "SQL",
+  "title": "SQL Day 6 — NULLs, Data Quality & Conditional Logic",
+  "description": "Handle missing values safely and validate data quality before using fields in business reporting.",
+  "dataset_refs": [
+    "orders"
+  ],
+  "topics": [
+    {
+      "id": "sql-d6-t1",
+      "sequence": 1,
+      "title": "IS NULL & IS NOT NULL",
+      "business_skill": "Detect missing business attributes.",
+      "teaching": {
+        "teacher": "## NULL\\nNULL represents missing or unknown data. Use IS NULL or IS NOT NULL; equality operators do not correctly test NULL.",
+        "explain": "A NULL is not the same as zero, empty text, or false.",
+        "detailedlearning": "Always decide whether missing data should be excluded, flagged, or replaced before calculating KPIs.",
+        "expose": "Missing values can silently change counts and averages.",
+        "example": "SELECT COUNT(*) FROM orders WHERE postal_code IS NULL;",
+        "business_question": "Data quality wants the number of orders without postal codes.",
+        "expected_sql": "SELECT COUNT(*) AS missing_postal_codes FROM orders WHERE postal_code IS NULL;"
+      },
+      "questions": [
+        {
+          "id": "sql-d6-t1-q1",
+          "difficulty": "Basic",
+          "role": "Data Quality Analyst",
+          "scenario": "The team suspects missing customer identifiers.",
+          "request": "Return the number of rows where customer_id is NULL.",
+          "output": [
+            "missing_customer_ids"
+          ],
+          "validation": "customer_id IS NULL"
+        },
+        {
+          "id": "sql-d6-t1-q2",
+          "difficulty": "Medium",
+          "role": "Operations Manager",
+          "scenario": "Shipping records may have missing ship dates.",
+          "request": "Return order ID and customer name for rows with a missing ship date.",
+          "output": [
+            "order_id",
+            "customer_name"
+          ],
+          "validation": "ship_date IS NULL"
+        },
+        {
+          "id": "sql-d6-t1-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "Finance wants to know whether any profit values are missing.",
+          "request": "Return the count and percentage of rows where profit is NULL.",
+          "output": [
+            "missing_profit_count",
+            "missing_profit_pct"
+          ],
+          "validation": "NULL count divided by total rows"
+        }
+      ]
+    },
+    {
+      "id": "sql-d6-t2",
+      "sequence": 2,
+      "title": "COALESCE — Safe Defaults",
+      "business_skill": "Replace NULL with an explicit fallback when business logic requires it.",
+      "teaching": {
+        "teacher": "## COALESCE\\nCOALESCE returns the first non-NULL expression.",
+        "explain": "It is useful when a report requires a display or calculation default.",
+        "detailedlearning": "Do not blindly convert NULL to zero; only do so when zero is a valid business interpretation.",
+        "expose": "A default value is a business decision, not merely a SQL convenience.",
+        "example": "SELECT COALESCE(postal_code, 0) AS postal_code FROM orders;",
+        "business_question": "The reporting team wants missing discount values treated as zero for a calculation.",
+        "expected_sql": "SELECT AVG(COALESCE(discount,0)) AS avg_discount FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d6-t2-q1",
+          "difficulty": "Basic",
+          "role": "Finance Analyst",
+          "scenario": "Missing discount is defined as zero for this report.",
+          "request": "Return average discount using zero when discount is NULL.",
+          "output": [
+            "avg_discount"
+          ],
+          "validation": "AVG(COALESCE(discount,0))"
+        },
+        {
+          "id": "sql-d6-t2-q2",
+          "difficulty": "Medium",
+          "role": "Customer Manager",
+          "scenario": "Some customer names are missing and the report needs a visible fallback.",
+          "request": "Return order ID and customer name, replacing NULL customer names with 'Unknown Customer'.",
+          "output": [
+            "order_id",
+            "customer_name"
+          ],
+          "validation": "COALESCE(customer_name,'Unknown Customer')"
+        },
+        {
+          "id": "sql-d6-t2-q3",
+          "difficulty": "Intermediate",
+          "role": "Finance Manager",
+          "scenario": "Profit data has occasional NULLs and the reporting rule treats them as zero only for this KPI.",
+          "request": "Return total profit using zero for NULL profit values.",
+          "output": [
+            "total_profit"
+          ],
+          "validation": "SUM(COALESCE(profit,0))"
+        }
+      ]
+    },
+    {
+      "id": "sql-d6-t3",
+      "sequence": 3,
+      "title": "NULL-Safe Conditional Logic",
+      "business_skill": "Combine CASE and NULL handling without misclassifying missing data.",
+      "teaching": {
+        "teacher": "## NULL-aware CASE\\nCASE can explicitly detect missing values before other business rules.",
+        "explain": "Place the NULL rule where it matches the intended classification priority.",
+        "detailedlearning": "Separate Unknown from real zero or negative values when data quality matters.",
+        "expose": "Do not let ELSE accidentally hide missing-data problems.",
+        "example": "CASE WHEN profit IS NULL THEN 'Missing' WHEN profit < 0 THEN 'Loss' ELSE 'Profit' END",
+        "business_question": "Finance wants missing profit clearly separated from losses.",
+        "expected_sql": "SELECT order_id, CASE WHEN profit IS NULL THEN 'Missing' WHEN profit < 0 THEN 'Loss' ELSE 'Profit' END AS profit_status FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d6-t3-q1",
+          "difficulty": "Basic",
+          "role": "Finance Analyst",
+          "scenario": "Finance needs missing profit distinguished from loss.",
+          "request": "Create Missing, Loss, and Profit labels.",
+          "output": [
+            "order_id",
+            "profit_status"
+          ],
+          "validation": "NULL-aware CASE"
+        },
+        {
+          "id": "sql-d6-t3-q2",
+          "difficulty": "Medium",
+          "role": "Data Quality Manager",
+          "scenario": "Orders missing region must be flagged before regional reporting.",
+          "request": "Create a region status of Missing Region or Assigned Region.",
+          "output": [
+            "order_id",
+            "region_status"
+          ],
+          "validation": "CASE region IS NULL"
+        },
+        {
+          "id": "sql-d6-t3-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "A KPI population must exclude rows with missing sales.",
+          "request": "Return the count of valid sales rows and missing sales rows separately.",
+          "output": [
+            "valid_sales_rows",
+            "missing_sales_rows"
+          ],
+          "validation": "Conditional COUNT"
+        }
+      ]
+    },
+    {
+      "id": "sql-d6-t4",
+      "sequence": 4,
+      "title": "NULL Impact on Aggregates",
+      "business_skill": "Understand how missing values affect COUNT and AVG.",
+      "teaching": {
+        "teacher": "## Aggregate behavior\\nCOUNT(*) counts rows, while COUNT(column) ignores NULLs; AVG(column) also ignores NULL values.",
+        "explain": "Two counts can legitimately differ when the column contains missing values.",
+        "detailedlearning": "When reporting completeness, compare total rows with populated-field counts.",
+        "expose": "An average over populated values is not necessarily an average over all records.",
+        "example": "SELECT COUNT(*) AS rows, COUNT(discount) AS discount_rows, AVG(discount) AS avg_discount FROM orders;",
+        "business_question": "The manager wants discount completeness and average discount.",
+        "expected_sql": "SELECT COUNT(*) AS rows, COUNT(discount) AS discount_rows, AVG(discount) AS avg_discount FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d6-t4-q1",
+          "difficulty": "Basic",
+          "role": "Data Quality Analyst",
+          "scenario": "The team needs total rows versus rows with a discount value.",
+          "request": "Return both counts.",
+          "output": [
+            "rows",
+            "discount_rows"
+          ],
+          "validation": "COUNT(*) versus COUNT(discount)"
+        },
+        {
+          "id": "sql-d6-t4-q2",
+          "difficulty": "Medium",
+          "role": "Finance Analyst",
+          "scenario": "Finance needs average discount based only on populated discount records.",
+          "request": "Return count of discount records and average discount.",
+          "output": [
+            "discount_rows",
+            "avg_discount"
+          ],
+          "validation": "COUNT(discount), AVG(discount)"
+        },
+        {
+          "id": "sql-d6-t4-q3",
+          "difficulty": "Intermediate",
+          "role": "BI Manager",
+          "scenario": "The dashboard needs a discount completeness rate.",
+          "request": "Return total rows, populated discount rows, and discount completeness percentage.",
+          "output": [
+            "rows",
+            "discount_rows",
+            "completeness_pct"
+          ],
+          "validation": "COUNT(discount)/COUNT(*)"
+        }
+      ]
+    },
+    {
+      "id": "sql-d6-t5",
+      "sequence": 5,
+      "title": "Data Quality KPI",
+      "business_skill": "Build a compact NULL-monitoring query.",
+      "teaching": {
+        "teacher": "## Data-quality snapshot\\nCombine counts and percentages to expose missingness before business KPIs are trusted.",
+        "explain": "A quality query should make the size of the issue measurable.",
+        "detailedlearning": "Choose critical columns based on business impact rather than checking every field indiscriminately.",
+        "expose": "Data quality is part of analysis, not an afterthought.",
+        "example": "SELECT COUNT(*) AS rows, SUM(CASE WHEN customer_id IS NULL THEN 1 ELSE 0 END) AS missing_customer_ids FROM orders;",
+        "business_question": "The analytics lead wants a quality snapshot for customer ID, region, and profit.",
+        "expected_sql": "SELECT COUNT(*) AS rows, SUM(CASE WHEN customer_id IS NULL THEN 1 ELSE 0 END) AS missing_customer_ids, SUM(CASE WHEN region IS NULL THEN 1 ELSE 0 END) AS missing_regions, SUM(CASE WHEN profit IS NULL THEN 1 ELSE 0 END) AS missing_profit FROM orders;"
+      },
+      "questions": [
+        {
+          "id": "sql-d6-t5-q1",
+          "difficulty": "Basic",
+          "role": "Analytics Lead",
+          "scenario": "Before publishing the report, the team needs missing-field counts.",
+          "request": "Return total rows and missing customer IDs.",
+          "output": [
+            "rows",
+            "missing_customer_ids"
+          ],
+          "validation": "Quality count"
+        },
+        {
+          "id": "sql-d6-t5-q2",
+          "difficulty": "Medium",
+          "role": "BI Manager",
+          "scenario": "The dashboard owner wants completeness for region.",
+          "request": "Return total rows, populated regions, and region completeness percentage.",
+          "output": [
+            "rows",
+            "region_rows",
+            "region_completeness_pct"
+          ],
+          "validation": "COUNT(region)/COUNT(*)"
+        },
+        {
+          "id": "sql-d6-t5-q3",
+          "difficulty": "Advanced",
+          "role": "Senior Analyst",
+          "scenario": "The release gate checks three critical fields.",
+          "request": "Return total rows and missing counts for customer_id, region, and profit in one result.",
+          "output": [
+            "rows",
+            "missing_customer_ids",
+            "missing_regions",
+            "missing_profit"
+          ],
+          "validation": "Three conditional missing counts"
+        }
+      ]
+    }
+  ]
+}
