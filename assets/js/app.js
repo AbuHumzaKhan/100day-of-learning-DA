@@ -144,10 +144,7 @@ function render() {
       <div class="engine-head"><span class="engine-dot"></span><strong>AHK ACADEMY ENGINE MATRIX · SQL</strong><span class="engine-spacer"></span><span id="engineStatus">Ready</span><button class="engine-close" id="engineClose">×</button></div>
       <div class="engine-body">
         <div class="engine-context"><span>LOCAL · READ ONLY · ORDERS DATASET</span><b>SELECT ONLY</b></div>
-        <textarea id="sqlInput" spellcheck="false">SELECT category, SUM(sales) AS total_sales, SUM(profit) AS total_profit
-FROM orders
-GROUP BY category
-ORDER BY total_sales DESC;</textarea>
+        <textarea id="sqlInput" spellcheck="false" placeholder="Write your SQL query here..."></textarea>
         <div class="run-row"><button class="run-button" id="runSQL">▶ Run Query</button><span>Results are limited to the browser practice dataset.</span></div>
         <div id="sqlResult" class="result"><div class="empty">Run a query to inspect the result.</div></div>
       </div>
