@@ -15,21 +15,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
+        uses: actions/checkout@v6
       - name: Validate JavaScript
         run: |
           node --check assets/js/app.js
-          node --check assets/js/engine-manager.js
           node --check assets/js/sql-engine.js
-
+          node --check engines/sql-engine.js
       - name: Validate curriculum release
         run: |
           node - <<'NODE'
@@ -37,7 +32,8 @@ jobs:
           const manifest = JSON.parse(fs.readFileSync('manifest.json','utf8'));
           const index = JSON.parse(fs.readFileSync('curriculum/index.json','utf8'));
           const published = Number(manifest.release_control.published_through_day);
-          if (index.published_through_day !== published) throw new Error('Manifest/index published-day mismatch');
+          if (Number(index.published_through_day) !== published) throw new Error('Manifest/index published-day mismatch');
+          if (manifest.release_control.open_days.join(',') !== index.open_days.join(',')) throw new Error('Manifest/index open-day mismatch');
           for (const day of index.open_days) {
             const file = 'curriculum/day-' + String(day).padStart(3,'0') + '.json';
             if (!fs.existsSync(file)) throw new Error('Missing ' + file);
@@ -48,19 +44,28 @@ jobs:
           }
           console.log('Curriculum validation passed through Day ' + published);
           NODE
-
-      - name: Upload static site
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
+      - name: Verify static entry
+        run: |
+          test -f index.html
+          test -f assets/css/app.css
+          test -f assets/js/app.js
+          echo "Static frontend validation passed."
 
   deploy:
-    needs: build
+    needs: validate
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload static site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: .
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
