@@ -156,7 +156,6 @@ ORDER BY total_sales DESC;</textarea>
 
   bindDayEvents();
   bindArena();
-  hydrateTaskState();
 }
 
 function renderDayPicker(index) {
@@ -300,6 +299,10 @@ function goDay(day) {
   localStorage.setItem('ahk_active_day_v4', String(day));
   render();
   window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function hydrateTaskState() {
+  // Question status is read from localStorage during render; this lifecycle hook is intentionally safe.
 }
 
 function bindArena() {
