@@ -1,19 +1,126 @@
 export class SQLAcademyEngine {
-  constructor(rows){this.rows=rows||[]}
-  run({sql}){
-    const q=sql.trim().replace(/;$/,'');
-    if(!/^select\s/i.test(q))throw new Error('Read-only engine: start with SELECT.');
-    if(/\b(insert|update|delete|drop|alter|create|truncate|replace)\b/i.test(q))throw new Error('Write operations are disabled.');
-    const m=q.match(/^select\s+(.+?)\s+from\s+([a-z_][\w]*)(?:\s+where\s+(.+?))?(?:\s+group\s+by\s+(.+?))?(?:\s+order\s+by\s+(.+?))?$/i);
-    if(!m)throw new Error('Supported: SELECT ... FROM orders [WHERE] [GROUP BY] [ORDER BY].');
-    if(m[2].toLowerCase()!=='orders')throw new Error('Available table: orders.');
-    let data=this.rows.map(r=>({...r})); if(m[3])data=data.filter(r=>this.where(m[3],r));
-    const agg=/\b(sum|avg|count|min|max)\s*\(/i.test(m[1]); if(m[4]||agg)data=this.aggregate(data,m[1],m[4]);else data=data.map(r=>this.project(r,m[1]));
-    if(m[5])this.sort(data,m[5]); return {columns:data.length?Object.keys(data[0]):this.columns(m[1]),rows:data.slice(0,500)};
+  constructor(rows = []) { this.rows = rows; }
+
+  run({ sql }) {
+    const q = String(sql || "").trim().replace(/;$/, "");
+    if (!/^select\s/i.test(q)) throw new Error("Read-only engine: start with SELECT.");
+    if (/\b(insert|update|delete|drop|alter|create|truncate|replace)\b/i.test(q)) throw new Error("Write operations are disabled.");
+    const match = q.match(/^select\s+(.+?)\s+from\s+([a-z_][\w]*)(?:\s+where\s+(.+?))?(?:\s+group\s+by\s+(.+?))?(?:\s+order\s+by\s+(.+?))?$/i);
+    if (!match) throw new Error("Supported: SELECT ... FROM orders [WHERE] [GROUP BY] [ORDER BY].");
+    if (match[2].toLowerCase() !== "orders") throw new Error("Available table: orders.");
+
+    let data = this.rows.map(row => ({ ...row }));
+    if (match[3]) data = data.filter(row => this.where(match[3], row));
+    const hasAggregate = /\b(sum|avg|count|min|max)\s*\(/i.test(match[1]);
+    data = (match[4] || hasAggregate) ? this.aggregate(data, match[1], match[4]) : data.map(row => this.project(row, match[1]));
+    if (match[5]) this.sort(data, match[5]);
+
+    return { columns: data.length ? Object.keys(data[0]) : this.columns(match[1]), rows: data.slice(0, 500) };
   }
-  columns(s){return s.split(',').map(x=>x.trim().replace(/\s+as\s+.+$/i,'').replace(/^.*\./,''))}
-  project(r,s){const o={};s.split(',').forEach(token=>{const x=token.trim(),a=x.match(/^([\w.]+)\s+as\s+([\w]+)$/i),k=a?a[1].split('.').pop():x.split('.').pop();o[a?a[2]:k]=r[k]});return o}
-  where(expr,r){const p=expr.split(/\s+(AND|OR)\s+/i);let ok=this.cond(p[0],r);for(let i=1;i<p.length;i+=2)ok=p[i].toUpperCase()==='AND'?ok&&this.cond(p[i+1],r):ok||this.cond(p[i+1],r);return ok}
-  cond(c,r){const m=c.trim().match(/^([\w.]+)\s*(=|!=|<>|>=|<=|>|<|LIKE|IN)\s*(.+)$/i);if(!m)throw new Error('Unsupported WHERE condition: '+c);const f=m[1].split('.').pop(),op=m[2].toUpperCase(),v=m[3].trim(),a=r[f],unq=x=>x.replace(/^["']|["']$/g,'');if(op==='LIKE'){const pat=unq(v).replace(/%/g,'.*').replace(/_/g,'.');return new RegExp('^'+pat+'$','i').test(String(a))}if(op==='IN')return v.replace(/^\(|\)$/g,'').split(',').map(x=>unq(x.trim())).includes(String(a));const b=isNaN(Number(unq(v)))?unq(v):Number(unq(v));if(op==='=')return String(a)==String(b);if(op==='!='||op==='<>')return String(a)!=String(b);if(op==='>')return Number(a)>Number(b);if(op==='<')return Number(a)<Number(b);if(op==='>=')return Number(a)>=Number(b);return Number(a)<=Number(b)}
-  aggregate(data,s,group){const gs=group?group.split(',').map(x=>x.trim().split('.').pop()):[null],map=new Map();data.forEach(r=>{const k=gs.map(g=>g?String(r[g]):'__all__').join('|');if(!map.has(k))map.set(k,[]);map.get(k).push(r)});const out=[];map.forEach(rows=>{const o={};if(gs[0])gs.forEach(g=>o[g]=rows[0][g]);s.split(',').forEach(t=>{const f=t.trim().match(/(sum|avg|count|min|max)\s*\(\s*([\w.]+|\*)\s*\)/i),a=t.match(/\s+as\s+([\w]+)/i);if(!f)return;const name=a?a[1]:f[0],field=f[2].split('.').pop(),vals=field==='*'?rows.map(()=>1):rows.map(x=>Number(x[field])||0);let v=f[1].toLowerCase()==='sum'?vals.reduce((x,y)=>x+y,0):f[1].toLowerCase()==='avg'?vals.reduce((x,y)=>x+y,0)/vals.length:f[1].toLowerCase()==='count'?rows.length:f[1].toLowerCase()==='min'?Math.min(...vals):Math.max(...vals);o[name]=Number.isInteger(v)?v:Number(v.toFixed(2))});out.push(o)});return out}
-  sort(data,expr){const m=expr.split(',')[0].trim().match(/^([\w.]+)(?:\s+(ASC|DESC))?$/i);if(!m)return;const f=m[1].split('.').pop(),d=(m[2]||'ASC').toUpperCase();data.sort((a,b)=>{const n=Number(a[f])-Number(b[f]),c=Number.isNaN(n)?String(a[f]).localeCompare(String(b[f]).]\OOIÑTÐÉÏËXÎßJ_BB
+
+  columns(selection) {
+    return selection.split(",").map(token => token.trim().replace(/\s+as\s+.+$/i, "").replace(/^.*\./, ""));
+  }
+
+  project(row, selection) {
+    const result = {};
+    selection.split(",").forEach(token => {
+      const expression = token.trim();
+      const alias = expression.match(/^([\w.]+)\s+as\s+([\w]+)$/i);
+      const key = alias ? alias[1].split(".").pop() : expression.split(".").pop();
+      result[alias ? alias[2] : key] = row[key];
+    });
+    return result;
+  }
+
+  where(expression, row) {
+    const parts = expression.split(/\s+(AND|OR)\s+/i);
+    let result = this.condition(parts[0], row);
+    for (let i = 1; i < parts.length; i += 2) {
+      const next = this.condition(parts[i + 1], row);
+      result = parts[i].toUpperCase() === "AND" ? result && next : result || next;
+    }
+    return result;
+  }
+
+  condition(condition, row) {
+    const match = condition.trim().match(/^([\w.]+)\s*(=|!=|<>|>=|<=|>|<|LIKE|IN)\s*(.+)$/i);
+    if (!match) throw new Error("Unsupported WHERE condition: " + condition);
+    const field = match[1].split(".").pop();
+    const operator = match[2].toUpperCase();
+    const rawValue = match[3].trim();
+    const actual = row[field];
+    const unquote = value => value.replace(/^["']|["']$/g, "");
+
+    if (operator === "LIKE") {
+      const pattern = unquote(rawValue).replace(/[.*+?^\${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*").replace(/_/g, ".");
+      return new RegExp("^" + pattern + "$", "i").test(String(actual));
+    }
+    if (operator === "IN") {
+      return rawValue.replace(/^\(|\)$/g, "").split(",").map(value => unquote(value.trim())).includes(String(actual));
+    }
+
+    const clean = unquote(rawValue);
+    const expected = Number.isNaN(Number(clean)) ? clean : Number(clean);
+    if (operator === "=") return String(actual) === String(expected);
+    if (operator === "!=" || operator === "<>") return String(actual) !== String(expected);
+    if (operator === ">") return Number(actual) > Number(expected);
+    if (operator === "<") return Number(actual) < Number(expected);
+    if (operator === ">=") return Number(actual) >= Number(expected);
+    return Number(actual) <= Number(expected);
+  }
+
+  aggregate(data, selection, groupBy) {
+    const groups = groupBy ? groupBy.split(",").map(value => value.trim().split(".").pop()) : [null];
+    const grouped = new Map();
+
+    data.forEach(row => {
+      const key = groups.map(group => group ? String(row[group]) : "__all__").join("|");
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(row);
+    });
+
+    const output = [];
+    grouped.forEach(rows => {
+      const result = {};
+      if (groups[0]) groups.forEach(group => { result[group] = rows[0][group]; });
+
+      selection.split(",").forEach(token => {
+        const aggregate = token.trim().match(/(sum|avg|count|min|max)\s*\(\s*([\w.]+|\*)\s*\)/i);
+        const alias = token.match(/\s+as\s+([\w]+)/i);
+        if (!aggregate) return;
+
+        const fn = aggregate[1].toLowerCase();
+        const field = aggregate[2].split(".").pop();
+        const name = alias ? alias[1] : aggregate[0];
+        const values = field === "*" ? rows.map(() => 1) : rows.map(row => Number(row[field]) || 0);
+
+        let value;
+        if (fn === "sum") value = values.reduce((a, b) => a + b, 0);
+        else if (fn === "avg") value = values.reduce((a, b) => a + b, 0) / values.length;
+        else if (fn === "count") value = rows.length;
+        else if (fn === "min") value = Math.min(...values);
+        else value = Math.max(...values);
+
+        result[name] = Number.isInteger(value) ? value : Number(value.toFixed(2));
+      });
+      output.push(result);
+    });
+    return output;
+  }
+
+  sort(data, expression) {
+    const match = expression.split(",")[0].trim().match(/^([\w.]+)(?:\s+(ASC|DESC))?$/i);
+    if (!match) return;
+
+    const field = match[1].split(".").pop();
+    const direction = (match[2] || "ASC").toUpperCase();
+
+    data.sort((a, b) => {
+      const av = a[field], bv = b[field];
+      if (typeof av === "number" && typeof bv === "number") return direction === "DESC" ? bv - av : av - bv;
+      const comparison = String(av ?? "").localeCompare(String(bv ?? ""));
+      return direction === "DESC" ? -comparison : comparison;
+    });
+  }
+}
