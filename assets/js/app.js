@@ -212,7 +212,7 @@ function renderQuestion(q, topicIndex, questionIndex) {
       <div class="question-meta"><span class="role">${esc(q.role || 'Senior Analyst')}</span><span class="difficulty">${esc(q.difficulty || 'Business')}</span></div>
       <p class="scenario">${esc(q.scenario || '')}</p>
       <p class="request">${esc(q.request || q.question || '')}</p>
-      <div class="question-footer"><span>Output: ${esc(q.required_output || q.expected_output || 'Business-ready analytical result')}</span><span>${status === 'solved' ? 'Solved' : status === 'attempted' ? 'Attempted' : 'Not started'}</span></div>
+      <div class="question-footer"><span>Task: Write the SQL yourself · ${Array.isArray(q.output) ? q.output.length + " required fields" : "Business-ready result"}</span><span>${status === "solved" ? "Solved" : status === "attempted" ? "Attempted" : "Not started"}</span></div>
       <div class="academy-task-actions"><button class="text-button task-hint">Hint</button><button class="secondary-button task-solve">Solve in Arena</button><button class="done-button ${status === 'solved' ? 'done' : ''}">${status === 'solved' ? 'Done ✓' : 'Mark done'}</button></div>
     </article>`;
 }
@@ -314,9 +314,17 @@ function bindArena() {
 }
 
 function openArena(request) {
-  document.querySelector('#engineLaunch')?.click();
+  const drawer = document.querySelector('#engineDrawer');
   const input = document.querySelector('#sqlInput');
-  if (input && request) input.dataset.businessRequest = request;
+  if (!drawer) return;
+  drawer.classList.add('open');
+  drawer.setAttribute('aria-hidden','false');
+  document.body.classList.add('modal-open');
+  if (input) {
+    input.value = '';
+    input.focus({preventScroll:true});
+    input.dataset.businessRequest = request || '';
+  }
 }
 
 function runSQL() {
