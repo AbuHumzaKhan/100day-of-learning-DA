@@ -1,6 +1,6 @@
 {
   "name": "100day-of-learning-DA",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "AHK Academy runtime content manifest — premium 100-Day Data Analyst Business Trainer.",
   "owner": "AbuHumzaKhan",
   "release_control": {
@@ -103,9 +103,9 @@
   },
   "release": "Premium learning UX",
   "ui": {
-    "learning_navigation": "day-selector",
+    "learning_navigation": "learning-hub",
     "settings_progress": true,
-    "practice": "footer-and-task-launch",
-    "markdown": "marked+DOMPurify"
+    "practice": "integrated-workspace",
+    "mobile": "learning-first"
   }
 }
