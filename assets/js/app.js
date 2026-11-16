@@ -721,6 +721,7 @@ loadCurriculum()
     });
     observer.observe(app,{childList:true,subtree:true});
     repairNav();
+    addDayPicker();
     renderMarkdown(app);
     addModeSwitcher(app);
     addTaskActions(app);
