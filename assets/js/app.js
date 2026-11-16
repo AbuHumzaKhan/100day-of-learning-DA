@@ -87,7 +87,7 @@ function render() {
         </a>
         <nav class="nav-links" aria-label="Primary navigation">
           <button id="learningNav" class="active">Learning Path</button>
-          <button id="practiceNav">Practice Arena</button>
+          <button id="practiceNav">AHK Practice Arena</button>
           <button id="progressNav">Progress</button>
         </nav>
         <div class="nav-actions"><span class="avatar">AK</span></div>
@@ -130,7 +130,7 @@ function render() {
       </section>
 
       <section class="container arena-section" id="arena">
-        <div class="section-heading"><div><span class="eyebrow">Practice</span><h2>AHK Practice Arena</h2><p>Translate business requests into executable analysis.</p></div><span class="status-badge">LOCAL · READ ONLY</span></div>
+        <div class="section-heading"><div><span class="eyebrow">Practice Workspace</span><h2>AHK Practice Arena</h2><p>Translate business requests into executable analysis.</p></div><span class="status-badge">LOCAL · READ ONLY</span></div>
         <div class="arena-card">
           <div class="arena-copy"><span class="engine-mark">SQL</span><h3>SQL Business Analysis Engine</h3><p>Run safe SELECT queries against the academy practice dataset without sending learner data to a server.</p></div>
           <button class="primary-button" id="engineLaunch">Open SQL Arena</button>
