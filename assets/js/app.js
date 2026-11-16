@@ -143,9 +143,27 @@ function render() {
     <div class="engine-drawer" id="engineDrawer" aria-hidden="true">
       <div class="engine-head"><span class="engine-dot"></span><strong>AHK ACADEMY ENGINE MATRIX · SQL</strong><span class="engine-spacer"></span><span id="engineStatus">Ready</span><button class="engine-close" id="engineClose">×</button></div>
       <div class="engine-body">
-        <div class="engine-context"><span>LOCAL · READ ONLY · ORDERS DATASET</span><b>SELECT ONLY</b></div>
+        <div class="engine-context"><span id="engineContextLabel">LOCAL · READ ONLY · ORDERS DATASET</span><b>SELECT ONLY</b></div>
+        <div class="engine-tools" role="toolbar" aria-label="SQL Arena tools">
+          <button type="button" class="engine-tool active" id="engineQuestionBtn">Question</button>
+          <button type="button" class="engine-tool" id="engineTableBtn">Tbl</button>
+        </div>
+        <section class="engine-panel question-panel" id="engineQuestionPanel">
+          <div class="panel-kicker">CURRENT BUSINESS REQUEST</div>
+          <div class="panel-role" id="engineQuestionRole">Select a task</div>
+          <p id="engineQuestionScenario">Choose a business request to practice against the dataset.</p>
+          <div class="panel-request" id="engineQuestionRequest">No question selected.</div>
+          <div class="question-selector" id="engineQuestionSelector"></div>
+        </section>
+        <section class="engine-panel table-panel" id="engineTablePanel" hidden>
+          <div class="panel-kicker">TABLE EXPLORER</div>
+          <div class="table-title-row"><strong>orders</strong><span>8 practice columns · read only</span></div>
+          <div class="schema-grid" id="engineSchema"></div>
+          <div class="sample-label">SAMPLE ROWS</div>
+          <div class="table-scroll" id="engineTablePreview"></div>
+        </section>
         <textarea id="sqlInput" spellcheck="false" placeholder="Write your SQL query here..."></textarea>
-        <div class="run-row"><button class="run-button" id="runSQL">▶ Run Query</button><span>Results are limited to the browser practice dataset.</span></div>
+        <div class="run-row"><button class="run-button" id="runSQL">▶ Run Query</button><span>Write the query yourself. No answer is pre-filled.</span></div>
         <div id="sqlResult" class="result"><div class="empty">Run a query to inspect the result.</div></div>
       </div>
     </div>
@@ -304,26 +322,122 @@ function hydrateTaskState() {
 
 function bindArena() {
   const drawer = document.querySelector('#engineDrawer');
-  const open = () => { drawer?.classList.add('open'); drawer?.setAttribute('aria-hidden','false'); document.body.classList.add('modal-open'); };
-  const close = () => { drawer?.classList.remove('open'); drawer?.setAttribute('aria-hidden','true'); document.body.classList.remove('modal-open'); };
+  const open = () => {
+    drawer?.classList.add('open');
+    drawer?.setAttribute('aria-hidden','false');
+    document.body.classList.add('modal-open');
+    initEngineWorkspace();
+  };
+  const close = () => {
+    drawer?.classList.remove('open');
+    drawer?.setAttribute('aria-hidden','true');
+    document.body.classList.remove('modal-open');
+  };
   document.querySelector('#engineLaunch')?.addEventListener('click', open);
   document.querySelector('#engineLaunch2')?.addEventListener('click', open);
   document.querySelector('#engineClose')?.addEventListener('click', close);
   document.querySelector('#runSQL')?.addEventListener('click', runSQL);
-  window.addEventListener('keydown', e => { if (e.key === 'Escape') close(); }, {once:true});
+  document.querySelector('#engineQuestionBtn')?.addEventListener('click', () => switchEnginePanel('question'));
+  document.querySelector('#engineTableBtn')?.addEventListener('click', () => switchEnginePanel('table'));
+  initEngineWorkspace();
+  window.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+}
+
+function switchEnginePanel(panel) {
+  const question = document.querySelector('#engineQuestionPanel');
+  const table = document.querySelector('#engineTablePanel');
+  const qBtn = document.querySelector('#engineQuestionBtn');
+  const tBtn = document.querySelector('#engineTableBtn');
+  const showQuestion = panel === 'question';
+  if (question) question.hidden = !showQuestion;
+  if (table) table.hidden = showQuestion;
+  qBtn?.classList.toggle('active', showQuestion);
+  tBtn?.classList.toggle('active', !showQuestion);
+}
+
+function initEngineWorkspace() {
+  const questionSelector = document.querySelector('#engineQuestionSelector');
+  const questions = [];
+  const day = state.days.get(state.activeDay);
+  (day?.topics || []).forEach((topic, topicIndex) => {
+    (topic.questions || []).forEach((q, questionIndex) => {
+      questions.push({ ...q, topicTitle: topic.title, topicIndex, questionIndex });
+    });
+  });
+
+  if (!questions.length) {
+    if (questionSelector) questionSelector.innerHTML = '<span class="empty">No business questions are published for this day.</span>';
+    renderEngineTable();
+    return;
+  }
+
+  if (questionSelector && !questionSelector.dataset.bound) {
+    questionSelector.innerHTML = questions.map((q, i) =>
+      '<button type="button" class="engine-question-chip" data-question-index="' + i + '">' +
+      '<span>' + String(i + 1).padStart(2,'0') + '</span>' + esc(q.role || 'Analyst') +
+      '</button>'
+    ).join('');
+    questionSelector.dataset.bound = 'true';
+    questionSelector.querySelectorAll('.engine-question-chip').forEach(button => {
+      button.addEventListener('click', () => selectEngineQuestion(questions[Number(button.dataset.questionIndex)], button));
+    });
+  }
+  selectEngineQuestion(questions[0], questionSelector.querySelector('.engine-question-chip'));
+  renderEngineTable();
+}
+
+function selectEngineQuestion(question, button) {
+  document.querySelectorAll('.engine-question-chip').forEach(el => el.classList.remove('selected'));
+  button?.classList.add('selected');
+
+  const role = document.querySelector('#engineQuestionRole');
+  const scenario = document.querySelector('#engineQuestionScenario');
+  const request = document.querySelector('#engineQuestionRequest');
+  if (role) role.textContent = (question.role || 'Senior Analyst') + ' · ' + (question.topicTitle || 'Business Analysis');
+  if (scenario) scenario.textContent = question.scenario || '';
+  if (request) request.textContent = question.request || question.question || 'Translate the business request into SQL.';
+  const input = document.querySelector('#sqlInput');
+  if (input) {
+    input.value = '';
+    input.dataset.businessRequest = question.request || question.question || '';
+  }
+}
+
+function renderEngineTable() {
+  const schema = document.querySelector('#engineSchema');
+  const preview = document.querySelector('#engineTablePreview');
+  if (!schema || !preview) return;
+
+  const columns = [
+    ['order_id','TEXT'],['customer_name','TEXT'],['category','TEXT'],['region','TEXT'],
+    ['sales','NUMBER'],['profit','NUMBER'],['quantity','NUMBER']
+  ];
+  schema.innerHTML = columns.map(([name,type]) =>
+    '<div class="schema-item"><strong>' + name + '</strong><span>' + type + '</span></div>'
+  ).join('');
+
+  const sampleRows = orders.slice(0, 5);
+  preview.innerHTML =
+    '<table><thead><tr>' + columns.map(([name]) => '<th>' + name + '</th>').join('') + '</tr></thead><tbody>' +
+    sampleRows.map(row => '<tr>' + columns.map(([name]) => '<td>' + esc(row[name]) + '</td>').join('') + '</tr>').join('') +
+    '</tbody></table>';
 }
 
 function openArena(request) {
   const drawer = document.querySelector('#engineDrawer');
-  const input = document.querySelector('#sqlInput');
   if (!drawer) return;
   drawer.classList.add('open');
   drawer.setAttribute('aria-hidden','false');
   document.body.classList.add('modal-open');
-  if (input) {
-    input.value = '';
-    input.focus({preventScroll:true});
-    input.dataset.businessRequest = request || '';
+  initEngineWorkspace();
+
+  if (request) {
+    const input = document.querySelector('#sqlInput');
+    if (input) {
+      input.value = '';
+      input.dataset.businessRequest = request;
+      input.focus({preventScroll:true});
+    }
   }
 }
 
