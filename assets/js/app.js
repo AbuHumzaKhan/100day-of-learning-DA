@@ -1,466 +1,142 @@
-import { EngineManager } from './engine-manager.js';
-import { SQLAcademyEngine } from './sql-engine.js';
+import { SQLEngine } from '../../engines/sql-engine.js';
 
-const app = document.querySelector('#app');
-const state = {
-  index: null,
-  days: new Map(),
-  activeDay: Number(localStorage.getItem('ahk_active_day_v4') || 1),
-  completed: new Set(JSON.parse(localStorage.getItem('ahk_completed') || '[]'))
+const app=document.querySelector('#app');
+const state={
+  manifest:null,
+  index:null,
+  day:null,
+  activeDay:Number(localStorage.getItem('ahk_active_day_v5')||1),
+  activeTopic:0,
+  activeQuestion:0,
+  taskState:readJSON('ahk_task_status_v5',{}),
+  sqlEngine:null,
+  sqlReady:false
 };
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const trackFor=d=>d<=25?'SQL':d<=50?'Excel':d<=75?'Power BI & DAX':'Python & Pandas';
+function readJSON(key,fallback){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback))}catch{return fallback}}
+function saveTaskState(){localStorage.setItem('ahk_task_status_v5',JSON.stringify(state.taskState))}
+function taskKey(day,topic,question){return day+':'+topic+':'+question}
+function countQuestions(day){return (day?.topics||[]).reduce((n,t)=>n+(t.questions?.length||0),0)}
+function solvedForDay(day){return Object.entries(state.taskState).filter(([k,v])=>k.startsWith(day+':')&&v==='solved').length}
+async function getJSON(path){const r=await fetch('./'+path+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error(path+' · HTTP '+r.status);return r.json()}
+function toast(message){const old=$('.toast');old?.remove();const el=document.createElement('div');el.className='toast';el.textContent=message;document.body.appendChild(el);setTimeout(()=>el.remove(),2400)}
+function publishedDays(){return Number(state.manifest?.release_control?.published_through_day||state.index?.published_through_day||0)}
+function dayMeta(day){return state.index.days.find(x=>x.day===day)}
+function updateUrl(){history.replaceState(null,'','#day-'+String(state.activeDay).padStart(2,'0'))}
 
-const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({
-  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-}[c]));
-
-const engine = new EngineManager({
-  onStatus(status) {
-    const el = document.querySelector('#engineStatus');
-    if (el) el.textContent = status.state === 'running' ? 'Running…' : status.state === 'error' ? 'Error' : 'Ready';
-  }
-});
-
-const orders = [
-  {order_id:'CA-1001',customer_name:'Aisha Rahman',category:'Technology',region:'West',sales:1240,profit:310,quantity:3},
-  {order_id:'CA-1002',customer_name:'Omar Khan',category:'Furniture',region:'South',sales:860,profit:96,quantity:2},
-  {order_id:'CA-1003',customer_name:'Sara Malik',category:'Office Supplies',region:'East',sales:540,profit:122,quantity:5},
-  {order_id:'CA-1004',customer_name:'Daniel Lee',category:'Technology',region:'North',sales:1780,profit:420,quantity:4},
-  {order_id:'CA-1005',customer_name:'Noor Ahmed',category:'Furniture',region:'West',sales:690,profit:-35,quantity:2},
-  {order_id:'CA-1006',customer_name:'Hana Park',category:'Technology',region:'East',sales:2100,profit:510,quantity:5},
-  {order_id:'CA-1007',customer_name:'Rayan Ali',category:'Office Supplies',region:'South',sales:430,profit:78,quantity:6},
-  {order_id:'CA-1008',customer_name:'Maya Chen',category:'Technology',region:'West',sales:990,profit:220,quantity:2}
-];
-engine.register('sql', new SQLAcademyEngine(orders));
-
-async function getJSON(path) {
-  const response = await fetch('./' + path + '?v=' + Date.now(), {cache:'no-store'});
-  if (!response.ok) throw new Error(path + ' returned HTTP ' + response.status);
-  return response.json();
+async function loadDay(day){
+  const published=publishedDays();
+  if(day<1||day>published){toast('That day is not published yet.');return}
+  state.activeDay=day;state.activeTopic=0;state.activeQuestion=0;
+  localStorage.setItem('ahk_active_day_v5',String(day));
+  app.innerHTML='<div class="loading">Preparing your learning environment…</div>';
+  try{state.day=await getJSON('curriculum/'+dayMeta(day).file);render();updateUrl();window.scrollTo({top:0,behavior:'smooth'})}
+  catch(e){renderFatal(e)}
 }
+function renderFatal(error){app.innerHTML='<main class="fatal"><div class="fatal-card"><span class="kicker">AHK Academy · Runtime</span><h1>Learning environment could not start.</h1><p>'+esc(error.message)+'</p><button class="retry" onclick="location.reload()">Retry</button></div></main>'}
 
-async function boot() {
-  try {
-    const index = await getJSON('curriculum/index.json');
-    state.index = index;
-    const openDays = Array.isArray(index.open_days) ? index.open_days : [];
-    const selected = openDays.includes(state.activeDay) ? state.activeDay : Number(index.published_through_day || openDays[0] || 1);
-    state.activeDay = selected;
-
-    await Promise.all(openDays.map(async day => {
-      const data = await getJSON('curriculum/day-' + String(day).padStart(3,'0') + '.json');
-      state.days.set(day, data);
-    }));
-
-    render();
-    bindGlobalEvents();
-  } catch (error) {
-    app.innerHTML = `
-      <main class="container fatal">
-        <span class="eyebrow">AHK ACADEMY · RUNTIME ERROR</span>
-        <h1>Learning environment could not start.</h1>
-        <p>${esc(error.message)}</p>
-        <div class="fatal-actions">
-          <button class="primary-button" onclick="location.reload()">Retry</button>
-          <a class="secondary-button" href="https://github.com/AbuHumzaKhan/100day-of-learning-DA" target="_blank" rel="noopener">Open curriculum repository</a>
-        </div>
-        <small>If this screen appears after a deployment, wait for the GitHub Pages deployment to finish and refresh once.</small>
-      </main>`;
-  }
+function render(){
+ const d=state.day,pub=publishedDays(),solved=solvedForDay(d.day),total=countQuestions(d);
+ app.innerHTML='<div class="app-shell">'+renderHeader()+'<main id="main" class="page"><div class="page-grid">'+renderLeftRail(pub)+'<section class="lesson">'+renderLesson(d)+'</section>'+renderRightRail(d)+'</div></main></div>';
+ bind();
+ updateProgressUI(solved,total);
 }
-
-function metric(value, label, note) {
-  return `<article><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(note)}</small></article>`;
+function renderHeader(){return '<header class="topbar"><div class="topbar-inner"><a class="brand" href="./"><span class="logo">AHK</span><span><span class="brand-name">AHK Academy</span><span class="brand-sub">Data Analyst Learning Hub</span></span></a><nav class="primary-nav"><button class="nav-item active" data-scroll="lesson">Learn</button><button class="nav-item" data-scroll="practice">Practice</button><button class="nav-item" data-scroll="projects">Projects</button><button class="nav-item" data-scroll="progress">Progress</button></nav><div class="header-search"><span>⌕</span><input id="globalSearch" placeholder="Search lessons, topics…" aria-label="Search lessons"><kbd>Ctrl K</kbd></div><div class="profile"><span>AK</span><div class="avatar">AK</div></div></div></header>'}
+function renderLeftRail(pub){
+ const groups=[['SQL',1,25],['Excel',26,50],['Power BI',51,75],['Python',76,100]];
+ let html='<aside class="left-rail"><div class="panel rail-panel"><div class="rail-header"><h2>100-Day Data Analyst Journey</h2><p>Business-first learning path</p></div><div class="program-progress"><div class="progress-row"><span>Day '+state.activeDay+' of 100</span><strong>'+Math.round(state.activeDay)+'%</strong></div><div class="progress-track"><div class="progress-fill" style="width:'+state.activeDay+'%"></div></div></div><div class="track-list">';
+ for(const [name,start,end] of groups){html+='<div class="track-label">'+name+'</div>';for(let d=start;d<=end;d++){const meta=dayMeta(d),open=d<=pub,active=d===state.activeDay;html+='<button class="day-button '+(active?'active ':'')+(!open?'locked':'')+'" data-day="'+d+'" '+(!open?'disabled':'')+'><span class="day-line"><span class="day-number">Day '+String(d).padStart(2,'0')+'</span><span class="day-state">'+(open?'OPEN':'LOCKED')+'</span></span><span class="day-title">'+esc(meta?.title?.replace(/^.*?—\s*/,'')||'Content will unlock')+'</span></button>'}}html+='</div></div></aside>';return html;
 }
-
-function render() {
-  const index = state.index;
-  const day = state.days.get(state.activeDay);
-  const published = Number(index.published_through_day || state.days.size);
-  const progress = Math.round((published / 100) * 100);
-
-  app.innerHTML = `
-    <header class="topbar">
-      <div class="container nav">
-        <a class="brand" href="./" aria-label="AHK Academy home">
-          <span class="logo">AHK</span>
-          <span><strong>AHK Academy</strong><small>100-Day Data Analyst Business Trainer</small></span>
-        </a>
-        <nav class="nav-links" aria-label="Primary navigation">
-          <button id="learningNav" class="active">Learning Path</button>
-          <button id="practiceNav">AHK Practice Arena</button>
-          <button id="progressNav">Progress</button>
-        </nav>
-        <div class="nav-actions"><span class="avatar">AK</span></div>
-      </div>
-    </header>
-
-    <main id="main">
-      <section class="hero container">
-        <div class="hero-grid">
-          <article class="hero-main">
-            <span class="eyebrow">Business-first analyst training</span>
-            <h1>Learn analytics by <span>solving business requests.</span></h1>
-            <p>Structured daily training that moves from SQL foundations to advanced analysis, Excel, Power BI and Python. Every lesson teaches the concept first, then puts it into a realistic stakeholder situation.</p>
-            <div class="hero-actions">
-              <button class="primary-button" id="continueBtn">Continue Day ${state.activeDay} →</button>
-              <button class="secondary-button" id="jumpBtn">Explore curriculum</button>
-            </div>
-            <div class="hero-trust"><span>GitHub-sourced curriculum</span><span>Local learner progress</span><span>100-day progression</span></div>
-          </article>
-          <aside class="release-card">
-            <div class="release-line"><span>Current release</span><b>Day ${published} live</b></div>
-            <div><h2>${esc(day?.title || 'Loading curriculum')}</h2><p>${esc(day?.track || 'SQL')} learning track · ${day?.topics?.length || 0} topics · ${countQuestions(day)} business requests</p></div>
-            <div><div class="release-progress"><span style="width:${progress}%"></span></div><div class="release-foot"><span>100-day path</span><b>${published}% published</b></div></div>
-          </aside>
-        </div>
-      </section>
-
-      <section class="container metric-grid">
-        ${metric(published,'Published days','Available now')}
-        ${metric('5','Topics per day','Instructor-led')}
-        ${metric('15','Business questions','Per learning day')}
-        ${metric(solvedCount(),'Questions solved','Saved on this device')}
-      </section>
-
-      <section class="container workspace" id="learning">
-        <div class="content-card">
-          ${renderDayPicker(index)}
-          ${renderLesson(day)}
-        </div>
-      </section>
-
-      <section class="container arena-section" id="arena">
-        <div class="section-heading"><div><span class="eyebrow">Practice Workspace</span><h2>AHK Practice Arena</h2><p>Translate business requests into executable analysis.</p></div><span class="status-badge">LOCAL · READ ONLY</span></div>
-        <div class="arena-card">
-          <div class="arena-copy"><span class="engine-mark">SQL</span><h3>SQL Business Analysis Engine</h3><p>Run safe SELECT queries against the academy practice dataset without sending learner data to a server.</p></div>
-          <button class="primary-button" id="engineLaunch">Open SQL Arena</button>
-        </div>
-      </section>
-    </main>
-
-    <footer class="site-footer"><div class="container footer-inner"><div><strong>AHK Academy</strong><span>Business-first learning · GitHub-powered · local progress</span></div><div class="footer-actions"><a class="footer-link" href="https://github.com/AbuHumzaKhan/100day-of-learning-DA" target="_blank" rel="noopener">GitHub</a><button class="engine-launch" id="engineLaunch2"><span class="engine-dot"></span>SQL Engine</button></div></div></footer>
-
-    <div class="engine-drawer" id="engineDrawer" aria-hidden="true">
-      <div class="engine-head"><span class="engine-dot"></span><strong>AHK ACADEMY ENGINE MATRIX · SQL</strong><span class="engine-spacer"></span><span id="engineStatus">Ready</span><button class="engine-close" id="engineClose">×</button></div>
-      <div class="engine-body">
-        <div class="engine-context"><span id="engineContextLabel">LOCAL · READ ONLY · ORDERS DATASET</span><b>SELECT ONLY</b></div>
-        <div class="engine-tools" role="toolbar" aria-label="SQL Arena tools">
-          <button type="button" class="engine-tool active" id="engineQuestionBtn">Question</button>
-          <button type="button" class="engine-tool" id="engineTableBtn">Tbl</button>
-        </div>
-        <section class="engine-panel question-panel" id="engineQuestionPanel">
-          <div class="panel-kicker">CURRENT BUSINESS REQUEST</div>
-          <div class="panel-role" id="engineQuestionRole">Select a task</div>
-          <p id="engineQuestionScenario">Choose a business request to practice against the dataset.</p>
-          <div class="panel-request" id="engineQuestionRequest">No question selected.</div>
-          <div class="question-selector" id="engineQuestionSelector"></div>
-        </section>
-        <section class="engine-panel table-panel" id="engineTablePanel" hidden>
-          <div class="panel-kicker">TABLE EXPLORER</div>
-          <div class="table-title-row"><strong>orders</strong><span>8 practice columns · read only</span></div>
-          <div class="schema-grid" id="engineSchema"></div>
-          <div class="sample-label">SAMPLE ROWS</div>
-          <div class="table-scroll" id="engineTablePreview"></div>
-        </section>
-        <textarea id="sqlInput" spellcheck="false" placeholder="Write your SQL query here..."></textarea>
-        <div class="run-row"><button class="run-button" id="runSQL">▶ Run Query</button><span>Write the query yourself. No answer is pre-filled.</span></div>
-        <div id="sqlResult" class="result"><div class="empty">Run a query to inspect the result.</div></div>
-      </div>
-    </div>
-  `;
-
-  bindDayEvents();
-  bindArena();
+function renderLesson(d){
+ const topics=d.topics||[],active=state.activeTopic;
+ return '<div class="breadcrumb"><span>Learning Path</span><span>›</span><span>'+esc(d.track)+'</span><span>›</span><strong>Day '+d.day+'</strong></div><div class="lesson-hero"><span class="kicker">'+esc(d.track)+' · Day '+String(d.day).padStart(2,'0')+'</span><h1>'+esc(d.title)+'</h1><p>'+esc(d.description||d.learning_objectives?.[0]||'Build practical analytical capability through guided business learning.')+'</p><div class="hero-meta"><span class="meta-pill"><strong>5</strong> topics</span><span class="meta-pill"><strong>15</strong> business requests</span><span class="meta-pill"><strong>'+solvedForDay(d.day)+'</strong>/15 solved</span><span class="meta-pill">~'+(d.estimated_time_minutes||45)+' min</span></div></div><div class="learning-tabs"><button class="learning-tab active">Learn</button><button class="learning-tab" data-scroll="examples">Examples</button><button class="learning-tab" data-scroll="practice">Business Case</button></div><div class="lesson-layout"><aside class="lesson-plan panel"><div class="plan-card"><div class="plan-title">Lesson plan</div>'+topics.map((t,i)=>'<button class="plan-item '+(i===active?'active':'')+'" data-topic="'+i+'"><small>Topic '+(i+1)+'</small><strong>'+esc(t.title)+'</strong><span>'+((i+1)*5+1)+' min · '+(t.questions?.length||3)+' tasks</span></button>').join('')+'</div></aside><div id="topicArea">'+renderTopic(topics[active],active)+'</div></div><div class="daily-checkpoint"><div><h3>Day '+d.day+' learning checkpoint</h3><p id="checkpointText">'+solvedForDay(d.day)+'/15 business requests solved. Progress stays on this device.</p></div><button class="complete-day" id="completeDay" '+(solvedForDay(d.day)<15?'disabled':'')+'>Complete day</button></div>';
 }
-
-function renderDayPicker(index) {
-  return `<div class="academy-day-picker">
-    <div><span class="eyebrow">Learning path</span><strong>Day ${state.activeDay} of 100</strong></div>
-    <div class="academy-day-actions">
-      <button id="prevDay" ${state.activeDay <= 1 ? 'disabled' : ''}>←</button>
-      <select id="daySelect" aria-label="Select published learning day">${index.open_days.map(d => `<option value="${d}" ${d === state.activeDay ? 'selected' : ''}>Day ${d} · ${esc(index.days.find(x => x.day === d)?.title || '')}</option>`).join('')}</select>
-      <button id="nextDay" ${state.activeDay >= Number(index.published_through_day) ? 'disabled' : ''}>→</button>
-    </div>
-  </div>`;
+function renderTopic(t,index){
+ if(!t)return '';
+ const teaching=t.teaching||{};
+ const example=teaching.syntax||teaching.example_sql||teaching.example||'';
+ return '<article class="topic-card active"><button class="topic-toggle"><span class="topic-number">'+String(index+1).padStart(2,'0')+'</span><span class="topic-heading"><small>TOPIC '+(index+1)+'</small><strong>'+esc(t.title)+'</strong></span><span class="topic-chevron">⌄</span></button><div class="topic-content"><div class="teacher-grid"><div class="teacher-card"><span class="label">Why this matters</span><p>'+esc(teaching.purpose||teaching.business_context||'Understand the business purpose before writing the analysis.')+'</p></div><div class="teacher-card"><span class="label">How it works</span><p>'+esc(teaching.explanation||teaching.detailedlearning||teaching.explain||'Learn the technique, then apply it to a business request.')+'</p></div><div class="teacher-card"><span class="label">Analyst mindset</span><p>'+esc(teaching.expose||'Keep the business question, data grain, and expected output aligned.')+'</p></div><div class="teacher-card"><span class="label">Practice goal</span><p>'+esc(t.business_skill||'Translate the concept into a reproducible analytical result.')+'</p></div></div>'+(example?'<div class="example-box"><div class="example-head"><span>Worked example</span><button class="copy-button" data-copy="'+esc(example)+'">Copy</button></div><pre>'+esc(example)+'</pre></div>':'')+'<div class="business-list"><div class="section-label"><strong>Business requests</strong><span>3 tasks · solve without a pre-written answer</span></div>'+(t.questions||[]).map((q,i)=>renderQuestion(q,index,i)).join('')+'</div></div></article>';
 }
-
-function renderLesson(day) {
-  if (!day) return '<div class="empty">Curriculum unavailable.</div>';
-  const topics = Array.isArray(day.topics) ? day.topics : [];
-  return `
-    <header class="lesson-header">
-      <div><span class="eyebrow">${esc(day.track)} · DAY ${String(day.day).padStart(2,'0')}</span><h1>${esc(day.title)}</h1><p>${esc(day.description || day.learning_objectives?.[0] || 'Build practical analytical capability through guided business problems.')}</p></div>
-      <div class="lesson-progress"><span>5 topics</span><span>15 tasks</span></div>
-    </header>
-    <div id="topicList">
-      ${topics.map((topic, i) => renderTopic(topic, i)).join('')}
-    </div>
-    <div class="lesson-complete"><div><span class="eyebrow">Daily checkpoint</span><strong id="completionTitle">Day ${day.day} learning checkpoint</strong><small id="completionText"></small></div><button class="primary-button" id="completeDay" disabled>Complete day</button></div>`;
+function renderQuestion(q,topicIndex,questionIndex){
+ const key=taskKey(state.activeDay,topicIndex,questionIndex),status=state.taskState[key]||'not_started';
+ return '<article class="business-card '+(status==='solved'?'solved':'')+'" data-task="'+key+'"><div class="question-top"><span class="role">'+esc(q.role||'Senior Analyst')+'</span><span class="level">'+esc(q.difficulty||'Business task')+'</span></div><p class="scenario">'+esc(q.scenario||'')+'</p><p class="request">'+esc(q.request||q.question||'')+'</p><div class="deliverable">Deliverable: '+esc(Array.isArray(q.output)?q.output.join(' · '):(q.required_output||'Business-ready analytical result'))+'</div><div class="task-actions"><button class="task-btn task-hint">Hint</button><button class="task-btn primary task-solve">Solve in Practice</button><button class="task-btn done-button '+(status==='solved'?'done':'')+'">'+(status==='solved'?'Completed ✓':'Mark done')+'</button></div></article>';
 }
-
-function renderTopic(topic, index) {
-  const questions = Array.isArray(topic.questions) ? topic.questions : [];
-  const teaching = topic.teaching || {};
-  const steps = [
-    ['Purpose', teaching.purpose || 'Understand the analytical purpose of this technique.'],
-    ['How it works', teaching.explanation || teaching.business_context || 'Apply the technique to a business dataset and validate the output.']
-  ];
-  const example = teaching.syntax || teaching.example_sql || '';
-  return `
-    <article class="lesson-topic ${index === 0 ? 'open' : ''}">
-      <button class="topic-toggle" aria-expanded="${index === 0}">
-        <span class="topic-number">${String(index + 1).padStart(2,'0')}</span>
-        <span class="topic-title"><small>TOPIC ${index + 1}</small><strong>${esc(topic.title)}</strong></span>
-        <span class="topic-chevron">⌄</span>
-      </button>
-      <div class="topic-content">
-        <div class="lesson-flow">${steps.map((step, n) => `<div class="lesson-step"><span class="step-no">0${n+1}</span><div><small>${esc(step[0])}</small><p>${esc(step[1])}</p></div></div>`).join('')}</div>
-        ${example ? `<div class="example-card"><div class="example-head"><span>Business syntax / example</span><button class="copy-example" data-copy="${esc(example)}">Copy</button></div><pre>${esc(example)}</pre></div>` : ''}
-        <div class="question-stack"><div class="question-heading"><span>Business requests</span><small>${questions.length} stakeholder tasks</small></div>
-        ${questions.map((q, qi) => renderQuestion(q, index, qi)).join('')}</div>
-      </div>
-    </article>`;
+function renderRightRail(d){
+ const q=(d.topics?.[state.activeTopic]?.questions||[])[state.activeQuestion];
+ return '<aside class="right-rail"><section class="panel request-panel" id="businessCase"><div class="request-head"><h2>Business Request</h2><span class="request-count">Question '+(state.activeQuestion+1)+' of 3</span></div><div class="request-selector">'+(d.topics?.[state.activeTopic]?.questions||[]).map((x,i)=>'<button class="q-chip '+(i===state.activeQuestion?'active':'')+'" data-question="'+i+'">Q'+(i+1)+'</button>').join('')+'</div><span class="request-role">'+esc(q?.role||'Stakeholder')</span><h3>'+esc(q?.title||'Your business task')+'</h3><p>'+esc(q?.scenario||'')+'</p><div class="task-callout"><span>Your task</span><strong>'+esc(q?.request||q?.question||'Translate the request into an analytical result.')+'</strong></div></section>'+renderPractice(d,q)+'</aside>';
 }
-
-function renderQuestion(q, topicIndex, questionIndex) {
-  const key = taskKey(state.activeDay, topicIndex, questionIndex);
-  const status = readTasks()[key] || 'not_started';
-  return `
-    <article class="business-question ${status === 'solved' ? 'solved' : ''}" data-task-key="${key}" data-validation="${esc(q.validation || q.required_output || '')}">
-      <div class="question-meta"><span class="role">${esc(q.role || 'Senior Analyst')}</span><span class="difficulty">${esc(q.difficulty || 'Business')}</span></div>
-      <p class="scenario">${esc(q.scenario || '')}</p>
-      <p class="request">${esc(q.request || q.question || '')}</p>
-      <div class="question-footer"><span>Task: Write the SQL yourself · ${Array.isArray(q.output) ? q.output.length + " required fields" : "Business-ready result"}</span><span>${status === "solved" ? "Solved" : status === "attempted" ? "Attempted" : "Not started"}</span></div>
-      <div class="academy-task-actions"><button class="text-button task-hint">Hint</button><button class="secondary-button task-solve">Solve in Arena</button><button class="done-button ${status === 'solved' ? 'done' : ''}">${status === 'solved' ? 'Done ✓' : 'Mark done'}</button></div>
-    </article>`;
+function renderPractice(d,q){
+ return '<section class="panel practice-panel" id="practice"><div class="practice-header"><div class="practice-title"><span class="code-icon">&lt;/&gt;</span><div><h2>Practice Workspace</h2><span>Write the solution yourself · read-only dataset</span></div></div><select class="dataset-select" id="datasetSelect"><option>orders · 150 rows</option></select></div><div class="practice-tools"><button class="tool-tab active" data-tool="query">Write SQL</button><button class="tool-tab" data-tool="table">Tbl (Data)</button><button class="tool-tab" data-tool="question">Question</button></div><div class="practice-body"><div class="practice-pane active" data-pane="query"><textarea id="sqlEditor" class="sql-editor" spellcheck="false" placeholder="Write your SQL query here…"></textarea><div class="editor-actions"><button class="run-query" id="runQuery">▶ Run Query</button><button class="clear-query" id="clearQuery">Clear</button><button class="format-query" id="formatQuery">Format</button><span class="engine-state" id="engineState">Ready · answer not provided</span></div><div class="hint">No solution is pre-filled. Use the business request, inspect <b>Tbl (Data)</b>, and write your own query.</div><div class="results" id="results"><div class="results-empty">Run your query to see the result here.</div></div></div><div class="practice-pane" data-pane="table"><div class="schema-grid" id="schemaGrid"></div><div class="schema-table" id="sampleTable"></div></div><div class="practice-pane" data-pane="question"><div class="task-callout"><span>Current business request</span><strong id="questionText">'+esc(q?.request||'')+'</strong></div><p style="font-size:8px;color:#7a857e;line-height:1.6;margin:10px 0 0">Use this request as your analytical specification. Do not copy an answer; derive the query from the requirement.</p></div></div></section>';
 }
-
-function countQuestions(day) {
-  return day?.topics?.reduce((n,t) => n + (Array.isArray(t.questions) ? t.questions.length : 0), 0) || 0;
+function bind(){
+ $$('.day-button').forEach(b=>b.addEventListener('click',()=>loadDay(Number(b.dataset.day))));
+ $$('.plan-item').forEach(b=>b.addEventListener('click',()=>{state.activeTopic=Number(b.dataset.topic);state.activeQuestion=0;render();document.querySelector('#topicArea')?.scrollIntoView({behavior:'smooth',block:'start'})}));
+ $$('.q-chip').forEach(b=>b.addEventListener('click',()=>{state.activeQuestion=Number(b.dataset.question);renderRightRailOnly()}));
+ $$('.task-solve').forEach(b=>b.addEventListener('click',()=>{const card=b.closest('[data-task]');state.taskState[card.dataset.task]='attempted';saveTaskState();openPractice();}));
+ $$('.task-hint').forEach(b=>b.addEventListener('click',()=>{const card=b.closest('[data-task]');const q=findQuestionByKey(card.dataset.task);toast('Hint: '+(q?.validation||'Translate the business request into the fields, filters, and calculations it requires.'))}));
+ $$('.done-button').forEach(b=>b.addEventListener('click',()=>{const card=b.closest('[data-task]');const current=state.taskState[card.dataset.task];state.taskState[card.dataset.task]=current==='solved'?'not_started':'solved';saveTaskState();render()}));
+ $('#completeDay')?.addEventListener('click',()=>{localStorage.setItem('ahk_completed_day_'+state.activeDay,'true');toast('Day '+state.activeDay+' completed locally.');});
+ $$('.topic-toggle').forEach(b=>b.addEventListener('click',()=>b.closest('.topic-card').classList.toggle('active')));
+ $$('.copy-button').forEach(b=>b.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(b.dataset.copy||'');b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1000)}catch{}}));
+ $$('.tool-tab').forEach(b=>b.addEventListener('click',()=>switchPracticeTool(b.dataset.tool)));
+ $$('[data-scroll]').forEach(b=>b.addEventListener('click',()=>document.getElementById(b.dataset.scroll)?.scrollIntoView({behavior:'smooth',block:'start'})));
+ $('#runQuery')?.addEventListener('click',runQuery);
+ $('#clearQuery')?.addEventListener('click',()=>{$('#sqlEditor').value='';$('#results').innerHTML='<div class="results-empty">Editor cleared. Write your own query.</div>'});
+ $('#formatQuery')?.addEventListener('click',()=>{$('#sqlEditor').value=basicFormat($('#sqlEditor').value)});
+ bindSearch();
+ renderSchema();
 }
-
-function taskKey(day, topic, question) { return day + ':' + topic + ':' + question; }
-function readTasks() { try { return JSON.parse(localStorage.getItem('ahk_task_status_v4') || '{}'); } catch { return {}; } }
-function writeTasks(data) { localStorage.setItem('ahk_task_status_v4', JSON.stringify(data)); }
-function solvedCount() { return Object.values(readTasks()).filter(v => v === 'solved').length; }
-
-function bindDayEvents() {
-  document.querySelector('#daySelect')?.addEventListener('change', e => goDay(Number(e.target.value)));
-  document.querySelector('#prevDay')?.addEventListener('click', () => goDay(state.activeDay - 1));
-  document.querySelector('#nextDay')?.addEventListener('click', () => goDay(state.activeDay + 1));
-  document.querySelector('#continueBtn')?.addEventListener('click', () => document.querySelector('#learning')?.scrollIntoView({behavior:'smooth'}));
-  document.querySelector('#jumpBtn')?.addEventListener('click', () => document.querySelector('#learning')?.scrollIntoView({behavior:'smooth'}));
-
-  document.querySelectorAll('.topic-toggle').forEach(button => {
-    button.addEventListener('click', () => {
-      const topic = button.closest('.lesson-topic');
-      const open = topic.classList.toggle('open');
-      button.setAttribute('aria-expanded', String(open));
-    });
-  });
-
-  document.querySelectorAll('.copy-example').forEach(button => {
-    button.addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(button.dataset.copy || ''); button.textContent = 'Copied'; setTimeout(() => button.textContent = 'Copy', 1200); } catch {}
-    });
-  });
-
-  document.querySelectorAll('.task-hint').forEach(button => button.addEventListener('click', () => {
-    const card = button.closest('.business-question');
-    toast('Hint: ' + (card.dataset.validation || 'Translate the stakeholder request into the required analytical output.').slice(0, 220));
-  }));
-
-  document.querySelectorAll('.task-solve').forEach(button => button.addEventListener('click', () => {
-    const card = button.closest('.business-question');
-    setTask(card.dataset.taskKey, 'attempted');
-    openArena(card.querySelector('.request')?.textContent || '');
-  }));
-
-  document.querySelectorAll('.done-button').forEach(button => button.addEventListener('click', () => {
-    const card = button.closest('.business-question');
-    const solved = readTasks()[card.dataset.taskKey] === 'solved';
-    setTask(card.dataset.taskKey, solved ? 'not_started' : 'solved');
-    render();
-  }));
-
-  updateCompletion();
+function renderRightRailOnly(){
+ const old=$('.right-rail'),newHTML=renderRightRail(state.day);old.outerHTML=newHTML;bindPracticeOnly();renderSchema();
 }
-
-function setTask(key, status) {
-  const data = readTasks();
-  data[key] = status;
-  writeTasks(data);
+function bindPracticeOnly(){
+ $$('.q-chip').forEach(b=>b.addEventListener('click',()=>{state.activeQuestion=Number(b.dataset.question);renderRightRailOnly()}));
+ $$('.tool-tab').forEach(b=>b.addEventListener('click',()=>switchPracticeTool(b.dataset.tool)));
+ $('#runQuery')?.addEventListener('click',runQuery);$('#clearQuery')?.addEventListener('click',()=>{$('#sqlEditor').value='';$('#results').innerHTML='<div class="results-empty">Editor cleared. Write your own query.</div>'});$('#formatQuery')?.addEventListener('click',()=>{$('#sqlEditor').value=basicFormat($('#sqlEditor').value)});
 }
-
-function updateCompletion() {
-  const day = state.activeDay;
-  const solved = Object.entries(readTasks()).filter(([key, value]) => key.startsWith(day + ':') && value === 'solved').length;
-  const text = document.querySelector('#completionText');
-  const button = document.querySelector('#completeDay');
-  if (text) text.textContent = solved + '/15 completed · Progress is stored locally on this device.';
-  if (button) button.disabled = solved < 15;
-  button?.addEventListener('click', () => {
-    localStorage.setItem('ahk_completed_day_' + day, 'true');
-    toast('Day ' + day + ' completed. Continue when the next day is published.');
-  }, {once:true});
+function switchPracticeTool(tool){$$('.tool-tab').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));$$('.practice-pane').forEach(p=>p.classList.toggle('active',p.dataset.pane===tool))}
+function openPractice(){document.querySelector('#practice')?.scrollIntoView({behavior:'smooth',block:'start'});switchPracticeTool('query');setTimeout(()=>$('#sqlEditor')?.focus(),250)}
+function findQuestionByKey(key){const [,ti,qi]=key.split(':').map(Number);return state.day?.topics?.[ti]?.questions?.[qi]}
+function updateProgressUI(solved,total){const fill=$('.program-progress .progress-fill');if(fill)fill.style.width=Math.min(100,(state.activeDay/100)*100)+'%';const text=$('#checkpointText');if(text)text.textContent=solved+'/'+total+' business requests solved. Progress stays on this device.'}
+function bindSearch(){const input=$('#globalSearch');if(!input)return;input.addEventListener('input',e=>{const q=e.target.value.toLowerCase().trim();$$('.day-button').forEach(b=>b.style.display=!q||b.textContent.toLowerCase().includes(q)?'block':'none')});document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();input.focus()}})}
+function basicFormat(sql){return String(sql||'').replace(/\s+/g,' ').replace(/\s+(FROM|WHERE|GROUP BY|ORDER BY|HAVING|LIMIT)\s+/gi,'\\n$1 ').replace(/,/g,', ')}
+async function ensureSQLEngine(){
+ if(state.sqlReady)return state.sqlEngine;
+ state.sqlEngine=new SQLEngine();
+ $('#engineState').textContent='Starting local SQL engine…';
+ await state.sqlEngine.init();
+ state.sqlReady=true;
+ return state.sqlEngine;
 }
-
-function goDay(day) {
-  if (!state.index?.open_days?.includes(day)) {
-    toast('Day ' + day + ' is not published yet.');
-    return;
-  }
-  state.activeDay = day;
-  localStorage.setItem('ahk_active_day_v4', String(day));
-  render();
-  window.scrollTo({top:0, behavior:'smooth'});
+async function runQuery(){
+ const input=$('#sqlEditor'),out=$('#results'),status=$('#engineState');if(!input||!out)return;
+ const sql=input.value.trim();if(!sql){out.innerHTML='<div class="results-empty">Write a SQL query first.</div>';return}
+ status.textContent='Executing…';out.innerHTML='<div class="results-empty">Running your query locally…</div>';
+ try{
+  const engine=await ensureSQLEngine();const r=await engine.run(sql);status.textContent=r.elapsed+' ms · '+r.rows.length+' rows';
+  if(!r.rows.length){out.innerHTML='<div class="results-empty">Query executed successfully but returned no rows.</div>';return}
+  out.innerHTML='<div class="results-meta">'+r.rows.length+' row(s) returned · local execution</div><table><thead><tr>'+r.columns.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+r.rows.map(row=>'<tr>'+r.columns.map(c=>'<td>'+esc(row[c])+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+ }catch(e){status.textContent='Ready · query needs attention';out.innerHTML='<div class="results-empty error">'+esc(e.message)+'</div>'}
 }
-
-function hydrateTaskState() {
-  // Question status is read from localStorage during render; this lifecycle hook is intentionally safe.
+async function renderSchema(){
+ const schemaGrid=$('#schemaGrid'),sample=$('#sampleTable');if(!schemaGrid||!sample)return;
+ try{
+  const s=await getJSON('datasets/orders/schema.json');schemaGrid.innerHTML=s.columns.map(([name,type])=>'<div class="schema-item"><strong>'+esc(name)+'</strong><span>'+esc(type)+'</span></div>').join('');
+  const data=await getJSON('datasets/orders/data.csv');const rows=parseCSV(data);sample.innerHTML='<table><thead><tr>'+rows.headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.rows.slice(0,8).map(r=>'<tr>'+r.map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+ }catch(e){schemaGrid.innerHTML='<div class="results-empty error">Dataset metadata unavailable.</div>'}
 }
-
-function bindArena() {
-  const drawer = document.querySelector('#engineDrawer');
-  const open = () => {
-    drawer?.classList.add('open');
-    drawer?.setAttribute('aria-hidden','false');
-    document.body.classList.add('modal-open');
-    initEngineWorkspace();
-  };
-  const close = () => {
-    drawer?.classList.remove('open');
-    drawer?.setAttribute('aria-hidden','true');
-    document.body.classList.remove('modal-open');
-  };
-  document.querySelector('#engineLaunch')?.addEventListener('click', open);
-  document.querySelector('#engineLaunch2')?.addEventListener('click', open);
-  document.querySelector('#engineClose')?.addEventListener('click', close);
-  document.querySelector('#runSQL')?.addEventListener('click', runSQL);
-  document.querySelector('#engineQuestionBtn')?.addEventListener('click', () => switchEnginePanel('question'));
-  document.querySelector('#engineTableBtn')?.addEventListener('click', () => switchEnginePanel('table'));
-  initEngineWorkspace();
-  window.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+function parseCSV(text){
+ const lines=text.replace(/^\uFEFF/,'').trim().split(/\r?\n/);if(!lines.length)return{headers:[],rows:[]};
+ const parse=line=>{const out=[];let cur='',quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(quoted&&line[i+1]==='"'){cur+='"';i++}else quoted=!quoted}else if(ch===','&&!quoted){out.push(cur);cur=''}else cur+=ch}out.push(cur);return out};const headers=parse(lines.shift());return{headers,rows:lines.map(parse)};
 }
-
-function switchEnginePanel(panel) {
-  const question = document.querySelector('#engineQuestionPanel');
-  const table = document.querySelector('#engineTablePanel');
-  const qBtn = document.querySelector('#engineQuestionBtn');
-  const tBtn = document.querySelector('#engineTableBtn');
-  const showQuestion = panel === 'question';
-  if (question) question.hidden = !showQuestion;
-  if (table) table.hidden = showQuestion;
-  qBtn?.classList.toggle('active', showQuestion);
-  tBtn?.classList.toggle('active', !showQuestion);
+async function boot(){
+ try{
+  state.manifest=await getJSON('manifest.json');state.index=await getJSON('curriculum/index.json');
+  const pub=publishedDays(),hash=location.hash.match(/day-(\d+)/),wanted=hash?Number(hash[1]):Number(localStorage.getItem('ahk_active_day_v5')||pub||1);
+  await loadDay(Math.min(Math.max(1,wanted),pub));
+ }catch(e){renderFatal(e)}
 }
-
-function initEngineWorkspace() {
-  const questionSelector = document.querySelector('#engineQuestionSelector');
-  const questions = [];
-  const day = state.days.get(state.activeDay);
-  (day?.topics || []).forEach((topic, topicIndex) => {
-    (topic.questions || []).forEach((q, questionIndex) => {
-      questions.push({ ...q, topicTitle: topic.title, topicIndex, questionIndex });
-    });
-  });
-
-  if (!questions.length) {
-    if (questionSelector) questionSelector.innerHTML = '<span class="empty">No business questions are published for this day.</span>';
-    renderEngineTable();
-    return;
-  }
-
-  if (questionSelector && !questionSelector.dataset.bound) {
-    questionSelector.innerHTML = questions.map((q, i) =>
-      '<button type="button" class="engine-question-chip" data-question-index="' + i + '">' +
-      '<span>' + String(i + 1).padStart(2,'0') + '</span>' + esc(q.role || 'Analyst') +
-      '</button>'
-    ).join('');
-    questionSelector.dataset.bound = 'true';
-    questionSelector.querySelectorAll('.engine-question-chip').forEach(button => {
-      button.addEventListener('click', () => selectEngineQuestion(questions[Number(button.dataset.questionIndex)], button));
-    });
-  }
-  selectEngineQuestion(questions[0], questionSelector.querySelector('.engine-question-chip'));
-  renderEngineTable();
-}
-
-function selectEngineQuestion(question, button) {
-  document.querySelectorAll('.engine-question-chip').forEach(el => el.classList.remove('selected'));
-  button?.classList.add('selected');
-
-  const role = document.querySelector('#engineQuestionRole');
-  const scenario = document.querySelector('#engineQuestionScenario');
-  const request = document.querySelector('#engineQuestionRequest');
-  if (role) role.textContent = (question.role || 'Senior Analyst') + ' · ' + (question.topicTitle || 'Business Analysis');
-  if (scenario) scenario.textContent = question.scenario || '';
-  if (request) request.textContent = question.request || question.question || 'Translate the business request into SQL.';
-  const input = document.querySelector('#sqlInput');
-  if (input) {
-    input.value = '';
-    input.dataset.businessRequest = question.request || question.question || '';
-  }
-}
-
-function renderEngineTable() {
-  const schema = document.querySelector('#engineSchema');
-  const preview = document.querySelector('#engineTablePreview');
-  if (!schema || !preview) return;
-
-  const columns = [
-    ['order_id','TEXT'],['customer_name','TEXT'],['category','TEXT'],['region','TEXT'],
-    ['sales','NUMBER'],['profit','NUMBER'],['quantity','NUMBER']
-  ];
-  schema.innerHTML = columns.map(([name,type]) =>
-    '<div class="schema-item"><strong>' + name + '</strong><span>' + type + '</span></div>'
-  ).join('');
-
-  const sampleRows = orders.slice(0, 5);
-  preview.innerHTML =
-    '<table><thead><tr>' + columns.map(([name]) => '<th>' + name + '</th>').join('') + '</tr></thead><tbody>' +
-    sampleRows.map(row => '<tr>' + columns.map(([name]) => '<td>' + esc(row[name]) + '</td>').join('') + '</tr>').join('') +
-    '</tbody></table>';
-}
-
-function openArena(request) {
-  const drawer = document.querySelector('#engineDrawer');
-  if (!drawer) return;
-  drawer.classList.add('open');
-  drawer.setAttribute('aria-hidden','false');
-  document.body.classList.add('modal-open');
-  initEngineWorkspace();
-
-  if (request) {
-    const input = document.querySelector('#sqlInput');
-    if (input) {
-      input.value = '';
-      input.dataset.businessRequest = request;
-      input.focus({preventScroll:true});
-    }
-  }
-}
-
-function runSQL() {
-  const result = document.querySelector('#sqlResult');
-  try {
-    const output = engine.run('sql', {sql: document.querySelector('#sqlInput')?.value || ''});
-    if (!output.rows.length) { result.innerHTML = '<div class="empty">Query returned no rows.</div>'; return; }
-    result.innerHTML = '<div class="result-meta">' + output.rows.length + ' row(s) returned</div><table><thead><tr>' + output.columns.map(c => '<th>' + esc(c) + '</th>').join('') + '</tr></thead><tbody>' + output.rows.map(row => '<tr>' + output.columns.map(c => '<td>' + esc(row[c]) + '</td>').join('') + '</tr>').join('') + '</tbody></table>';
-  } catch (error) {
-    result.innerHTML = '<div class="empty error">' + esc(error.message) + '</div>';
-  }
-}
-
-function bindGlobalEvents() {
-  document.querySelector('#practiceNav')?.addEventListener('click', () => document.querySelector('#arena')?.scrollIntoView({behavior:'smooth'}));
-  document.querySelector('#progressNav')?.addEventListener('click', () => toast(solvedCount() + ' business questions solved on this device.'));
-}
-
-function toast(message) {
-  const old = document.querySelector('.academy-ux-toast'); old?.remove();
-  const el = document.createElement('div'); el.className = 'academy-ux-toast'; el.textContent = message; document.body.appendChild(el);
-  setTimeout(() => el.remove(), 2300);
-}
-
 boot();
