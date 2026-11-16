@@ -737,3 +737,46 @@ loadCurriculum()
   });
   observe();
 })();
+
+
+
+(function completionUX(){
+  const store='ahk_task_status_v4';
+  const read=()=>{try{return JSON.parse(localStorage.getItem(store)||'{}')}catch{return {}}};
+  function sync(){
+    const root=document.querySelector('#content');
+    if(!root)return;
+    const day=Number(window.__AHK_ACTIVE_DAY__||1);
+    const data=read();
+    let solved=0;
+    root.querySelectorAll('.lesson-topic').forEach((topic,ti)=>{
+      topic.querySelectorAll('.business-question').forEach((card,qi)=>{
+        const key=day+':'+ti+':'+qi;
+        const status=data[key]||'not_started';
+        if(status==='solved')solved++;
+        const done=card.querySelector('.done-button');
+        if(done){
+          done.classList.toggle('done',status==='solved');
+          done.textContent=status==='solved'?'Done ✓':'Mark done';
+        }
+        let chip=card.querySelector('.academy-status-chip');
+        if(!chip){
+          chip=document.createElement('span');
+          chip.className='academy-status-chip';
+          card.querySelector('.task-label')?.appendChild(chip);
+        }
+        chip.textContent=status==='solved'?'Solved':status==='attempted'?'Attempted':'Not started';
+        chip.dataset.status=status;
+      });
+    });
+    const complete=root.querySelector('#complete-day');
+    if(complete){
+      complete.disabled=solved<15;
+      const small=root.querySelector('.lesson-complete small');
+      if(small)small.textContent=solved+'/15 completed · Complete all 15 business tasks to close the day.';
+    }
+  }
+  const observer=new MutationObserver(sync);
+  observer.observe(document.body,{childList:true,subtree:true});
+  sync();
+})();
