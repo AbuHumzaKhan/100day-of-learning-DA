@@ -1,0 +1,294 @@
+{
+  "day": 11,
+  "track": "SQL",
+  "title": "SQL Day 11 — Multi-Step CTE Analysis & Reusable Business Logic",
+  "description": "Turn complex business requests into readable SQL pipelines by chaining CTEs, separating calculation layers, and combining multiple intermediate datasets into one decision-ready result.",
+  "dataset_refs": [
+    "orders",
+    "customers",
+    "product-catalog"
+  ],
+  "topics": [
+    {
+      "id": "sql-d11-t1",
+      "sequence": 1,
+      "title": "Chained CTEs — Build an Analysis Pipeline",
+      "business_skill": "Break a business request into sequential named transformations that can be tested and reused.",
+      "teaching": {
+        "teacher": "## Chained CTEs\nA query can define multiple CTEs separated by commas. Each CTE can reference earlier CTEs, creating a readable analysis pipeline.",
+        "explain": "Use one CTE for each meaningful business transformation: for example, calculate customer sales first, then classify those customers, then summarize the classifications.",
+        "detailedlearning": "Design the grain of every CTE before writing SQL. Give each layer one responsibility and reference earlier layers by name instead of repeating the same calculation.",
+        "expose": "A long query becomes easier to validate when intermediate business logic has explicit names such as customer_sales, customer_segment, or regional_summary.",
+        "example": "WITH customer_sales AS (SELECT customer_name,SUM(sales) AS total_sales FROM orders GROUP BY customer_name), customer_class AS (SELECT customer_name,total_sales,CASE WHEN total_sales>=5000 THEN 'High Value' ELSE 'Standard' END AS value_class FROM customer_sales) SELECT value_class,COUNT(*) AS customers,SUM(total_sales) AS sales FROM customer_class GROUP BY value_class;",
+        "business_question": "The customer director wants customers classified by total sales and then summarized by value class.",
+        "expected_sql": "WITH customer_sales AS (SELECT customer_name,SUM(sales) AS total_sales FROM orders GROUP BY customer_name), customer_class AS (SELECT customer_name,total_sales,CASE WHEN total_sales>=5000 THEN 'High Value' ELSE 'Standard' END AS value_class FROM customer_sales) SELECT value_class,COUNT(*) AS customers,SUM(total_sales) AS sales FROM customer_class GROUP BY value_class;"
+      },
+      "questions": [
+        {
+          "id": "sql-d11-t1-q1",
+          "difficulty": "Basic",
+          "role": "Customer Manager",
+          "scenario": "Management wants a customer-level sales table followed by a simple customer classification.",
+          "request": "Build one CTE for total customer sales and a second CTE that labels customers as High Value when total sales are at least 5000. Return customer name, total sales, and value class.",
+          "output": [
+            "customer_name",
+            "total_sales",
+            "value_class"
+          ],
+          "validation": "Two chained CTEs with CASE classification"
+        },
+        {
+          "id": "sql-d11-t1-q2",
+          "difficulty": "Medium",
+          "role": "Sales Director",
+          "scenario": "Leadership wants to understand how much revenue comes from the customer classes.",
+          "request": "Using chained CTEs, classify customers by total sales and return customer count and total sales for each class.",
+          "output": [
+            "value_class",
+            "customers",
+            "total_sales"
+          ],
+          "validation": "Customer aggregation CTE followed by classification and grouped summary"
+        },
+        {
+          "id": "sql-d11-t1-q3",
+          "difficulty": "Intermediate",
+          "role": "Senior Analyst",
+          "scenario": "The executive review needs the top customer class by revenue contribution.",
+          "request": "Build customer-level sales and classification layers, then return the value class with the highest total sales.",
+          "output": [
+            "value_class",
+            "total_sales"
+          ],
+          "validation": "Chained CTEs plus final ORDER BY/LIMIT or equivalent"
+        }
+      ]
+    },
+    {
+      "id": "sql-d11-t2",
+      "sequence": 2,
+      "title": "CTE + JOIN — Combine Prepared Business Layers",
+      "business_skill": "Prepare an aggregated dataset in a CTE and join it to master data for business context.",
+      "teaching": {
+        "teacher": "## CTE plus JOIN\nA CTE can create a clean analytical layer before it is joined to another table. This separates metric calculation from descriptive attributes.",
+        "explain": "For example, calculate customer sales from orders in one CTE and then join that result to the customer master to add segment or region.",
+        "detailedlearning": "Aggregate the transactional table at the required grain before joining when the business question asks for one row per customer. This prevents accidental duplication.",
+        "expose": "The join should enrich a prepared metric, not silently change its grain. Validate row counts and keys after the join.",
+        "example": "WITH customer_sales AS (SELECT customer_name,SUM(sales) AS total_sales FROM orders GROUP BY customer_name) SELECT c.customer_name,c.segment,cs.total_sales FROM customers c JOIN customer_sales cs ON c.customer_name=cs.customer_name;",
+        "business_question": "Customer leadership wants sales totals enriched with customer segment.",
+        "expected_sql": "WITH customer_sales AS (SELECT customer_name,SUM(sales) AS total_sales FROM orders GROUP BY customer_name) SELECT c.customer_name,c.segment,cs.total_sales FROM customers c JOIN customer_sales cs ON c.customer_name=cs.customer_name;"
+      },
+      "questions": [
+        {
+          "id": "sql-d11-t2-q1",
+          "difficulty": "Basic",
+          "role": "Customer Director",
+          "scenario": "The director wants customer sales totals with the segment stored in the customer master.",
+          "request": "Create a customer-sales CTE and join it to customers to return customer name, segment, and total sales.",
+          "output": [
+            "customer_name",
+            "segment",
+            "total_sales"
+          ],
+          "validation": "CTE aggregation joined to customers"
+        },
+        {
+          "id": "sql-d11-t2-q2",
+          "difficulty": "Medium",
+          "role": "Regional Manager",
+          "scenario": "Management wants customer performance grouped by the customer's master-data region.",
+          "request": "Calculate customer sales in a CTE, join to customers, and return total sales by customer region.",
+          "output": [
+            "region",
+            "total_sales"
+          ],
+          "validation": "CTE + customer join + GROUP BY region"
+        },
+        {
+          "id": "sql-d11-t2-q3",
+          "difficulty": "Advanced",
+          "role": "Senior Analyst",
+          "scenario": "The commercial team wants to compare customer segment performance without recalculating transaction-level sales in the final query.",
+          "request": "Prepare customer totals in a CTE, enrich them with segment, and return customer count, average customer sales, and total sales by segment.",
+          "output": [
+            "segment",
+            "customer_count",
+            "avg_customer_sales",
+            "total_sales"
+          ],
+          "validation": "Prepared customer grain + JOIN + second-level aggregation"
+        }
+      ]
+    },
+    {
+      "id": "sql-d11-t3",
+      "sequence": 3,
+      "title": "CTE Benchmarks — Compare Business Groups to an Overall Benchmark",
+      "business_skill": "Create a grouped KPI layer and compare each group against a benchmark calculated from that layer.",
+      "teaching": {
+        "teacher": "## CTE benchmark pattern\nFirst calculate the business metric at the required grain. Then calculate a benchmark from that prepared result and compare each group against it.",
+        "explain": "This avoids averaging raw transactions when the business actually wants an average of group totals.",
+        "detailedlearning": "Keep the metric grain explicit: region-level, category-level, or customer-level. Use a second CTE for the benchmark so the final comparison is readable.",
+        "expose": "The benchmark must be calculated from the same grain as the values being compared.",
+        "example": "WITH regional_sales AS (SELECT region,SUM(sales) AS total_sales FROM orders GROUP BY region), benchmark AS (SELECT AVG(total_sales) AS avg_region_sales FROM regional_sales) SELECT r.region,r.total_sales,b.avg_region_sales FROM regional_sales r CROSS JOIN benchmark b WHERE r.total_sales>b.avg_region_sales;",
+        "business_question": "The director wants regions whose sales exceed the average regional sales total.",
+        "expected_sql": "WITH regional_sales AS (SELECT region,SUM(sales) AS total_sales FROM orders GROUP BY region), benchmark AS (SELECT AVG(total_sales) AS avg_region_sales FROM regional_sales) SELECT r.region,r.total_sales,b.avg_region_sales FROM regional_sales r CROSS JOIN benchmark b WHERE r.total_sales>b.avg_region_sales;"
+      },
+      "questions": [
+        {
+          "id": "sql-d11-t3-q1",
+          "difficulty": "Basic",
+          "role": "Regional Director",
+          "scenario": "Leadership wants only regions performing above the average regional sales total.",
+          "request": "Create a regional sales CTE and a benchmark CTE, then return regions above the benchmark.",
+          "output": [
+            "region",
+            "total_sales",
+            "avg_region_sales"
+          ],
+          "validation": "Regional aggregation CTE + benchmark CTE + comparison"
+        },
+        {
+          "id": "sql-d11-t3-q2",
+          "difficulty": "Medium",
+          "role": "Finance Manager",
+          "scenario": "Finance wants categories whose total profit is stronger than the average category profit.",
+          "request": "Prepare category profit totals, calculate the average category profit from that prepared dataset, and return categories above it.",
+          "output": [
+            "category",
+            "total_profit",
+            "avg_category_profit"
+          ],
+          "validation": "Category aggregation + benchmark from category grain"
+        },
+        {
+          "id": "sql-d11-t3-q3",
+          "difficulty": "Advanced",
+          "role": "Senior Analyst",
+          "scenario": "The executive report needs to identify customers whose sales exceed the average customer total and show the gap.",
+          "request": "Build customer totals, calculate the average customer total, and return customers above the benchmark with their sales and amount above average.",
+          "output": [
+            "customer_name",
+            "total_sales",
+            "avg_customer_sales",
+            "above_average_amount"
+          ],
+          "validation": "Customer CTE + benchmark CTE + derived comparison metric"
+        }
+      ]
+    },
+    {
+      "id": "sql-d11-t4",
+      "sequence": 4,
+      "title": "Multiple Analytical Layers — From Transaction Data to Decision KPI",
+      "business_skill": "Translate a multi-step stakeholder request into separate data-preparation, classification, and KPI layers.",
+      "teaching": {
+        "teacher": "## Multi-layer SQL\nA production analytical query often has several logical stages: clean or aggregate the base data, add business classifications, then summarize the resulting population.",
+        "explain": "The goal is not to make SQL longer. The goal is to make each business transformation independently understandable and testable.",
+        "detailedlearning": "Write the business steps in plain language first, then map each step to a CTE. Avoid mixing transaction-level and summary-level logic unless the grain is intentional.",
+        "expose": "This pattern is the bridge from ad-hoc SQL to maintainable analytical SQL used in reporting and BI pipelines.",
+        "example": "WITH product_sales AS (SELECT product_name,category,SUM(sales) AS total_sales,SUM(profit) AS total_profit FROM orders GROUP BY product_name,category), product_status AS (SELECT product_name,category,total_sales,total_profit,CASE WHEN total_profit<0 THEN 'Loss' WHEN total_profit/NULLIF(total_sales,0)<0.10 THEN 'Low Margin' ELSE 'Healthy' END AS status FROM product_sales) SELECT category,status,COUNT(*) AS products,SUM(total_sales) AS sales FROM product_status GROUP BY category,status;",
+        "business_question": "Product leadership wants products classified by profitability and summarized by category.",
+        "expected_sql": "Build a product-level CTE, classify each product by profit/margin, then summarize products and sales by category and status."
+      },
+      "questions": [
+        {
+          "id": "sql-d11-t4-q1",
+          "difficulty": "Basic",
+          "role": "Product Manager",
+          "scenario": "Product leadership wants a portfolio view showing which products are loss-making.",
+          "request": "Create a product-level sales and profit CTE, classify products as Loss when total profit is below zero, and return product name and status.",
+          "output": [
+            "product_name",
+            "status"
+          ],
+          "validation": "Product aggregation CTE + CASE classification"
+        },
+        {
+          "id": "sql-d11-t4-q2",
+          "difficulty": "Medium",
+          "role": "Commercial Manager",
+          "scenario": "Management wants to separate products with healthy margins from products that need attention.",
+          "request": "At product level, calculate total sales and total profit, classify products as Loss, Low Margin when profit margin is below 10%, or Healthy otherwise, then summarize product count by status.",
+          "output": [
+            "status",
+            "product_count"
+          ],
+          "validation": "Multi-layer product classification + grouped summary"
+        },
+        {
+          "id": "sql-d11-t4-q3",
+          "difficulty": "Advanced",
+          "role": "Senior Analyst",
+          "scenario": "The executive team wants to know where low-margin products are concentrated.",
+          "request": "Build product-level profitability layers and return category, status, product count, and sales for each category-status combination, sorted by sales descending.",
+          "output": [
+            "category",
+            "status",
+            "product_count",
+            "sales"
+          ],
+          "validation": "Multi-layer CTE + category/status KPI summary + ORDER BY"
+        }
+      ]
+    },
+    {
+      "id": "sql-d11-t5",
+      "sequence": 5,
+      "title": "Refactoring Complex SQL — Replace Repeated Logic with CTEs",
+      "business_skill": "Improve analytical SQL maintainability by eliminating duplicated subqueries and giving repeated business calculations one definition.",
+      "teaching": {
+        "teacher": "## SQL refactoring with CTEs\nWhen the same calculation appears multiple times, a CTE can define it once and let several later steps reference it.",
+        "explain": "Refactoring is an analytical engineering skill: the result should remain correct while the query becomes easier to read, test, and modify.",
+        "detailedlearning": "Identify repeated logic, extract it into a named CTE, then build the final query from that shared layer. Preserve the original business grain.",
+        "expose": "Readable SQL reduces maintenance risk when a KPI definition changes. One named metric layer is easier to update than several copied expressions.",
+        "example": "WITH category_kpi AS (SELECT category,SUM(sales) AS total_sales,SUM(profit) AS total_profit FROM orders GROUP BY category) SELECT category,total_sales,total_profit,total_profit/NULLIF(total_sales,0) AS profit_margin FROM category_kpi ORDER BY profit_margin DESC;",
+        "business_question": "Finance wants one reusable category KPI layer containing sales, profit, and margin.",
+        "expected_sql": "WITH category_kpi AS (SELECT category,SUM(sales) AS total_sales,SUM(profit) AS total_profit FROM orders GROUP BY category) SELECT category,total_sales,total_profit,total_profit/NULLIF(total_sales,0) AS profit_margin FROM category_kpi ORDER BY profit_margin DESC;"
+      },
+      "questions": [
+        {
+          "id": "sql-d11-t5-q1",
+          "difficulty": "Basic",
+          "role": "Finance Analyst",
+          "scenario": "Finance currently calculates category sales and profit in separate query blocks.",
+          "request": "Refactor the analysis into one category KPI CTE and return category, total sales, total profit, and profit margin.",
+          "output": [
+            "category",
+            "total_sales",
+            "total_profit",
+            "profit_margin"
+          ],
+          "validation": "Single reusable category KPI CTE"
+        },
+        {
+          "id": "sql-d11-t5-q2",
+          "difficulty": "Medium",
+          "role": "BI Developer",
+          "scenario": "A report uses the same customer sales calculation for both customer-level output and segment summaries.",
+          "request": "Create one customer-sales CTE and use it to return both customer totals with segment and segment-level total sales.",
+          "output": [
+            "customer_name",
+            "segment",
+            "total_sales"
+          ],
+          "validation": "Reusable customer KPI layer referenced downstream"
+        },
+        {
+          "id": "sql-d11-t5-q3",
+          "difficulty": "Advanced",
+          "role": "Senior Analyst",
+          "scenario": "The CFO wants a maintainable category profitability query that can later be reused for threshold analysis.",
+          "request": "Create one category KPI CTE containing sales, profit, and margin; use that layer to return categories above 10% margin, sorted by total sales.",
+          "output": [
+            "category",
+            "total_sales",
+            "total_profit",
+            "profit_margin"
+          ],
+          "validation": "Refactored reusable KPI CTE + margin threshold + sort"
+        }
+      ]
+    }
+  ]
+}
