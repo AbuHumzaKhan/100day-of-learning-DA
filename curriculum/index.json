@@ -1,6 +1,6 @@
 {
   "resource_type": "curriculum-index",
-  "published_through_day": 10,
+  "published_through_day": 11,
   "open_days": [
     1,
     2,
@@ -11,10 +11,10 @@
     7,
     8,
     9,
-    10
+    10,
+    11
   ],
   "locked_days": [
-    11,
     12,
     13,
     14,
@@ -225,7 +225,21 @@
       "topics": 5,
       "business_questions": 15,
       "status": "open"
+    },
+    {
+      "day": 11,
+      "file": "day-011.json",
+      "track": "SQL",
+      "title": "SQL Day 11 — Multi-Step CTE Analysis & Reusable Business Logic",
+      "dataset_refs": [
+        "orders",
+        "customers",
+        "product-catalog"
+      ],
+      "topics": 5,
+      "business_questions": 15,
+      "status": "open"
     }
   ],
-  "release_rule": "Days 1-10 are published and available. Day 11 onward is locked until its curriculum resource is published."
+  "release_rule": "Days 1-11 are published and available. Day 12 onward is locked until its curriculum resource is published."
 }
