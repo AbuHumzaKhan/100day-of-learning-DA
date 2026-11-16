@@ -1,7 +1,7 @@
 {
   "name": "100day-of-learning-DA",
-  "version": "1.6.0",
-  "description": "Content database for the 100-Day Data Analyst Business Trainer. GitHub is the authoritative source for published learning, coding-arena, and dataset resources.",
+  "version": "3.0.0",
+  "description": "AHK Academy runtime content manifest — premium 100-Day Data Analyst Business Trainer.",
   "owner": "AbuHumzaKhan",
   "release_control": {
     "mode": "sequential",
@@ -98,6 +98,7 @@
       "PowerBI-DAX",
       "Python"
     ],
-    "lazy_loading": true
+    "lazy_loading": true,
+    "release": "Sequential published-day control"
   }
 }
