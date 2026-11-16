@@ -100,3 +100,7 @@ body{font-size:14px}
   .task-actions,.academy-task-actions{align-items:stretch}
   .task-actions button,.academy-task-actions button{flex:1}
 }
+
+.academy-status-chip{margin-left:4px;border-radius:999px;padding:3px 7px;font-size:8px;letter-spacing:0;text-transform:none;color:#8398ac;background:rgba(255,255,255,.035);border:1px solid var(--line)}
+.academy-status-chip[data-status="attempted"]{color:var(--amber);background:rgba(255,198,109,.07);border-color:rgba(255,198,109,.15)}
+.academy-status-chip[data-status="solved"]{color:var(--green);background:rgba(94,230,168,.07);border-color:rgba(94,230,168,.18)}
