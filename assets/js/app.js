@@ -26,8 +26,197 @@ function dayButton(d){const item=state.index.days.find(x=>x.day===d);return `<bu
 function topic(t,i){const th=t.teaching||{};return `<article class="topic ${state.topic===i?'open':''}"><button class="topic-head"><span class="num">${String(i+1).padStart(2,'0')}</span><span class="topic-name"><small>TOPIC ${i+1}</small><b>${esc(t.title)}</b></span><span>⌄</span></button><div class="topic-body"><div class="lesson-grid"><section><label>Teacher</label><p>${esc(th.teacher||'')}</p>${th.example?`<pre>${esc(th.example)}</pre>`:''}</section><section><label>Business skill</label><p>${esc(t.business_skill||th.explain||'Apply the concept to a stakeholder request.')}</p><p>${esc(th.detailedlearning||'')}</p></section></div><div class="questions">${(t.questions||[]).map(q=>`<div class="question"><div><b>${esc(q.role||'Stakeholder')}</b><small>${esc(q.difficulty||'Business')}</small></div><p>${esc(q.scenario||'')} ${esc(q.request||'')}</p></div>`).join('')}</div></div></article>`}
 function renderDay(){const d=state.days.get(state.activeDay),c=document.querySelector('#content');if(!d){c.innerHTML=`<div class="content-head"><div class="eyebrow">COMING SOON</div><h2>Day ${state.activeDay}</h2><p>Locked until its curriculum resource is published. The release engine opens it automatically when the JSON resource becomes available.</p></div>`;return}c.innerHTML=`<div class="content-head"><div class="eyebrow">${esc(d.track)} · DAY ${String(d.day).padStart(2,'0')}</div><h2>${esc(d.title)}</h2><p>${esc(d.description||'Business-first analytical learning.')}</p></div>${d.topics.map(topic).join('')}<div class="complete"><button class="primary" id="complete">${done(d.day)?'Day completed':'Mark day complete'}</button></div>`;c.querySelectorAll('.topic-head').forEach((b,i)=>b.onclick=()=>{state.topic=state.topic===i?-1:i;renderDay()});document.querySelector('#complete').onclick=()=>{state.completed.add(d.day);save();toast(`Day ${d.day} completed`);renderDay()}}
 function runSQL(){try{const r=engine.run('sql',{sql:document.querySelector('#sql').value});document.querySelector('#result').innerHTML=r.rows.length?`<table><thead><tr>${r.columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${r.rows.map(row=>`<tr>${r.columns.map(c=>`<td>${esc(row[c])}</td>`).join('')}</tr>`).join('')}</tbody></table>`:`<div class="empty">Query executed successfully. 0 rows returned.</div>`}catch(e){document.querySelector('#result').innerHTML=`<div class="empty error">${esc(e.message)}</div>`}}
-function render(){const total=state.index.published_through_day;app.innerHTML=`<header class="topbar"><div class="container nav"><a class="brand" href="./"><span class="logo">DA</span><span><strong>AHK Academy</strong><small>100-Day Data Analyst Business Trainer</small></span></a><nav><button data-scroll="learning">Learning</button><button data-scroll="arena">Code Arena</button><button data-scroll="progress">Progress</button><button id="settingsBtn">Settings</button></nav><div class="nav-actions"><button class="icon" id="search">⌕</button><span class="avatar">AH</span></div></div></header><section class="hero"><div class="container hero-grid"><div class="hero-main"><div class="eyebrow"><i></i> Business-first analytics training</div><h1>Think like an analyst.<br><span>Work like one.</span></h1><p>A premium 100-day training environment built around stakeholder requests, analytical reasoning, code practice and production habits.</p><div class="cta"><button class="primary" id="continue">Continue Day ${state.activeDay}</button><button class="secondary" id="arenaBtn">Open Code Arena</button></div></div><aside class="release"><div><div class="release-top"><span>Current release</span><b>LIVE</b></div><h2>Day ${total} unlocked</h2><p>GitHub is the content source. Publish a new curriculum JSON and the academy can discover it at runtime.</p></div><div><div class="progress"><span style="width:${total}%"></span></div><div class="progress-row"><span>${total}/100 days published</span><span>${total}%</span></div></div></aside></div></section><div class="container stats" id="progress"><div class="stat"><strong>${total}</strong><span>Published days</span></div><div class="stat"><strong>5</strong><span>Topics per day</span></div><div class="stat"><strong>15</strong><span>Business questions / day</span></div><div class="stat"><strong>${state.completed.size}</strong><span>Days completed</span></div></div><main class="container main" id="learning"><section class="learning-shell"><div class="learning-header"><div class="learning-title"><h2>Learning path</h2><p>100 days · four production-focused tracks · unlocks automatically as content is published</p></div><div class="learning-meta"><span class="mini-pill">${total}/100 live</span><span class="mini-pill">5 topics/day</span><span class="mini-pill">15 questions/day</span></div></div><div class="language-grid"><div class="language-card active"><div class="language-head"><div class="language-icon">SQL</div><div><strong>SQL</strong><span>Query · model · analyse</span></div><span class="language-range">01–25</span></div><div class="day-grid">${Array.from({length:25},(_,i)=>dayButton(i+1)).join('')}</div></div><div class="language-card"><div class="language-head"><div class="language-icon">EX</div><div><strong>Excel</strong><span>Clean · model · report</span></div><span class="language-range">26–50</span></div><div class="day-grid">${Array.from({length:25},(_,i)=>dayButton(i+26)).join('')}</div></div><div class="language-card"><div class="language-head"><div class="language-icon">BI</div><div><strong>Power BI</strong><span>Model · DAX · insight</span></div><span class="language-range">51–75</span></div><div class="day-grid">${Array.from({length:25},(_,i)=>dayButton(i+51)).join('')}</div></div><div class="language-card"><div class="language-head"><div class="language-icon">PY</div><div><strong>Python</strong><span>Analyse · automate · ship</span></div><span class="language-range">76–100</span></div><div class="day-grid">${Array.from({length:25},(_,i)=>dayButton(i+76)).join('')}</div></div></div></section><section class="content"><div class="content-card" id="content"></div></section></main><div id="arena"></div><footer class="site-footer" id="footer"><div class="container footer-inner"><div><strong>AHK Academy</strong><span>100-Day Data Analyst Business Trainer</span></div><div class="footer-actions"><button class="engine-launch" id="engineLaunch"><span class="engine-dot"></span> AHK ENGINE MATRIX <span class="engine-arrow">↑</span></button><button class="footer-link" id="footerSettings">Settings</button></div></div><section class="engine-drawer" id="engine"><div class="engine-head"><i></i><b>AHK ENGINE MATRIX</b><span></span><button class="tab active">SQL</button><button class="tab" id="schema">Schema</button><button class="tab" id="machines">Machines</button><button class="min" id="min">−</button></div><div class="engine-body"><label>LOCAL READ-ONLY SQL ENGINE · ORDERS DATASET</label><textarea id="sql">SELECT category, SUM(sales) AS total_sales, SUM(profit) AS total_profit FROM orders GROUP BY category ORDER BY total_sales DESC;</textarea><div class="runrow"><button class="run" id="run">▶ Run Query</button><small id="engineStatus">Ready</small></div><div class="result" id="result"><div class="empty">Run a query to inspect the result.</div></div></div></section></footer><div class="settings-page" id="settingsPage" aria-hidden="true"><div class="container settings-inner"><div class="settings-top"><button class="back-btn" id="closeSettings">← Back to Academy</button><span class="eyebrow">ACADEMY SETTINGS</span></div><div class="settings-hero"><div><span class="eyebrow"><i></i> Workspace control</span><h2>Settings</h2><p>Manage your learning workspace, progress and training preferences.</p></div><div class="settings-badge">AHK<br>ACADEMY</div></div><div class="settings-grid"><button class="setting-card" id="learningProgressBtn"><span class="setting-icon">▦</span><span><b>Learning Progress</b><small>View Days 1–100, completion status and unlocked curriculum.</small></span><span class="setting-chevron">→</span></button><div class="setting-card static"><span class="setting-icon">◈</span><span><b>Workspace</b><small>Business-first learning mode · local progress enabled.</small></span><span class="setting-status">ACTIVE</span></div><div class="setting-card static"><span class="setting-icon">◎</span><span><b>Content Source</b><small>GitHub curriculum resources are loaded at runtime.</small></span><span class="setting-status">LIVE</span></div></div></div></div></div>`;
- document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{state.activeDay=Number(b.dataset.day);state.topic=0;document.querySelectorAll('.day').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderDay();document.querySelector('#learning').scrollIntoView({behavior:'smooth'})});
- document.querySelectorAll('[data-scroll]').forEach(b=>b.onclick=()=>document.querySelector('#'+b.dataset.scroll).scrollIntoView({behavior:'smooth'}));
- document.querySelector('#continue').onclick=()=>document.querySelector('#learning').scrollIntoView({behavior:'smooth'});document.querySelector('#arenaBtn').onclick=()=>document.querySelector('#arena').scrollIntoView({behavior:'smooth'});document.querySelector('#run').onclick=runSQL;document.querySelector('#min').onclick=()=>document.querySelector('#engine').classList.toggle('min');document.querySelector('#engineLaunch').onclick=()=>{document.querySelector('#engine').classList.toggle('open');document.querySelector('.engine-arrow').textContent=document.querySelector('#engine').classList.contains('open')?'↓':'↑'};document.querySelector('#schema').onclick=()=>toast('Schema machine ready');document.querySelector('#machines').onclick=()=>toast('Engine registry ready');document.querySelector('#settingsBtn').onclick=()=>{document.querySelector('#settingsPage').classList.add('open');document.querySelector('#settingsPage').setAttribute('aria-hidden','false');window.scrollTo({top:0,behavior:'smooth'})};document.querySelector('#footerSettings').onclick=()=>document.querySelector('#settingsBtn').click();document.querySelector('#closeSettings').onclick=()=>{document.querySelector('#settingsPage').classList.remove('open');document.querySelector('#settingsPage').setAttribute('aria-hidden','true')};document.querySelector('#learningProgressBtn').onclick=()=>{document.querySelector('#settingsPage').classList.remove('open');document.querySelector('#settingsPage').setAttribute('aria-hidden','true');document.querySelector('#learning').scrollIntoView({behavior:'smooth'})};document.querySelector('#search').onclick=()=>{const q=prompt('Search published curriculum');if(!q)return;const found=[...state.days.values()].find(d=>d.title.toLowerCase().includes(q.toLowerCase())||d.topics.some(t=>t.title.toLowerCase().includes(q.toLowerCase())));if(found){state.activeDay=found.day;renderDay();toast('Opened Day '+found.day)}else toast('No published day matched')};renderDay()}
+function learningPathMarkup(){
+  return `<section class="learning-shell settings-learning" id="learning-progress">
+    <div class="learning-header">
+      <div class="learning-title">
+        <div class="eyebrow"><i></i> Curriculum map</div>
+        <h2>Learning path</h2>
+        <p>100 days · four production-focused tracks · unlocks automatically as content is published</p>
+      </div>
+      <div class="learning-meta">
+        <span class="mini-pill">${state.index.published_through_day}/100 live</span>
+        <span class="mini-pill">5 topics/day</span>
+        <span class="mini-pill">15 questions/day</span>
+      </div>
+    </div>
+    <div class="language-grid">
+      <div class="language-card active">
+        <div class="language-head"><div class="language-icon">SQL</div><div><strong>SQL</strong><span>Query · model · analyse</span></div><span class="language-range">01–25</span></div>
+        <div class="day-grid">${Array.from({length:25},(_,i)=>dayButton(i+1)).join('')}</div>
+      </div>
+      <div class="language-card">
+        <div class="language-head"><div class="language-icon">EX</div><div><strong>Excel</strong><span>Clean · model · report</span></div><span class="language-range">26–50</span></div>
+        <div class="day-grid">${Array.from({length:25},(_,i)=>dayButton(i+26)).join('')}</div>
+      </div>
+      <div class="language-card">
+        <div class="language-head"><div class="language-icon">BI</div><div><strong>Power BI</strong><span>Model · DAX · insight</span></div><span class="language-range">51–75</span></div>
+        <div class="day-grid">${Array.from({length:25},(_,i)=>dayButton(i+51)).join('')}</div>
+      </div>
+      <div class="language-card">
+        <div class="language-head"><div class="language-icon">PY</div><div><strong>Python</strong><span>Analyse · automate · ship</span></div><span class="language-range">76–100</span></div>
+        <div class="day-grid">${Array.from({length:25},(_,i)=>dayButton(i+76)).join('')}</div>
+      </div>
+    </div>
+  </section>`;
+}
+
+function openSettings(){
+  const page=document.querySelector('#settingsPage');
+  page.classList.add('open');
+  page.setAttribute('aria-hidden','false');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function closeSettings(){
+  const page=document.querySelector('#settingsPage');
+  page.classList.remove('open');
+  page.setAttribute('aria-hidden','true');
+}
+
+function bindDayButtons(){
+  document.querySelectorAll('#settingsPage [data-day]').forEach(b=>{
+    b.onclick=()=>{
+      state.activeDay=Number(b.dataset.day);
+      state.topic=0;
+      document.querySelectorAll('#settingsPage .day').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      closeSettings();
+      renderDay();
+      document.querySelector('#content')?.scrollIntoView({behavior:'smooth',block:'start'});
+    };
+  });
+}
+
+function render(){
+  const total=state.index.published_through_day;
+  app.innerHTML=`<header class="topbar">
+    <div class="container nav">
+      <a class="brand" href="./"><span class="logo">DA</span><span><strong>AHK Academy</strong><small>100-Day Data Analyst Business Trainer</small></span></a>
+      <nav>
+        <button id="learningNav">Learning</button>
+        <button data-scroll="arena">Code Arena</button>
+        <button data-scroll="progress">Progress</button>
+        <button id="settingsBtn">Settings</button>
+      </nav>
+      <div class="nav-actions"><button class="icon" id="search">⌕</button><span class="avatar">AH</span></div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-main">
+        <div class="eyebrow"><i></i> Business-first analytics training</div>
+        <h1>Think like an analyst.<br><span>Work like one.</span></h1>
+        <p>A premium 100-day training environment built around stakeholder requests, analytical reasoning, code practice and production habits.</p>
+        <div class="cta">
+          <button class="primary" id="continue">Continue Day ${state.activeDay}</button>
+          <button class="secondary" id="arenaBtn">Open Code Arena</button>
+        </div>
+      </div>
+      <aside class="release">
+        <div>
+          <div class="release-top"><span>Current release</span><b>LIVE</b></div>
+          <h2>Day ${total} unlocked</h2>
+          <p>GitHub is the content source. Publish a new curriculum JSON and the academy can discover it at runtime.</p>
+        </div>
+        <div>
+          <div class="progress"><span style="width:${total}%"></span></div>
+          <div class="progress-row"><span>${total}/100 days published</span><span>${total}%</span></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <div class="container stats" id="progress">
+    <div class="stat"><strong>${total}</strong><span>Published days</span></div>
+    <div class="stat"><strong>5</strong><span>Topics per day</span></div>
+    <div class="stat"><strong>15</strong><span>Business questions / day</span></div>
+    <div class="stat"><strong>${state.completed.size}</strong><span>Days completed</span></div>
+  </div>
+
+  <main class="container main">
+    <section class="content">
+      <div class="content-card" id="content"></div>
+    </section>
+  </main>
+
+  <div id="arena"></div>
+
+  <footer class="site-footer" id="footer">
+    <div class="container footer-inner">
+      <div><strong>AHK Academy</strong><span>100-Day Data Analyst Business Trainer</span></div>
+      <div class="footer-actions">
+        <button class="engine-launch" id="engineLaunch"><span class="engine-dot"></span> AHK ENGINE MATRIX <span class="engine-arrow">↑</span></button>
+        <button class="footer-link" id="footerSettings">Settings</button>
+      </div>
+    </div>
+    <section class="engine-drawer" id="engine">
+      <div class="engine-head"><i></i><b>AHK ENGINE MATRIX</b><span></span><button class="tab active">SQL</button><button class="tab" id="schema">Schema</button><button class="tab" id="machines">Machines</button><button class="min" id="min">−</button></div>
+      <div class="engine-body">
+        <label>LOCAL READ-ONLY SQL ENGINE · ORDERS DATASET</label>
+        <textarea id="sql">SELECT category, SUM(sales) AS total_sales, SUM(profit) AS total_profit FROM orders GROUP BY category ORDER BY total_sales DESC;</textarea>
+        <div class="runrow"><button class="run" id="run">▶ Run Query</button><small id="engineStatus">Ready</small></div>
+        <div class="result" id="result"><div class="empty">Run a query to inspect the result.</div></div>
+      </div>
+    </section>
+  </footer>
+
+  <div class="settings-page" id="settingsPage" aria-hidden="true">
+    <div class="container settings-inner">
+      <div class="settings-top"><button class="back-btn" id="closeSettings">← Back to Academy</button><span class="eyebrow">ACADEMY SETTINGS</span></div>
+      <div class="settings-hero">
+        <div>
+          <span class="eyebrow"><i></i> Workspace control</span>
+          <h2>Settings</h2>
+          <p>Manage your learning workspace, progress and training preferences.</p>
+        </div>
+        <div class="settings-badge">AHK<br>ACADEMY</div>
+      </div>
+      <div class="settings-grid">
+        <button class="setting-card" id="learningProgressBtn"><span class="setting-icon">▦</span><span><b>Learning Progress</b><small>Open the complete 100-day curriculum and see which days are live or locked.</small></span><span class="setting-chevron">→</span></button>
+        <div class="setting-card static"><span class="setting-icon">◈</span><span><b>Workspace</b><small>Business-first learning mode · local progress enabled.</small></span><span class="setting-status">ACTIVE</span></div>
+        <div class="setting-card static"><span class="setting-icon">◎</span><span><b>Content Source</b><small>GitHub curriculum resources are loaded at runtime.</small></span><span class="setting-status">LIVE</span></div>
+      </div>
+      <div class="progress-view" id="progressView">
+        ${learningPathMarkup()}
+      </div>
+    </div>
+  </div>`;
+
+  document.querySelectorAll('[data-scroll]').forEach(b=>b.onclick=()=>{
+    document.querySelector('#'+b.dataset.scroll)?.scrollIntoView({behavior:'smooth'});
+  });
+
+  document.querySelector('#learningNav').onclick=openSettings;
+  document.querySelector('#learningProgressBtn').onclick=()=>{
+    document.querySelector('#progressView').classList.add('visible');
+    document.querySelector('#learningProgressBtn').scrollIntoView({behavior:'smooth',block:'start'});
+  };
+  document.querySelector('#continue').onclick=()=>{
+    document.querySelector('#content')?.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+  document.querySelector('#arenaBtn').onclick=()=>document.querySelector('#arena')?.scrollIntoView({behavior:'smooth'});
+  document.querySelector('#run').onclick=runSQL;
+  document.querySelector('#min').onclick=()=>document.querySelector('#engine').classList.toggle('min');
+  document.querySelector('#engineLaunch').onclick=()=>{
+    document.querySelector('#engine').classList.toggle('open');
+    document.querySelector('.engine-arrow').textContent=document.querySelector('#engine').classList.contains('open')?'↓':'↑';
+  };
+  document.querySelector('#schema').onclick=()=>toast('Schema machine ready');
+  document.querySelector('#machines').onclick=()=>toast('Engine registry ready');
+  document.querySelector('#settingsBtn').onclick=openSettings;
+  document.querySelector('#footerSettings').onclick=openSettings;
+  document.querySelector('#closeSettings').onclick=closeSettings;
+  document.querySelector('#search').onclick=()=>{
+    const q=prompt('Search published curriculum');
+    if(!q)return;
+    const found=[...state.days.values()].find(d=>d.title.toLowerCase().includes(q.toLowerCase())||d.topics.some(t=>t.title.toLowerCase().includes(q.toLowerCase())));
+    if(found){state.activeDay=found.day;renderDay();toast('Opened Day '+found.day);}
+    else toast('No published day matched');
+  };
+
+  bindDayButtons();
+  renderDay();
+}
 loadCurriculum().then(({index,days})=>{state.index=index;days.forEach((d,n)=>state.days.set(n,d));if(!state.days.has(state.activeDay))state.activeDay=index.published_through_day||1;render();}).catch(e=>{app.innerHTML=`<div class="container fatal"><div class="eyebrow">ACADEMY LOAD ERROR</div><h2>Learning content could not be loaded.</h2><p>${esc(e.message)}</p><button class="primary" onclick="location.reload()">Retry</button></div>`});
