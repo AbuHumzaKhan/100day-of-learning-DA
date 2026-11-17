@@ -56,6 +56,63 @@
           ],
           "validation": "Two separate counts at different grains."
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d04-t01-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The sales director wants total transaction rows and unique customers.",
+          "prompt": "The sales director wants total transaction rows and unique customers.",
+          "hint": "Never report a count until you can state exactly what one counted row represents.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(*) AS order_rows, COUNT(DISTINCT customer_name) AS unique_customers FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t01-c2",
+          "title": "Sales Manager request",
+          "difficulty": "Basic",
+          "scenario": "Management wants the number of sales transactions.",
+          "prompt": "Return the total number of order records.",
+          "hint": "COUNT(*)",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(*) AS total_orders FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t01-c3",
+          "title": "Customer Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The team wants the active customer population represented in the dataset.",
+          "prompt": "Return the number of distinct customer IDs.",
+          "hint": "COUNT(DISTINCT customer_id)",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(DISTINCT customer_name) AS unique_customers FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t01-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "Finance is checking whether order volume and customer volume are being confused.",
+          "prompt": "Return both total order rows and distinct customers in one result.",
+          "hint": "Two separate counts at different grains.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(*) AS total_orders, COUNT(DISTINCT customer_name) AS unique_customers FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t01-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return the number of distinct product names in the orders table.",
+          "prompt": "Return the number of distinct product names in the orders table.",
+          "hint": "Never report a count until you can state exactly what one counted row represents.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(DISTINCT product_name) AS unique_products FROM orders;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -110,6 +167,63 @@
             "max_sales"
           ],
           "validation": "Four aggregate measures."
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d04-t02-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The CFO wants a basic sales KPI snapshot.",
+          "prompt": "The CFO wants a basic sales KPI snapshot.",
+          "hint": "Averages can hide skew; use them deliberately rather than assuming they represent a typical transaction.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT SUM(sales) AS total_sales, AVG(sales) AS avg_sales, MIN(sales) AS min_sales, MAX(sales) AS max_sales FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t02-c2",
+          "title": "Finance Manager request",
+          "difficulty": "Basic",
+          "scenario": "Finance needs the total sales value.",
+          "prompt": "Return total sales.",
+          "hint": "SUM(sales)",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT SUM(sales) AS total_sales FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t02-c3",
+          "title": "Sales Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The manager wants to understand order-value spread.",
+          "prompt": "Return average, minimum, and maximum sales per order.",
+          "hint": "AVG/MIN/MAX sales",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT AVG(sales) AS avg_sales, MIN(sales) AS min_sales, MAX(sales) AS max_sales FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t02-c4",
+          "title": "CFO request",
+          "difficulty": "Intermediate",
+          "scenario": "The monthly review requires a compact sales KPI block.",
+          "prompt": "Return total sales, total profit, average sales, and maximum sales.",
+          "hint": "Four aggregate measures.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT SUM(sales) AS total_sales, SUM(profit) AS total_profit, AVG(sales) AS avg_sales, MAX(sales) AS max_sales FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t02-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return the median-like midpoint inputs: minimum sales, average sales, and maximum sales for the order book.",
+          "prompt": "Return the median-like midpoint inputs: minimum sales, average sales, and maximum sales for the order book.",
+          "hint": "Averages can hide skew; use them deliberately rather than assuming they represent a typical transaction.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT SUM(quantity) AS total_units, AVG(discount) AS avg_discount FROM orders;",
+          "dataset": "orders"
         }
       ]
     },
@@ -167,6 +281,63 @@
           ],
           "validation": "GROUP BY region, segment"
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d04-t03-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The regional director wants sales by region.",
+          "prompt": "The regional director wants sales by region.",
+          "hint": "State the dimension before writing the aggregate.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT region, SUM(sales) AS total_sales FROM orders GROUP BY region;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t03-c2",
+          "title": "Regional Manager request",
+          "difficulty": "Basic",
+          "scenario": "Leadership wants regional performance.",
+          "prompt": "Return total sales for each region.",
+          "hint": "GROUP BY region",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT region, SUM(sales) AS total_sales FROM orders GROUP BY region;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t03-c3",
+          "title": "Category Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The category team wants category-level profitability.",
+          "prompt": "Return total sales and total profit for each category.",
+          "hint": "GROUP BY category",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT category, SUM(sales) AS total_sales, SUM(profit) AS total_profit FROM orders GROUP BY category;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t03-c4",
+          "title": "Commercial Director request",
+          "difficulty": "Intermediate",
+          "scenario": "The director wants segment performance by region.",
+          "prompt": "Return region, segment, total sales, and total profit for each region-segment combination.",
+          "hint": "GROUP BY region, segment",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT region, segment, SUM(sales) AS total_sales, SUM(profit) AS total_profit FROM orders GROUP BY region, segment;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t03-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return category and average profit grouped by category.",
+          "prompt": "Return category and average profit grouped by category.",
+          "hint": "State the dimension before writing the aggregate.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT ship_mode, COUNT(*) AS order_count, SUM(sales) AS total_sales FROM orders GROUP BY ship_mode;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -219,6 +390,63 @@
             "total_sales"
           ],
           "validation": "GROUP BY customer_id; HAVING SUM(sales) > 5000"
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d04-t04-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The director wants only regions with at least 10,000 in sales.",
+          "prompt": "The director wants only regions with at least 10,000 in sales.",
+          "hint": "Do not replace HAVING with WHERE when the business rule is about a group KPI.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT region, SUM(sales) AS total_sales FROM orders GROUP BY region HAVING SUM(sales) >= 10000;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t04-c2",
+          "title": "Sales Director request",
+          "difficulty": "Basic",
+          "scenario": "Only regions above a sales threshold should appear.",
+          "prompt": "Return regions whose total sales are at least 10,000.",
+          "hint": "HAVING SUM(sales) >= 10000",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT region, SUM(sales) AS total_sales FROM orders GROUP BY region HAVING SUM(sales) >= 10000;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t04-c3",
+          "title": "Finance Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Finance wants categories with negative aggregate profit.",
+          "prompt": "Return categories whose total profit is below zero.",
+          "hint": "HAVING SUM(profit) < 0",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT category, SUM(profit) AS total_profit FROM orders GROUP BY category HAVING SUM(profit) < 0;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t04-c4",
+          "title": "Customer Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Management wants customer accounts generating more than 5,000 in sales.",
+          "prompt": "Return customer IDs with total sales above 5,000.",
+          "hint": "GROUP BY customer_id; HAVING SUM(sales) > 5000",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT customer_name, SUM(sales) AS total_sales FROM orders GROUP BY customer_name HAVING SUM(sales) > 5000;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t04-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return categories with average sales above 500.",
+          "prompt": "Return categories with average sales above 500.",
+          "hint": "Do not replace HAVING with WHERE when the business rule is about a group KPI.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT ship_mode, SUM(sales) AS total_sales FROM orders GROUP BY ship_mode HAVING SUM(sales) > 20000;",
+          "dataset": "orders"
         }
       ]
     },
@@ -280,6 +508,63 @@
             "avg_discount"
           ],
           "validation": "All measures grouped by region"
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d04-t05-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The COO wants regional orders, sales, and profit.",
+          "prompt": "The COO wants regional orders, sales, and profit.",
+          "hint": "A technically valid query can still be a bad report if the grain is ambiguous.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT region, COUNT(*) AS orders, SUM(sales) AS sales, SUM(profit) AS profit FROM orders GROUP BY region;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t05-c2",
+          "title": "COO request",
+          "difficulty": "Basic",
+          "scenario": "Leadership wants a regional KPI table.",
+          "prompt": "Return region, order count, sales, and profit.",
+          "hint": "Grouped regional KPI summary",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT region, COUNT(*) AS orders, SUM(sales) AS sales, SUM(profit) AS profit FROM orders GROUP BY region;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t05-c3",
+          "title": "Sales Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The manager wants category performance in one view.",
+          "prompt": "Return category, order count, total sales, and average discount.",
+          "hint": "GROUP BY category",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT category, COUNT(*) AS orders, SUM(sales) AS total_sales, AVG(discount) AS avg_discount FROM orders GROUP BY category;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t05-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "A review pack needs region-level profitability and volume.",
+          "prompt": "Return region, distinct customers, order count, sales, profit, and average discount.",
+          "hint": "All measures grouped by region",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT region, COUNT(DISTINCT customer_name) AS customers, COUNT(*) AS orders, SUM(sales) AS sales, SUM(profit) AS profit, AVG(discount) AS avg_discount FROM orders GROUP BY region;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d04-t05-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return region, order count, total sales, and total profit, sorted by total sales descending.",
+          "prompt": "Return region, order count, total sales, and total profit, sorted by total sales descending.",
+          "hint": "A technically valid query can still be a bad report if the grain is ambiguous.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT ship_mode, COUNT(*) AS orders, SUM(sales) AS sales, AVG(profit) AS avg_profit FROM orders GROUP BY ship_mode;",
+          "dataset": "orders"
         }
       ]
     }
