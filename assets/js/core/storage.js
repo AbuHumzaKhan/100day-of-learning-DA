@@ -61,7 +61,7 @@ function normalizeExams(value) {
     result[day] = {
       answers,
       submitted: exam.submitted === true,
-      score: Number.isInteger(score) && score >= 0 && score <= 5 ? score : null,
+      score: exam.score == null ? null : Number.isInteger(score) && score >= 0 && score <= 5 ? score : null,
       passed: exam.passed === true,
       attempts: Number.isInteger(Number(exam.attempts)) ? Math.max(0, Number(exam.attempts)) : 0,
       submittedAt: typeof exam.submittedAt === 'string' ? exam.submittedAt : null
