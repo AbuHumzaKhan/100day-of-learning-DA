@@ -19,7 +19,8 @@ const state = {
   searchQuery: '',
   searchResults: [],
   searchTimer: null,
-  projectSelection: null
+  projectSelection: null,
+  theme: localStorage.getItem('ahk_academy_theme') || 'light'
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -31,6 +32,55 @@ const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, char => ({
   '"': '&quot;',
   "'": '&#39;'
 }[char]));
+
+function renderInlineMarkdown(value) {
+  let html = escapeHTML(value);
+  html = html.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>');
+  html = html.replace(/\\*(.+?)\\*/g, '<em>$1</em>');
+  html = html.replace(/\\`([^\\`]+)\\`/g, '<code>$1</code>');
+  return html;
+}
+
+function renderLessonMarkdown(value) {
+  const lines = String(value || '').split(/\\r?\\n/);
+  const output = [];
+  let listOpen = false;
+  const closeList = () => {
+    if (listOpen) {
+      output.push('</ul>');
+      listOpen = false;
+    }
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) {
+      closeList();
+      continue;
+    }
+    if (/^###\\s+/.test(line)) {
+      closeList();
+      output.push('<h4>' + renderInlineMarkdown(line.replace(/^###\\s+/, '')) + '</h4>');
+    } else if (/^##\\s+/.test(line)) {
+      closeList();
+      output.push('<h3>' + renderInlineMarkdown(line.replace(/^##\\s+/, '')) + '</h3>');
+    } else if (/^#\\s+/.test(line)) {
+      closeList();
+      output.push('<h2>' + renderInlineMarkdown(line.replace(/^#\\s+/, '')) + '</h2>');
+    } else if (/^[-*]\\s+/.test(line)) {
+      if (!listOpen) {
+        output.push('<ul>');
+        listOpen = true;
+      }
+      output.push('<li>' + renderInlineMarkdown(line.replace(/^[-*]\\s+/, '')) + '</li>');
+    } else {
+      closeList();
+      output.push('<p>' + renderInlineMarkdown(line) + '</p>');
+    }
+  }
+  closeList();
+  return output.join('');
+}
 
 const TEACHING_MODES = [
   { id: 'teacher', label: 'Teacher', description: 'Instructor-led lesson' },
@@ -188,6 +238,7 @@ function renderHeader() {
   ];
   return '<header class="academy-header"><div class="academy-header-inner">' +
     '<a class="academy-brand" href="./" aria-label="AHK Academy Data Analyst Learning Hub home" data-view="learn"><span class="brand-mark">AHK</span><span class="brand-copy"><strong>AHK Academy</strong><small>Data Analyst Learning Hub</small></span></a>' +
+    '<button type="button" class="theme-toggle" data-action="toggle-theme" aria-label="Switch theme" aria-pressed="' + (state.theme === 'dark') + '"><span aria-hidden="true">' + (state.theme === 'dark' ? '☀' : '◐') + '</span><span class="theme-label">' + (state.theme === 'dark' ? 'Light' : 'Dark') + '</span></button>' +
     '<nav class="academy-nav" aria-label="Main navigation">' +
     items.map(([id, label]) => '<button type="button" class="nav-button ' + (state.view === id ? 'active' : '') + '" data-view="' + id + '">' + label + '</button>').join('') +
     '</nav>' +
@@ -240,7 +291,7 @@ function renderTeaching(topic) {
 
   return '<section class="teaching-panel" id="examples"><div class="section-heading"><div><span class="eyebrow">LEARN THE CONCEPT</span><h3>Teaching workspace</h3></div><span class="content-tag">Guided lesson</span></div>' +
     '<div class="mode-tabs" role="tablist" aria-label="Teaching modes">' + tabs + '</div>' +
-    '<div class="teaching-copy" id="teaching-panel" role="tabpanel" aria-labelledby="teaching-tab-' + escapeHTML(mode.id) + '"><div class="teaching-mode-label">' + escapeHTML(mode.label) + '</div><div class="teaching-text">' + escapeHTML(content) + '</div></div>' +
+    '<div class="teaching-copy" id="teaching-panel" role="tabpanel" aria-labelledby="teaching-tab-' + escapeHTML(mode.id) + '"><div class="teaching-mode-label">' + escapeHTML(mode.label) + '</div><div class="teaching-text">' + renderLessonMarkdown(content) + '</div></div>' +
     (example ? '<div class="example-card"><div class="example-card-head"><div><span class="eyebrow">WORKED EXAMPLE</span><strong>Apply the concept</strong></div><button type="button" class="button button-quiet button-small" data-action="copy-example">Copy example</button></div><pre><code>' + escapeHTML(example) + '</code></pre></div>' : '') +
     '</section>';
 }
@@ -277,7 +328,7 @@ function renderLesson() {
   const question = currentQuestion();
   const topic = topics[state.activeTopic];
   return '<div class="page-grid">' + renderSidebar() + '<section class="lesson-column">' +
-    '<div class="lesson-breadcrumb"><span>Learning path</span><span>/</span><strong>' + escapeHTML(day.track) + '</strong><span>/</span><strong>Day ' + String(day.day).padStart(2, '0') + '</strong></div>' +
+    '<div class="lesson-breadcrumb"><span>Learning path</span><span>/</span><strong>' + escapeHTML(day.track) + '</strong><span>/</span><strong>Day ' + String(day.day).padStart(2, '0') + '</strong><span class="lesson-save-state">Saved locally</span></div>' +
     '<section class="lesson-hero"><div class="hero-topline"><span class="eyebrow">' + escapeHTML(day.track) + ' · DAY ' + String(day.day).padStart(2, '0') + '</span><span class="release-pill">Published lesson</span></div><h1>' + escapeHTML(day.title) + '</h1><p>' + escapeHTML(day.description || day.learning_objectives?.[0] || 'Build practical analytical capability through guided business learning.') + '</p>' +
     '<div class="hero-metrics"><div><strong>' + topics.length + '</strong><span>Topics</span></div><div><strong>' + total + '</strong><span>Business requests</span></div><div><strong>' + (day.estimated_time_minutes || 45) + ' min</strong><span>Estimated time</span></div><div><strong>' + solved + '/' + total + '</strong><span>Reviewed</span></div></div></section>' +
     '<section class="topic-navigator panel"><div class="section-heading"><div><span class="eyebrow">LESSON PLAN</span><h2>Today’s topics</h2></div><span class="content-tag">Follow in sequence</span></div><div class="topic-nav-list">' +
@@ -296,7 +347,7 @@ function renderRightRail(question) {
   const title = question?.title || 'Stakeholder request';
   return '<aside class="right-rail"><section class="panel request-panel" id="businessCase"><div class="section-heading"><div><span class="eyebrow">REAL-WORLD SCENARIO</span><h2>Business request</h2></div><span class="question-position">Q' + (state.activeQuestion + 1) + ' / ' + questions.length + '</span></div>' +
     '<div class="request-switcher">' + questions.map((item, index) => '<button type="button" class="request-chip ' + (index === state.activeQuestion ? 'active' : '') + '" data-question="' + index + '" aria-pressed="' + (index === state.activeQuestion) + '">Q' + (index + 1) + '</button>').join('') + '</div>' +
-    '<span class="request-stakeholder">' + escapeHTML(question?.role || 'Stakeholder') + '</span><h3 class="request-title">' + escapeHTML(title) + '</h4><p class="request-scenario">' + escapeHTML(question?.scenario || 'Select a business request to see its scenario.') + '</p>' +
+    '<span class="request-stakeholder">' + escapeHTML(question?.role || 'Stakeholder') + '</span><h3 class="request-title">' + escapeHTML(title) + '</h3><p class="request-scenario">' + escapeHTML(question?.scenario || 'Select a business request to see its scenario.') + '</p>' +
     '<div class="request-task"><span>What you need to deliver</span><strong>' + escapeHTML(question?.request || question?.question || 'Translate the request into a reproducible analytical output.') + '</strong></div>' +
     '<div class="request-output"><span>Expected output</span><p>' + escapeHTML(Array.isArray(question?.output) ? question.output.join(' · ') : (question?.required_output || 'A clear, auditable analytical result')) + '</p></div>' +
     '</section>' + renderPractice() + '</aside>';
@@ -530,7 +581,23 @@ async function searchContent(query) {
   const text = query.toLowerCase().trim();
   if (text.length < 2) return [];
   const entries = await ensureSearchIndex();
-  return entries.filter(entry => (entry.title + ' ' + entry.text).toLowerCase().includes(text)).slice(0, 12);
+  const tokens = text.split(/\\s+/).filter(Boolean);
+  return entries
+    .map(entry => {
+      const haystack = (entry.title + ' ' + entry.text).toLowerCase();
+      const title = entry.title.toLowerCase();
+      let score = 0;
+      if (title === text) score += 100;
+      if (title.includes(text)) score += 40;
+      for (const token of tokens) {
+        if (title.includes(token)) score += 20;
+        if (haystack.includes(token)) score += 5;
+      }
+      return { ...entry, score };
+    })
+    .filter(entry => entry.score > 0)
+    .sort((a, b) => b.score - a.score || a.day - b.day)
+    .slice(0, 12);
 }
 
 function updateSearchResults(results) {
@@ -672,7 +739,12 @@ async function handleClick(event) {
 
   const action = event.target.closest('[data-action]')?.dataset.action;
   if (!action) return;
-  if (action === 'retry') {
+  if (action === 'toggle-theme') {
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('ahk_academy_theme', state.theme);
+    document.documentElement.dataset.theme = state.theme;
+    render();
+  } else if (action === 'retry') {
     boot();
   } else if (action === 'complete-day') {
     const result = progressStore.completeDay(state.activeDay, dayQuestions(state.day));
@@ -750,6 +822,7 @@ function handleKeydown(event) {
 }
 
 async function boot() {
+  document.documentElement.dataset.theme = state.theme;
   setBusy(true);
   try {
     const [manifest, index, registry] = await Promise.all([
