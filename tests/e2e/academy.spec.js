@@ -13,6 +13,22 @@ test('loads the published lesson and enforces sequential unlocking', async ({ pa
   await expect(page.locator('.lesson-hero h1')).toContainText('Day 1');
 });
 
+test('does not unlock days when earlier days in the sequence are incomplete', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('ahk_academy_state_v1', JSON.stringify({
+      schemaVersion: 1,
+      activeDay: 4,
+      completedDays: [3],
+      tasks: {},
+      updatedAt: new Date().toISOString()
+    }));
+  });
+  await page.reload();
+  await expect(page.locator('.day-button[data-day="2"]')).toBeDisabled();
+  await expect(page.locator('.day-button[data-day="4"]')).toBeDisabled();
+  await expect(page.locator('.lesson-hero h1')).toContainText('Day 1');
+});
+
 test('renders all teaching modes and five topic navigation items', async ({ page }) => {
   await expect(page.locator('.topic-nav-button')).toHaveCount(5);
   await page.getByRole('tab', { name: /Explain/ }).click();
@@ -41,7 +57,11 @@ test('reviews all 15 tasks before completing a day and unlocking the next day', 
   await expect(page.locator('.lesson-hero h1')).toContainText('Day 2');
 });
 
-test('Projects and Progress navigation open real destinations', async ({ page }) => {
+test('Practice navigation is the active destination and Projects and Progress open', async ({ page }) => {
+  await page.getByRole('button', { name: 'Practice', exact: true }).click();
+  await expect(page.locator('.nav-button[data-view="practice"]')).toHaveClass(/active/);
+  await expect(page.locator('.nav-button[data-view="learn"]')).not.toHaveClass(/active/);
+
   await page.getByRole('button', { name: 'Projects', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Analytical project library' })).toBeVisible();
   await expect(page.locator('.project-card')).toHaveCount(4);
