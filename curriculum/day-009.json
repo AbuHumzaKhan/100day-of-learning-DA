@@ -222,9 +222,9 @@
           "difficulty": "Challenge",
           "scenario": "Return categories whose total profit is above the average category profit.",
           "prompt": "Return categories whose total profit is above the average category profit.",
-          "hint": "If the inner query returns multiple rows, scalar comparison will fail.",
+          "hint": "Aggregate profit at category grain, then compare each category with the average of those category totals.",
           "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
-          "expected_sql": "SELECT category, SUM(sales) AS total_sales FROM orders GROUP BY category HAVING SUM(sales) > (SELECT AVG(category_sales) FROM (SELECT SUM(sales) AS category_sales FROM orders GROUP BY category));",
+          "expected_sql": "SELECT category, SUM(profit) AS total_profit FROM orders GROUP BY category HAVING SUM(profit) > (SELECT AVG(category_profit) FROM (SELECT SUM(profit) AS category_profit FROM orders GROUP BY category));",
           "dataset": "orders"
         }
       ]
@@ -445,9 +445,9 @@
           "difficulty": "Challenge",
           "scenario": "Return customers who have at least one order with sales above 1000.",
           "prompt": "Return customers who have at least one order with sales above 1000.",
-          "hint": "EXISTS asks 'does at least one related record exist?', not 'how many?'.",
+          "hint": "Use the customer's name to correlate to orders, then add the order-level sales condition.",
           "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM customers;",
-          "expected_sql": "SELECT c.customer_id, c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_name=c.customer_name AND o.profit > 0);",
+          "expected_sql": "SELECT c.customer_id, c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_name=c.customer_name AND o.sales > 1000);",
           "dataset": "customers"
         }
       ]
@@ -558,7 +558,7 @@
           "prompt": "Return categories whose total sales are higher than the average category sales.",
           "hint": "Complexity becomes manageable when each layer has one responsibility.",
           "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
-          "expected_sql": "SELECT category, total_sales FROM (SELECT category, SUM(sales) AS total_sales FROM orders GROUP BY category) category_totals WHERE total_sales > (SELECT AVG(total_sales) FROM (SELECT SUM(sales) AS total_sales FROM orders GROUP BY category)) ORDER BY total_sales DESC;",
+          "expected_sql": "SELECT category, total_sales FROM (SELECT category, SUM(sales) AS total_sales FROM orders GROUP BY category) category_totals WHERE total_sales > (SELECT AVG(category_sales) FROM (SELECT SUM(sales) AS category_sales FROM orders GROUP BY category)) ORDER BY total_sales DESC;",
           "dataset": "orders"
         }
       ]
