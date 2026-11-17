@@ -36,6 +36,18 @@ test('teaching and practice tabs expose valid accessible tab relationships', asy
   await expect(page.locator('#practice-pane-query')).toHaveAttribute('aria-labelledby', 'practice-tab-query');
 });
 
+test('teaching and practice tabs support keyboard navigation without losing focus', async ({ page }) => {
+  await page.locator('[data-mode="teacher"]').focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('[data-mode="explain"]')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('[data-mode="explain"]')).toBeFocused();
+
+  await page.locator('[data-practice-tab="query"]').focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('[data-practice-tab="schema"]')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('[data-practice-tab="schema"]')).toBeFocused();
+});
+
 test('renders all teaching modes and five topic navigation items', async ({ page }) => {
   await expect(page.locator('.topic-nav-button')).toHaveCount(5);
   await page.getByRole('tab', { name: /Explain/ }).click();
@@ -94,6 +106,18 @@ test('SQL workspace executes a read-only query against the registered orders dat
   await page.locator('#sqlEditor').fill('DROP TABLE orders;');
   await page.locator('[data-action="run-query"]').click();
   await expect(page.locator('#queryResults')).toContainText('SELECT and WITH queries only');
+});
+
+test('responsive layouts fit mobile, tablet, laptop and desktop viewports', async ({ page }) => {
+  for (const width of [320, 390, 768, 1024, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const dimensions = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth
+    }));
+    expect(dimensions.document, 'horizontal overflow at ' + width + 'px').toBeLessThanOrEqual(dimensions.viewport + 1);
+  }
+  await expect(page.locator('.lesson-hero h1')).toBeVisible();
 });
 
 test('mobile layout fits a 390px viewport without horizontal page overflow', async ({ page }) => {

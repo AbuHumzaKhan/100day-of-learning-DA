@@ -10,28 +10,28 @@
     "assert": {
       "assertions": {
         "categories:performance": [
-          "warn",
+          "error",
           {
             "minScore": 0.95,
             "aggregationMethod": "median"
           }
         ],
         "categories:accessibility": [
-          "warn",
+          "error",
           {
             "minScore": 0.95,
             "aggregationMethod": "median"
           }
         ],
         "categories:best-practices": [
-          "warn",
+          "error",
           {
             "minScore": 0.95,
             "aggregationMethod": "median"
           }
         ],
         "categories:seo": [
-          "warn",
+          "error",
           {
             "minScore": 0.95,
             "aggregationMethod": "median"

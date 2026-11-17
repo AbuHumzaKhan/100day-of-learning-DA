@@ -727,9 +727,12 @@ function handleTabKeydown(event, selector) {
     : event.key === 'End'
       ? tabs.length - 1
       : (currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+  const nextTab = tabs[nextIndex];
+  const attributeName = activeTab.hasAttribute('data-mode') ? 'data-mode' : 'data-practice-tab';
+  const attributeValue = nextTab.getAttribute(attributeName);
   event.preventDefault();
-  tabs[nextIndex].focus();
-  tabs[nextIndex].click();
+  nextTab.click();
+  document.querySelector(selector + '[' + attributeName + '="' + attributeValue + '"]')?.focus();
   return true;
 }
 
