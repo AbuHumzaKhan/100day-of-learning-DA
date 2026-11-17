@@ -18,7 +18,7 @@ async function getTopicCodingQuestions(page, day = 1, topicIndex = 0) {
 async function completeTopicCoding(page, day = 1, topicIndex = 0) {
   const questions = await getTopicCodingQuestions(page, day, topicIndex);
   expect(questions).toHaveLength(5);
-  await page.locator('[data-view="practice"]').click();
+  await page.locator('.academy-mode-nav [data-view="practice"]').click();
   for (let index = 0; index < questions.length; index += 1) {
     await expect(page.locator('#codingSqlEditor')).toBeVisible();
     await expect(page.locator('.coding-question-nav-item[data-coding-question="' + index + '"]')).toHaveClass(/is-current/);
@@ -50,7 +50,7 @@ test('opens readable topic lessons with practice and exam progression', async ({
   await expect(page.locator('.lesson-content-title')).toContainText('SELECT');
   await expect(page.locator('.lesson-business-task')).toBeVisible();
 
-  await page.locator('[data-view="practice"]').click();
+  await page.locator('.academy-mode-nav [data-view="practice"]').click();
   await expect(page.locator('.coding-question-nav-item')).toHaveCount(5);
   await expect(page.locator('.coding-question-nav-item[data-coding-question="0"]')).toBeEnabled();
   await expect(page.locator('.coding-question-nav-item[data-coding-question="1"]')).toBeDisabled();
@@ -59,7 +59,7 @@ test('opens readable topic lessons with practice and exam progression', async ({
 });
 
 test('rejects incorrect coding SQL and keeps the next question locked', async ({ page }) => {
-  await page.locator('[data-view="practice"]').click();
+  await page.locator('.academy-mode-nav [data-view="practice"]').click();
   await page.locator('#codingSqlEditor').fill('SELECT * FROM orders;');
   await page.locator('[data-action="run-coding-question"]').click();
   await expect(page.locator('.coding-feedback.needs-fix')).toBeVisible();
@@ -149,7 +149,7 @@ test('all 275 published coding reference queries execute against the registered 
 });
 
 test('the existing general SQL workspace remains available from topic practice', async ({ page }) => {
-  await page.locator('[data-view="practice"]').click();
+  await page.locator('.academy-mode-nav [data-view="practice"]').click();
   await page.locator('.coding-full-sql-workspace summary').click();
   await expect(page.locator('#sqlEditor')).toBeVisible();
   await page.locator('#sqlEditor').fill('SELECT COUNT(*) AS total_orders FROM orders;');
