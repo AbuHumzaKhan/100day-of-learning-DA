@@ -2006,3 +2006,25 @@ html[data-theme="dark"] .lesson-content-card .lesson-start-practice .eyebrow {
   .exam-heading { gap: 10px; }
   .exam-summary-card { min-width: 0; }
 }
+
+
+/* Final WCAG contrast fixes for the dark practice workspace */
+html[data-theme="dark"] .coding-practice-screen .eyebrow,
+html[data-theme="dark"] .coding-task-header .eyebrow,
+html[data-theme="dark"] .coding-editor-heading .eyebrow {
+  color: #9be7b2;
+}
+html[data-theme="dark"] .coding-hint summary {
+  color: #d2e6d7;
+}
+html[data-theme="dark"] .coding-practice-screen .button-primary,
+html[data-theme="dark"] .coding-practice-screen .coding-run-button {
+  color: #062113;
+}
+html[data-theme="dark"] .coding-practice-screen .lesson-complete-button {
+  color: #062113;
+}
+html[data-theme="dark"] .coding-practice-screen .button-primary:hover,
+html[data-theme="dark"] .coding-practice-screen .coding-run-button:hover {
+  color: #04180d;
+}
