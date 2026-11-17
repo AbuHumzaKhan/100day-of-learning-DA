@@ -1321,3 +1321,10 @@ html[data-theme="dark"] .lesson-content-card .lesson-extra-practice summary { co
 html[data-theme="dark"] .lesson-content-card .lesson-extra-practice summary:hover { color: #a9edbb; }
 html[data-theme="dark"] .lesson-content-card .request-text strong,
 html[data-theme="dark"] .lesson-content-card .question-label .stakeholder { color: #c4d8ca; }
+
+html[data-theme="dark"] .review-ring > div > small { color: #b5c9ba; }
+html[data-theme="dark"] .lesson-content-card .teaching-panel .section-heading .content-tag {
+  color: #d6efdc;
+  border: 1px solid #3a744b;
+  background: #173822;
+}
