@@ -14,11 +14,14 @@ async function completeCodingQuestions(page) {
     return day.topics[0].coding_questions;
   });
   await page.locator('.academy-mode-nav [data-view="practice"]').click();
-  for (const question of questions) {
-    await page.locator('#codingSqlEditor').fill(question.expected_sql);
+  for (let index = 0; index < questions.length; index += 1) {
+    await page.locator('#codingSqlEditor').fill(questions[index].expected_sql);
     await page.locator('[data-action="run-coding-question"]').click();
-    await expect(page.locator('.coding-feedback.is-correct')).toBeVisible();
+    if (index < questions.length - 1) {
+      await expect(page.locator('.coding-feedback.is-correct')).toBeVisible();
+    }
   }
+  await expect(page.locator('.exam-screen')).toBeVisible();
 }
 
 async function expectNoSeriousAxeViolations(page) {
