@@ -11,7 +11,7 @@ const state = {
   activeQuestion: 0,
   activeCodingQuestion: 0,
   examQuestionIndex: 0,
-  codingDrafts: {},
+  codingDrafts: (() => { try { return JSON.parse(localStorage.getItem('ahk_academy_coding_drafts_v1') || '{}'); } catch { return {}; } })(),
   codingFeedback: {},
   view: 'dashboard',
   teachingMode: 'teacher',
@@ -319,38 +319,7 @@ function currentQuestion() {
   return state.day?.topics?.[state.activeTopic]?.questions?.[state.activeQuestion] || null;
 }
 
-function buildExamQuestions(topic) {
-  const challenges = topic?.coding_questions || [];
-  if (challenges.length !== 5 || challenges.some(item => !item.expected_sql || !item.prompt)) return [];
-  const fallbackStatements = [
-    'SELECT order_id, sales FROM orders;',
-    'SELECT category, SUM(sales) AS total_sales FROM orders GROUP BY category;',
-    'SELECT region, COUNT(*) AS order_count FROM orders GROUP BY region;',
-    'SELECT * FROM orders LIMIT 10;',
-    'SELECT customer_name, SUM(sales) AS total_sales FROM orders GROUP BY customer_name;'
-  ];
-  const answerPositions = [1, 3, 0, 2, 1];
-  return challenges.map((challenge, index) => {
-    const correctSql = String(challenge.expected_sql).trim();
-    const alternatives = [...new Set(challenges.map(item => String(item.expected_sql || '').trim())
-      .filter(statement => statement && statement !== correctSql))];
-    for (const statement of fallbackStatements) {
-      if (alternatives.length >= 3) break;
-      if (statement !== correctSql && !alternatives.includes(statement)) alternatives.push(statement);
-    }
-    const correctOption = answerPositions[index];
-    const options = alternatives.slice(0, 3);
-    options.splice(correctOption, 0, correctSql);
-    return {
-      id: challenge.id || 'coding-' + (index + 1),
-      title: challenge.title || 'Coding challenge ' + (index + 1),
-      prompt: challenge.prompt,
-      options,
-      correctOption
-    };
-  });
-}
-\nfunction isUnlocked(day) {function isUnlocked(day) {
+function isUnlocked(day) {
   return progressStore.isDayUnlocked(day, publishedThrough());
 }
 
@@ -1152,6 +1121,13 @@ function updateSearchResults(results) {
 }
 
 function handleInput(event) {
+  if (event.target.id === 'codingSqlEditor') {
+    state.codingDrafts[codingDraftKey()] = event.target.value;
+    try {
+      localStorage.setItem('ahk_academy_coding_drafts_v1', JSON.stringify(state.codingDrafts));
+    } catch { /* Keep the current edit in memory if local storage is unavailable. */ }
+    return;
+  }
   if (event.target.id !== 'academySearch') return;
   state.searchQuery = event.target.value;
   window.clearTimeout(state.searchTimer);
@@ -1159,7 +1135,7 @@ function handleInput(event) {
     try {
       const results = await searchContent(state.searchQuery);
       updateSearchResults(results);
-    } catch (error) {
+    } catch {
       updateSearchResults([]);
       toast('Search could not load curriculum content.', 'warning');
     }
@@ -1178,25 +1154,32 @@ async function handleClick(event) {
   if (viewButton) {
     event.preventDefault();
     const target = viewButton.dataset.view;
-    if (target === 'exam' && !areAllLessonsComplete()) {
-      toast('Complete all five lessons before opening the exam.', 'warning');
+
+    if (target === 'exam' && !isTopicExamUnlocked()) {
+      toast('Pass all five coding questions for this topic before opening the exam.', 'warning');
       return;
     }
-    if (target === 'learn' && areAllLessonsComplete()) {
-      state.view = 'exam';
-    } else if (target === 'practice') {
-      state.view = 'practice';
-      history.replaceState(null, '', '#practice');
-      render();
-      window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    if (target === 'practice' && !currentTopic()?.coding_questions?.length) {
+      toast('Coding questions are not available for this topic.', 'warning');
       return;
+    }
+    if (target === 'dashboard') {
+      state.view = 'dashboard';
+      state.projectSelection = null;
+      history.replaceState(null, '', '#overview');
+    } else if (['learn', 'practice', 'exam'].includes(target)) {
+      state.view = target;
+      state.projectSelection = null;
+      if (target === 'practice') {
+        state.activeCodingQuestion = Math.min(completedCodingQuestionCount(), codingQuestionCount() - 1);
+      }
+      if (target === 'exam') state.examQuestionIndex = 0;
+      updateHash(state.activeDay);
     } else {
       state.view = target;
+      state.projectSelection = null;
+      history.replaceState(null, '', '#' + target);
     }
-    state.projectSelection = null;
-    if (target === 'dashboard') history.replaceState(null, '', '#overview');
-    else if (target === 'learn' || target === 'exam') updateHash(state.activeDay);
-    else history.replaceState(null, '', '#' + target);
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     return;
@@ -1220,16 +1203,38 @@ async function handleClick(event) {
     return;
   }
 
-  const lessonButton = event.target.closest('[data-lesson-index]');
-  if (lessonButton) {
-    const lessonIndex = Number(lessonButton.dataset.lessonIndex);
-    if (lessonIndex > completedLessonCount()) {
-      toast('Complete the lessons in order to unlock this lesson.', 'warning');
+  const topicButton = event.target.closest('[data-topic-index]');
+  if (topicButton) {
+    const topicIndex = Number(topicButton.dataset.topicIndex);
+    if (!progressStore.isTopicUnlocked(state.activeDay, topicIndex, state.day?.topics?.length || 5)) {
+      toast('Pass the previous topic exam to unlock this topic.', 'warning');
       return;
     }
-    state.activeTopic = lessonIndex;
+    state.activeTopic = topicIndex;
+    state.activeCodingQuestion = Math.min(progressStore.getCodingQuestionCount(state.activeDay, topicIndex), 4);
+    state.examQuestionIndex = 0;
+    const exam = progressStore.getTopicExamState(state.activeDay, topicIndex);
+    state.view = exam.submitted && !exam.passed
+      ? 'exam'
+      : progressStore.areCodingQuestionsCompleted(state.activeDay, topicIndex, 5)
+        ? 'exam'
+        : progressStore.getCodingQuestionCount(state.activeDay, topicIndex) > 0
+          ? 'practice'
+          : 'learn';
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  const codingQuestionButton = event.target.closest('[data-coding-question]');
+  if (codingQuestionButton) {
+    const questionIndex = Number(codingQuestionButton.dataset.codingQuestion);
+    if (questionIndex > completedCodingQuestionCount()) {
+      toast('Complete coding questions in order before opening this question.', 'warning');
+      return;
+    }
+    state.activeCodingQuestion = questionIndex;
+    render();
     return;
   }
 
@@ -1242,24 +1247,14 @@ async function handleClick(event) {
 
   const examOptionButton = event.target.closest('[data-exam-option]');
   if (examOptionButton && state.view === 'exam') {
-    const examState = progressStore.getExamState(state.activeDay);
-    if (examState.submitted) return;
-    progressStore.setExamAnswer(state.activeDay, state.examQuestionIndex, Number(examOptionButton.dataset.examOption));
-    render();
-    return;
-  }
-
-  const topicButton = event.target.closest('[data-topic]:not([data-task-action])');
-  if (topicButton) {
-    state.activeTopic = Number(topicButton.dataset.topic);
-    state.activeQuestion = 0;
-    render();
-    return;
-  }
-
-  const questionButton = event.target.closest('[data-question]');
-  if (questionButton && !questionButton.dataset.taskAction) {
-    state.activeQuestion = Number(questionButton.dataset.question);
+    const exam = progressStore.getTopicExamState(state.activeDay, state.activeTopic);
+    if (exam.submitted) return;
+    progressStore.setTopicExamAnswer(
+      state.activeDay,
+      state.activeTopic,
+      state.examQuestionIndex,
+      Number(examOptionButton.dataset.examOption)
+    );
     render();
     return;
   }
@@ -1298,10 +1293,10 @@ async function handleClick(event) {
     } else if (taskAction.dataset.taskAction === 'practice') {
       state.activeTopic = topicIndex;
       state.activeQuestion = questionIndex;
-      state.practiceTab = 'query';
+      state.activeCodingQuestion = Math.min(completedCodingQuestionCount(), 4);
       state.view = 'practice';
       render();
-      window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     return;
   }
@@ -1316,6 +1311,7 @@ async function handleClick(event) {
 
   const action = event.target.closest('[data-action]')?.dataset.action;
   if (!action) return;
+
   if (action === 'toggle-theme') {
     state.theme = state.theme === 'dark' ? 'light' : 'dark';
     localStorage.setItem('ahk_academy_theme', state.theme);
@@ -1325,27 +1321,26 @@ async function handleClick(event) {
     boot();
   } else if (action === 'save-progress') {
     progressStore.setActiveDay(state.activeDay);
-    toast('Lesson progress saved on this device.', 'success');
-  } else if (action === 'complete-lesson') {
-    const total = state.day?.topics?.length || 5;
-    const result = progressStore.completeLesson(state.activeDay, state.activeTopic, total);
-    if (!result.ok) {
-      toast(result.reason, 'warning');
-      return;
+    toast('Your learning progress is saved on this device.', 'success');
+  } else if (action === 'run-coding-question') {
+    await runTopicCodingQuestion();
+  } else if (action === 'format-coding-query') {
+    const editor = $('#codingSqlEditor');
+    if (editor) {
+      editor.value = formatSQL(editor.value);
+      state.codingDrafts[codingDraftKey()] = editor.value;
+      try { localStorage.setItem('ahk_academy_coding_drafts_v1', JSON.stringify(state.codingDrafts)); } catch {}
     }
-    if (result.allCompleted) {
-      state.view = 'exam';
-      state.examQuestionIndex = 0;
-      toast('All five lessons completed. Your exam is now unlocked.', 'success');
-    } else {
-      state.activeTopic = result.completedCount;
-      state.view = 'learn';
-      toast('Lesson completed. Lesson ' + String(state.activeTopic + 1).padStart(2, '0') + ' is now unlocked.', 'success');
-    }
+  } else if (action === 'reset-coding-query') {
+    const editor = $('#codingSqlEditor');
+    const starter = currentCodingQuestion()?.starter_sql || '';
+    if (editor) editor.value = starter;
+    state.codingDrafts[codingDraftKey()] = starter;
+    delete state.codingFeedback[codingDraftKey()];
+    try { localStorage.setItem('ahk_academy_coding_drafts_v1', JSON.stringify(state.codingDrafts)); } catch {}
     render();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   } else if (action === 'next-exam-question') {
-    const exam = progressStore.getExamState(state.activeDay);
+    const exam = progressStore.getTopicExamState(state.activeDay, state.activeTopic);
     if (!Object.prototype.hasOwnProperty.call(exam.answers, state.examQuestionIndex)) {
       toast('Choose an answer before moving to the next question.', 'warning');
       return;
@@ -1353,41 +1348,54 @@ async function handleClick(event) {
     state.examQuestionIndex = Math.min(4, state.examQuestionIndex + 1);
     render();
   } else if (action === 'submit-exam') {
-    const questions = buildExamQuestions(state.day);
-    const result = progressStore.submitExam(state.activeDay, questions.map(question => question.correctOption), 4);
+    const questions = buildExamQuestions(currentTopic());
+    const result = progressStore.submitTopicExam(
+      state.activeDay,
+      state.activeTopic,
+      questions.map(question => question.correctOption),
+      4,
+      state.day?.topics?.length || 5
+    );
     if (!result.ok) {
       toast(result.reason, 'warning');
       return;
     }
     state.examQuestionIndex = 0;
     render();
-    toast(result.passed ? 'Exam passed. The next published day is unlocked.' : 'Exam submitted. Review your answers and retry.', result.passed ? 'success' : 'warning');
+    toast(result.passed ? 'Topic exam passed. The next topic is unlocked.' : 'Exam submitted. Review your answers and retry.', result.passed ? 'success' : 'warning');
   } else if (action === 'retry-exam') {
-    if (progressStore.retryExam(state.activeDay)) {
+    if (progressStore.retryTopicExam(state.activeDay, state.activeTopic)) {
       state.examQuestionIndex = 0;
       render();
-      toast('New exam attempt started. Your previous score remains in your learning record.', 'info');
+      toast('New attempt started. Your previous attempt count is retained.', 'info');
     }
-  } else if (action === 'continue-next-day') {
-    const nextDay = state.activeDay + 1;
-    if (nextDay <= publishedThrough() && isUnlocked(nextDay)) {
-      await loadDay(nextDay);
-    } else {
-      state.view = 'dashboard';
-      history.replaceState(null, '', location.pathname + location.search);
+  } else if (action === 'continue-next-topic') {
+    const nextTopic = state.activeTopic + 1;
+    if (nextTopic < (state.day?.topics?.length || 5)) {
+      if (!progressStore.isTopicUnlocked(state.activeDay, nextTopic, state.day.topics.length)) {
+        toast('Pass this topic exam to unlock the next topic.', 'warning');
+        return;
+      }
+      state.activeTopic = nextTopic;
+      state.activeCodingQuestion = 0;
+      state.examQuestionIndex = 0;
+      state.view = 'learn';
       render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      const nextDay = state.activeDay + 1;
+      if (nextDay <= publishedThrough() && isUnlocked(nextDay)) {
+        await loadDay(nextDay);
+      } else {
+        state.view = 'dashboard';
+        history.replaceState(null, '', '#overview');
+        render();
+      }
     }
   } else if (action === 'save-exit') {
     progressStore.setActiveDay(state.activeDay);
     state.view = 'dashboard';
-    history.replaceState(null, '', location.pathname + location.search);
-    render();
-  } else if (action === 'complete-day') {
-    const result = progressStore.completeDay(state.activeDay, dayQuestions(state.day));
-    if (!result.ok) {
-      toast(result.reason, 'warning');
-      return;
-    }
+    history.replaceState(null, '', '#overview');
     render();
   } else if (action === 'run-query') {
     runQuery();
@@ -1470,16 +1478,17 @@ async function boot() {
 
     const published = publishedThrough();
     const hash = location.hash.match(/day-(\d+)/);
-    const route = ['overview', 'projects', 'progress', 'practice'].includes(location.hash.slice(1)) ? location.hash.slice(1) : '';
+    const route = ['overview', 'projects', 'progress'].includes(location.hash.slice(1)) ? location.hash.slice(1) : '';
     const requestedDay = hash ? Number(hash[1]) : progressStore.getState().activeDay;
     const firstUnlocked = Array.from({ length: published }, (_, index) => index + 1).find(day => isUnlocked(day)) || 1;
     const target = isUnlocked(requestedDay) ? requestedDay : firstUnlocked;
-    state.activeDay = target;
-    const hasLessonLink = Boolean(hash);
-    await loadDay(target, { updateUrl: hasLessonLink, render: false });
-    if (!hasLessonLink) state.view = route === 'overview' ? 'dashboard' : route || (areAllLessonsComplete() ? 'exam' : 'learn');
+    await loadDay(target, { updateUrl: Boolean(hash), render: false });
+
+    if (!hash) {
+      if (route === 'overview') state.view = 'dashboard';
+      else if (route === 'projects' || route === 'progress') state.view = route;
+    }
     render();
-    if (route === 'practice') window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'auto', block: 'start' }), 50);
   } catch (error) {
     renderFatal(error);
   }
