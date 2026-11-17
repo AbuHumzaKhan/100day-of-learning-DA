@@ -25,6 +25,7 @@ if ((index.days || []).length !== published) fail('Curriculum index must contain
 
 const datasetIds = new Set((registry.datasets || []).map(dataset => dataset.id));
 const seenQuestionIds = new Set();
+const seenCodingQuestionIds = new Set();
 
 for (const dayNumber of expectedDays) {
   const meta = index.days.find(item => Number(item.day) === dayNumber);
@@ -51,7 +52,20 @@ for (const dayNumber of expectedDays) {
   for (const datasetId of day.dataset_refs || []) {
     if (!datasetIds.has(datasetId)) fail(file + ': unregistered dataset reference ' + datasetId + '.');
   }
+  let codingQuestionCount = 0;
   for (const topic of day.topics) {
+    if (!Array.isArray(topic.coding_questions) || topic.coding_questions.length !== 5) {
+      fail(file + ': every topic must contain exactly five coding questions.');
+      continue;
+    }
+    codingQuestionCount += topic.coding_questions.length;
+    for (const codingQuestion of topic.coding_questions) {
+      if (!codingQuestion.expected_sql || !codingQuestion.prompt || !codingQuestion.starter_sql) {
+        fail(file + ': coding questions require a prompt, starter SQL, and reference SQL.');
+      }
+      if (seenCodingQuestionIds.has(codingQuestion.id)) fail('Duplicate coding question ID: ' + codingQuestion.id);
+      seenCodingQuestionIds.add(codingQuestion.id);
+    }
     for (const question of topic.questions) {
       if (question.id) {
         if (seenQuestionIds.has(question.id)) fail('Duplicate question ID: ' + question.id);
@@ -59,6 +73,7 @@ for (const dayNumber of expectedDays) {
       }
     }
   }
+  if (codingQuestionCount !== 25) fail(file + ': expected exactly 25 coding questions (five per topic).');
 }
 
 for (const dataset of registry.datasets || []) {
@@ -77,4 +92,4 @@ for (const dataset of registry.datasets || []) {
 }
 
 if (process.exitCode) process.exit(process.exitCode);
-console.log('Validated ' + published + ' published curriculum days, ' + seenQuestionIds.size + ' unique question IDs, and ' + (registry.datasets || []).length + ' registered datasets.');
+console.log('Validated ' + published + ' published curriculum days, ' + seenQuestionIds.size + ' unique business question IDs, ' + seenCodingQuestionIds.size + ' unique coding question IDs, and ' + (registry.datasets || []).length + ' registered datasets.');
