@@ -2,14 +2,28 @@ import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.clear());
-  await page.goto('/');
+  await page.goto('/#day-01');
   await expect(page.locator('.lesson-hero h1')).toBeVisible();
+});
+
+
+test('clean visits open a professional overview with a transparent curriculum roadmap', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('.dashboard-hero')).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Learn the craft\. Lead with insight\./ })).toBeVisible();
+  await expect(page.locator('.track-card')).toHaveCount(4);
+  await expect(page.locator('.dashboard-metrics')).toContainText('165');
+  await expect(page.locator('.dashboard-hero')).not.toContainText('Content not published');
+  await page.getByRole('button', { name: 'Learn', exact: true }).click();
+  await expect(page.locator('.lesson-hero h1')).toBeVisible();
+  await expect(page.locator('.day-button')).toHaveCount(11);
+  await expect(page.locator('.day-button[data-day="12"]')).toHaveCount(0);
 });
 
 test('loads the published lesson and enforces sequential unlocking', async ({ page }) => {
   await expect(page.locator('.day-button[data-day="1"]')).toBeEnabled();
   await expect(page.locator('.day-button[data-day="2"]')).toBeDisabled();
-  await expect(page.locator('.day-button[data-day="12"]')).toBeDisabled();
+  await expect(page.locator('.day-button[data-day="12"]')).toHaveCount(0);
   await expect(page.locator('.lesson-hero h1')).toContainText('Day 1');
 });
 
