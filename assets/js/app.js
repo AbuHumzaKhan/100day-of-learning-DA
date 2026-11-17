@@ -37,7 +37,7 @@ function renderInlineMarkdown(value) {
   let html = escapeHTML(value);
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  html = html.replace(/\\`([^\\`]+)\\`/g, '<code>$1</code>');
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
   return html;
 }
 
@@ -67,12 +67,12 @@ function renderLessonMarkdown(value) {
     } else if (/^#\s+/.test(line)) {
       closeList();
       output.push('<h2>' + renderInlineMarkdown(line.replace(/^#\s+/, '')) + '</h2>');
-    } else if (/^[-*]\\s+/.test(line)) {
+    } else if (/^[-*]\s+/.test(line)) {
       if (!listOpen) {
         output.push('<ul>');
         listOpen = true;
       }
-      output.push('<li>' + renderInlineMarkdown(line.replace(/^[-*]\\s+/, '')) + '</li>');
+      output.push('<li>' + renderInlineMarkdown(line.replace(/^[-*]\s+/, '')) + '</li>');
     } else {
       closeList();
       output.push('<p>' + renderInlineMarkdown(line) + '</p>');
