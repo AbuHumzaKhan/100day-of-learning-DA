@@ -890,3 +890,46 @@ html[data-theme="dark"] .teaching-text { color: #c1cec4; }
   .academy-nav { grid-column: 1 / -1; grid-row: 2; }
   .academy-search-wrap { grid-column: 1 / -1; grid-row: 3; width: 100%; }
 }
+
+
+/* Accessibility contrast pass — keep supporting copy readable at small sizes */
+:root { --muted: #596b60; }
+body { color: #26392e; }
+.dashboard-section-heading p,
+.learning-method-intro p,
+.method-step p,
+.track-card > p,
+.track-release > div:first-child,
+.track-future,
+.review-ring-copy span,
+.review-ring-copy small,
+.review-card-foot span,
+.dashboard-footer,
+.section-counter,
+.track-number { color: #596b60; }
+.metric-symbol-amber { color: #795317; }
+.review-period,
+.track-status { color: #52665a; }
+.roadmap-progress-copy,
+.roadmap-progress-foot,
+.track-range,
+.roadmap-other-track em { color: #596b60; }
+html[data-theme="dark"] .dashboard-section-heading p,
+html[data-theme="dark"] .learning-method-intro p,
+html[data-theme="dark"] .method-step p,
+html[data-theme="dark"] .track-card > p,
+html[data-theme="dark"] .track-release > div:first-child,
+html[data-theme="dark"] .track-future,
+html[data-theme="dark"] .review-ring-copy span,
+html[data-theme="dark"] .review-ring-copy small,
+html[data-theme="dark"] .review-card-foot span,
+html[data-theme="dark"] .dashboard-footer,
+html[data-theme="dark"] .section-counter,
+html[data-theme="dark"] .track-number,
+html[data-theme="dark"] .roadmap-progress-copy,
+html[data-theme="dark"] .roadmap-progress-foot,
+html[data-theme="dark"] .track-range,
+html[data-theme="dark"] .roadmap-other-track em { color: #aebfb2; }
+html[data-theme="dark"] .metric-symbol-amber { color: #e5c16c; }
+html[data-theme="dark"] .review-period,
+html[data-theme="dark"] .track-status { color: #b7cbbb; }
