@@ -212,7 +212,7 @@ async function loadDay(day, options = {}) {
     state.activeTopic = Math.min(state.activeTopic, Math.max(0, topicCount - 1));
     const questionCount = state.day.topics?.[state.activeTopic]?.questions?.length || 0;
     state.activeQuestion = Math.min(state.activeQuestion, Math.max(0, questionCount - 1));
-    render();
+    if (options.render !== false) render();
     if (options.updateUrl !== false) updateHash(target);
     window.scrollTo({ top: 0, behavior: 'auto' });
   } catch (error) {
@@ -260,7 +260,6 @@ function renderSidebar() {
   const completed = progressStore.getState().completedDays.filter(day => day <= published).length;
   const activeGroup = groups.find(group => state.activeDay >= group.start && state.activeDay <= group.end) || groups[0];
   const groupDays = available.filter(item => Number(item.day) >= activeGroup.start && Number(item.day) <= activeGroup.end);
-  const progress = Math.round((completed / Math.max(1, published)) * 100);
 
   return '<aside class="left-rail">' +
     '<section class="panel roadmap-panel">' +
@@ -274,7 +273,7 @@ function renderSidebar() {
           const isCurrent = day === state.activeDay;
           const isComplete = progressStore.isDayCompleted(day);
           const unlocked = isUnlocked(day);
-          const title = item.title?.replace(/^.*?—\\s*/, '') || 'Untitled lesson';
+          const title = item.title?.replace(/^.*?—\s*/, '') || 'Untitled lesson';
           return '<button type="button" class="day-button ' + (isCurrent ? 'current ' : '') + (isComplete ? 'completed ' : '') + (!unlocked ? 'locked' : '') + '" data-day="' + day + '" ' + (!unlocked ? 'disabled' : '') + ' aria-current="' + (isCurrent ? 'page' : 'false') + '">' +
             '<span class="day-index">' + String(day).padStart(2, '0') + '</span><span class="day-copy"><strong>' + escapeHTML(title) + '</strong><small>' + (isComplete ? 'Completed' : unlocked ? 'Available to learn' : 'Complete previous day to unlock') + '</small></span><span class="day-state">' + (isComplete ? '✓' : unlocked ? '›' : '•') + '</span></button>';
         }).join('') +
@@ -396,7 +395,6 @@ function renderPractice() {
 function renderDashboard() {
   const published = publishedThrough();
   const stats = progressStore.getStats(published);
-  const stateData = progressStore.getState();
   const activeMeta = dayMeta(state.activeDay) || dayMeta(1);
   const currentTitle = state.day?.title || activeMeta?.title || 'SQL Foundations';
   const currentDescription = state.day?.description || 'Build practical capability through a guided lesson and realistic business requests.';
@@ -421,10 +419,9 @@ function renderDashboard() {
       (live ? '<button type="button" class="track-open" data-view="learn" aria-label="Open SQL learning track">Open track <span>↗</span></button>' : '<span class="track-future">In sequence</span>') +
       '</div></article>';
   }).join('');
-  const featuredDays = (state.index?.days || []).filter(item => Number(item.day) <= published).slice(0, 4);
   const resumeDay = isUnlocked(state.activeDay) ? state.activeDay : (isUnlocked(stats.nextDay) ? stats.nextDay : 1);
   const resumeMeta = dayMeta(resumeDay) || activeMeta;
-  const cleanTitle = currentTitle.replace(/^.*?—\\s*/, '');
+  const cleanTitle = currentTitle.replace(/^.*?—\s*/, '');
 
   return '<section class="dashboard-view">' +
     '<section class="dashboard-hero">' +
@@ -439,7 +436,7 @@ function renderDashboard() {
         '<div class="hero-art-orbit orbit-one"></div><div class="hero-art-orbit orbit-two"></div>' +
         '<div class="hero-art-card"><div class="hero-art-head"><span>ANALYST SKILL MAP</span><span class="live-indicator">● LIVE PROGRAM</span></div>' +
           '<div class="hero-art-score"><div><small>CURRICULUM</small><strong>100<span> days</span></strong><em>One clear learning sequence</em></div><div class="hero-art-ring"><span>4</span><small>tracks</small></div></div>' +
-          '<div class="hero-art-bars"><div><span>SQL</span><i><b style="width:44%"></b></i><strong>01</strong></div><div><span>EXCEL</span><i><b style="width:8%"></b></i><strong>02</strong></div><div><span>POWER BI</span><i><b style="width:8%"></b></i><strong>03</strong></div><div><span>PYTHON</span><i><b style="width:8%"></b></i><strong>04</strong></div></div>' +
+          '<div class="hero-art-bars"><div><span>SQL</span><i><b style="width:44%"></b></i><strong>01</strong></div><div><span>EXCEL</span><i><b style="width:0%"></b></i><strong>02</strong></div><div><span>POWER BI</span><i><b style="width:8%"></b></i><strong>03</strong></div><div><span>PYTHON</span><i><b style="width:8%"></b></i><strong>04</strong></div></div>' +
           '<div class="hero-art-footer"><span>LEARN</span><b>→</b><span>APPLY</span><b>→</b><span>ANALYSE</span></div>' +
         '</div><div class="hero-art-float"><span class="float-mark">↗</span><span><strong>Built around business</strong><small>Not disconnected tutorials</small></span></div>' +
       '</div>' +
@@ -455,7 +452,7 @@ function renderDashboard() {
     '<div class="dashboard-section-heading"><div><span class="eyebrow">PICK UP WHERE YOU LEFT OFF</span><h2>Your next learning session</h2><p>A clear next step, with your progress kept on this device.</p></div><button type="button" class="text-link" data-view="progress">View progress <span>→</span></button></div>' +
     '<div class="dashboard-session-grid">' +
       '<article class="continue-card"><div class="continue-card-top"><span class="continue-label"><i></i> READY TO CONTINUE</span><span class="continue-day">DAY ' + String(resumeDay).padStart(2, '0') + '</span></div>' +
-        '<span class="continue-track">' + escapeHTML(resumeMeta?.track || 'SQL') + ' · FOUNDATIONS</span><h3>' + escapeHTML(resumeMeta?.title?.replace(/^.*?—\\s*/, '') || cleanTitle) + '</h3>' +
+        '<span class="continue-track">' + escapeHTML(resumeMeta?.track || 'SQL') + ' · FOUNDATIONS</span><h3>' + escapeHTML(resumeMeta?.title?.replace(/^.*?—\s*/, '') || cleanTitle) + '</h3>' +
         '<p>' + escapeHTML(resumeMeta?.description || currentDescription) + '</p>' +
         '<div class="continue-card-footer"><span><b>45 min</b> typical session</span><button type="button" class="button continue-button" data-view="learn">Resume lesson <span>→</span></button></div></article>' +
       '<article class="review-card"><div class="review-card-head"><div><span class="eyebrow">YOUR LEARNING RECORD</span><h3>Exercise review</h3></div><span class="review-period">PUBLISHED CONTENT</span></div>' +
@@ -934,7 +931,7 @@ async function boot() {
     const target = isUnlocked(requestedDay) ? requestedDay : firstUnlocked;
     state.activeDay = target;
     const hasLessonLink = Boolean(hash);
-    await loadDay(target, { updateUrl: hasLessonLink });
+    await loadDay(target, { updateUrl: hasLessonLink, render: hasLessonLink });
     if (!hasLessonLink) {
       state.view = 'dashboard';
       render();
