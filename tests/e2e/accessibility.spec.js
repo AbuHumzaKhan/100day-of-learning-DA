@@ -2,8 +2,9 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto('/');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
   await expect(page.locator('.lesson-hero h1')).toBeVisible();
 });
 
