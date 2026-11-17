@@ -733,11 +733,15 @@ async function handleClick(event) {
     const target = viewButton.dataset.view;
     if (target === 'practice') {
       state.view = 'practice';
+      history.replaceState(null, '', '#practice');
       render();
       window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     } else {
       state.view = target;
       state.projectSelection = null;
+      if (target === 'dashboard') history.replaceState(null, '', location.pathname + location.search);
+      else if (target === 'learn') updateHash(state.activeDay);
+      else history.replaceState(null, '', '#' + target);
       render();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -926,6 +930,7 @@ async function boot() {
 
     const published = publishedThrough();
     const hash = location.hash.match(/day-(\d+)/);
+    const route = ['projects', 'progress', 'practice'].includes(location.hash.slice(1)) ? location.hash.slice(1) : '';
     const requestedDay = hash ? Number(hash[1]) : progressStore.getState().activeDay;
     const firstUnlocked = Array.from({ length: published }, (_, index) => index + 1).find(day => isUnlocked(day)) || 1;
     const target = isUnlocked(requestedDay) ? requestedDay : firstUnlocked;
@@ -933,8 +938,9 @@ async function boot() {
     const hasLessonLink = Boolean(hash);
     await loadDay(target, { updateUrl: hasLessonLink, render: hasLessonLink });
     if (!hasLessonLink) {
-      state.view = 'dashboard';
+      state.view = route || 'dashboard';
       render();
+      if (route === 'practice') window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'auto', block: 'start' }), 50);
     }
   } catch (error) {
     renderFatal(error);
