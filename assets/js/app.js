@@ -719,7 +719,7 @@ async function handleClick(event) {
 function handleTabKeydown(event, selector) {
   const activeTab = event.target.closest(selector);
   if (!activeTab || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return false;
-  const tabs = $(selector);
+  const tabs = $$(selector);
   const currentIndex = tabs.indexOf(activeTab);
   if (currentIndex < 0 || !tabs.length) return false;
   const nextIndex = event.key === 'Home'
