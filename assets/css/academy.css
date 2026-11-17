@@ -1286,3 +1286,38 @@ html[data-theme="dark"] .exam-result-banner.is-passed small { color: #add8b8; }
 @media (prefers-reduced-motion: reduce) {
   .lesson-step,.exam-question-nav-item,.exam-option { transition: none; }
 }
+
+
+/* Dark forest palette: accessible contrast for the dashboard and lesson tabs */
+html[data-theme="dark"] .dashboard-metric strong span,
+html[data-theme="dark"] .dashboard-metric em,
+html[data-theme="dark"] .dashboard-section-heading p,
+html[data-theme="dark"] .review-card-foot span,
+html[data-theme="dark"] .review-ring-copy span,
+html[data-theme="dark"] .review-ring-copy small,
+html[data-theme="dark"] .track-card > p,
+html[data-theme="dark"] .track-release > div:first-child,
+html[data-theme="dark"] .track-future,
+html[data-theme="dark"] .track-range,
+html[data-theme="dark"] .track-number,
+html[data-theme="dark"] .section-counter,
+html[data-theme="dark"] .dashboard-footer {
+  color: #b5c9ba;
+}
+html[data-theme="dark"] .dashboard-metric small { color: #b4c8b8; }
+html[data-theme="dark"] .text-link,
+html[data-theme="dark"] .review-card-foot button { color: #8ee4a8; }
+html[data-theme="dark"] .track-release strong { color: #b7edc5; }
+html[data-theme="dark"] .learning-day-heading .eyebrow,
+html[data-theme="dark"] .lesson-content-heading .eyebrow { color: #8be4a7; }
+html[data-theme="dark"] .lesson-content-card .mode-tab { color: #c7dacc; }
+html[data-theme="dark"] .lesson-content-card .mode-tab strong { color: #dcebe0; }
+html[data-theme="dark"] .lesson-content-card .mode-tab small { color: #b4c9b9; }
+html[data-theme="dark"] .lesson-content-card .mode-tab.active strong { color: #f1fff4; }
+html[data-theme="dark"] .lesson-content-card .mode-tab.active small { color: #c8e8d0; }
+html[data-theme="dark"] .lesson-content-card .teaching-mode-label { color: #9be7b3; }
+html[data-theme="dark"] .lesson-content-card .teaching-panel .section-heading .content-tag { color: #c2d7c8; }
+html[data-theme="dark"] .lesson-content-card .lesson-extra-practice summary { color: #cce0d1; }
+html[data-theme="dark"] .lesson-content-card .lesson-extra-practice summary:hover { color: #a9edbb; }
+html[data-theme="dark"] .lesson-content-card .request-text strong,
+html[data-theme="dark"] .lesson-content-card .question-label .stakeholder { color: #c4d8ca; }
