@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
+  await page.goto('/');
+  await page.evaluate(() => localStorage.clear());
   await page.goto('/#day-01');
   await expect(page.locator('.lesson-content-title')).toBeVisible();
 });
@@ -102,7 +103,7 @@ test('teaching and practice tabs expose valid accessible tab relationships', asy
   await expect(page.locator('.mode-tabs [role="tab"]')).toHaveCount(4);
   await expect(page.locator('#teaching-panel')).toHaveAttribute('aria-labelledby', 'teaching-tab-teacher');
 
-  await page.locator('[data-view="dashboard"]').click();
+  await page.getByRole('button', { name: 'Overview', exact: true }).click();
   await page.getByRole('button', { name: 'Practice', exact: true }).click();
   await expect(page.locator('.practice-tabs [role="tab"]')).toHaveCount(3);
   await expect(page.locator('#practice-pane-query')).toHaveAttribute('aria-labelledby', 'practice-tab-query');
@@ -114,7 +115,7 @@ test('teaching and practice tabs support keyboard navigation without losing focu
   await expect(page.locator('[data-mode="explain"]')).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('[data-mode="explain"]')).toBeFocused();
 
-  await page.locator('[data-view="dashboard"]').click();
+  await page.getByRole('button', { name: 'Overview', exact: true }).click();
   await page.getByRole('button', { name: 'Practice', exact: true }).click();
   await page.locator('[data-practice-tab="query"]').focus();
   await page.keyboard.press('ArrowRight');
@@ -135,14 +136,14 @@ test('all teaching modes and five lesson steps are available', async ({ page }) 
 });
 
 test('overview, practice, projects and progress remain accessible', async ({ page }) => {
-  await page.locator('[data-view="dashboard"]').click();
+  await page.getByRole('button', { name: 'Overview', exact: true }).click();
   await expect(page.locator('.dashboard-hero')).toBeVisible();
 
   await page.getByRole('button', { name: 'Practice', exact: true }).click();
   await expect(page.locator('.nav-button[data-view="practice"]')).toHaveClass(/active/);
   await expect(page.locator('#sqlEditor')).toBeVisible();
 
-  await page.locator('[data-view="dashboard"]').click();
+  await page.getByRole('button', { name: 'Overview', exact: true }).click();
   await page.getByRole('button', { name: 'Projects', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Analytical project library' })).toBeVisible();
   await expect(page.locator('.project-card')).toHaveCount(4);
@@ -161,7 +162,7 @@ test('global search finds curriculum topics and business requests', async ({ pag
 
 test('SQL workspace executes read-only queries against the registered orders dataset', async ({ page }) => {
   test.setTimeout(60_000);
-  await page.locator('[data-view="dashboard"]').click();
+  await page.getByRole('button', { name: 'Overview', exact: true }).click();
   await page.getByRole('button', { name: 'Practice', exact: true }).click();
   await page.locator('#sqlEditor').fill('SELECT COUNT(*) AS total_orders FROM orders;');
   await page.locator('[data-action="run-query"]').click();
