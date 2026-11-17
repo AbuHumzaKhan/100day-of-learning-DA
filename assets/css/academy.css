@@ -43,7 +43,7 @@ button:disabled { cursor: not-allowed; opacity: .48; }
 .search-box { display: flex; align-items: center; gap: 9px; min-height: 40px; padding: 0 11px; border: 1px solid var(--line); border-radius: 10px; color: #7e8c84; background: var(--surface-soft); }
 .search-box input { width: 100%; min-width: 0; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 11px; }
 .search-box input::placeholder { color: #8c9992; }
-.search-box kbd { flex: 0 0 auto; padding: 3px 5px; border: 1px solid #dce5df; border-radius: 5px; color: #849089; background: #fff; font-size: 9px; }
+.search-box kbd { flex: 0 0 auto; padding: 3px 5px; border: 1px solid #cbd7cf; border-radius: 5px; color: #5e6d65; background: #fff; font-size: 9px; font-weight: 700; }
 .search-results { position: absolute; z-index: 80; top: 47px; right: 0; width: min(430px, 88vw); max-height: 420px; overflow: auto; padding: 7px; border: 1px solid var(--line); border-radius: 13px; background: white; box-shadow: var(--shadow); }
 .search-result { width: 100%; display: grid; gap: 4px; padding: 11px; border: 0; border-radius: 8px; text-align: left; background: transparent; }
 .search-result:hover { background: var(--surface-soft); }
