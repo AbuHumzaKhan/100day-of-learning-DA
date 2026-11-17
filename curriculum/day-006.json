@@ -17,9 +17,9 @@
         "explain": "A NULL is not the same as zero, empty text, or false.",
         "detailedlearning": "Always decide whether missing data should be excluded, flagged, or replaced before calculating KPIs.",
         "expose": "Missing values can silently change counts and averages.",
-        "example": "SELECT COUNT(*) FROM orders WHERE postal_code IS NULL;",
-        "business_question": "Data quality wants the number of orders without postal codes.",
-        "expected_sql": "SELECT COUNT(*) AS missing_postal_codes FROM orders WHERE postal_code IS NULL;"
+        "example": "SELECT COUNT(*) AS missing_customer_names FROM orders WHERE customer_name IS NULL;",
+        "business_question": "The data quality analyst wants to measure how many order records have no customer name.",
+        "expected_sql": "SELECT COUNT(*) AS missing_customer_names FROM orders WHERE customer_name IS NULL;"
       },
       "questions": [
         {
@@ -27,23 +27,23 @@
           "difficulty": "Basic",
           "role": "Data Quality Analyst",
           "scenario": "The team suspects missing customer identifiers.",
-          "request": "Return the number of rows where customer_id is NULL.",
+          "request": "Return the number of rows where customer_name is NULL.",
           "output": [
             "missing_customer_ids"
           ],
-          "validation": "customer_id IS NULL"
+          "validation": "customer_name IS NULL"
         },
         {
           "id": "sql-d6-t1-q2",
           "difficulty": "Medium",
           "role": "Operations Manager",
-          "scenario": "Shipping records may have missing ship dates.",
-          "request": "Return order ID and customer name for rows with a missing ship date.",
+          "scenario": "Shipping records may have missing order dates.",
+          "request": "Return order ID and customer name for rows with a missing order date.",
           "output": [
             "order_id",
             "customer_name"
           ],
-          "validation": "ship_date IS NULL"
+          "validation": "order_date IS NULL"
         },
         {
           "id": "sql-d6-t1-q3",
@@ -63,11 +63,11 @@
           "id": "sql-d06-t01-c1",
           "title": "Core lesson challenge",
           "difficulty": "Basic",
-          "scenario": "Data quality wants the number of orders without postal codes.",
-          "prompt": "Data quality wants the number of orders without postal codes.",
+          "scenario": "The data quality analyst wants to measure how many order records have no customer name.",
+          "prompt": "The data quality analyst wants to measure how many order records have no customer name.",
           "hint": "Missing values can silently change counts and averages.",
           "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
-          "expected_sql": "SELECT COUNT(*) AS missing_postal_codes FROM orders WHERE row_no IS NULL;",
+          "expected_sql": "SELECT COUNT(*) AS missing_customer_names FROM orders WHERE customer_name IS NULL;",
           "dataset": "orders"
         },
         {
@@ -75,8 +75,8 @@
           "title": "Data Quality Analyst request",
           "difficulty": "Basic",
           "scenario": "The team suspects missing customer identifiers.",
-          "prompt": "Return the number of rows where customer_id is NULL.",
-          "hint": "customer_id IS NULL",
+          "prompt": "Return the number of rows where customer_name is NULL.",
+          "hint": "customer_name IS NULL",
           "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
           "expected_sql": "SELECT COUNT(*) AS missing_customers FROM orders WHERE customer_name IS NULL;",
           "dataset": "orders"
@@ -86,8 +86,8 @@
           "title": "Operations Manager request",
           "difficulty": "Intermediate",
           "scenario": "Shipping records may have missing ship dates.",
-          "prompt": "Return order ID and customer name for rows with a missing ship date.",
-          "hint": "ship_date IS NULL",
+          "prompt": "Return order ID and customer name for rows with a missing order date.",
+          "hint": "order_date IS NULL",
           "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
           "expected_sql": "SELECT order_id, customer_name FROM orders WHERE order_date IS NULL;",
           "dataset": "orders"
@@ -111,7 +111,7 @@
           "prompt": "Return order IDs where the region value is missing.",
           "hint": "Missing values can silently change counts and averages.",
           "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
-          "expected_sql": "SELECT COUNT(*) AS missing_regions FROM orders WHERE region IS NULL;",
+          "expected_sql": "SELECT order_id FROM orders WHERE region IS NULL;",
           "dataset": "orders"
         }
       ]
