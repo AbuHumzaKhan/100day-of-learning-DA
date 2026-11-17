@@ -41,11 +41,11 @@ test('exam navigator shows one question at a time and autosaves selected answers
     await page.locator('[data-action="complete-lesson"]').click();
   }
 
-  await expect(page.locator('.exam-question-card')).toContainText('Question 1');
+  await expect(page.locator('.exam-question-meta')).toContainText('QUESTION 01');
   await page.locator('.exam-option').nth(1).click();
   await expect(page.locator('.exam-question-nav-item[data-exam-question="0"]')).toHaveClass(/is-answered/);
   await page.locator('.exam-question-nav-item[data-exam-question="1"]').click();
-  await expect(page.locator('.exam-question-card')).toContainText('Question 2');
+  await expect(page.locator('.exam-question-meta')).toContainText('QUESTION 02');
   await page.locator('.exam-option').nth(2).click();
   await page.reload();
   await expect(page.locator('.exam-screen')).toBeVisible();
@@ -61,7 +61,7 @@ test('exam requires all five answers and allows a failed attempt to be retried',
 
   for (let question = 0; question < 5; question += 1) {
     await page.locator('.exam-question-nav-item[data-exam-question="' + question + '"]').click();
-    await page.locator('.exam-option').first().click();
+    await page.locator('.exam-option').nth(question === 2 ? 1 : 0).click();
   }
   await page.locator('.exam-question-nav-item[data-exam-question="4"]').click();
   await page.locator('[data-action="submit-exam"]').click();
