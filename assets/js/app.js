@@ -664,6 +664,7 @@ function renderTopicPractice() {
       '<div class="lesson-progress-track"><i style="width:' + Math.round((completedCount / 5) * 100) + '%"></i></div><p>' +
       (allDone ? 'All coding questions passed. Your topic exam is ready.' : (5 - completedCount) + ' coding questions remaining before the exam.') + '</p></section>' +
     '</aside></div>' +
+    '<details class="coding-full-sql-workspace"><summary>Open the full SQL workspace</summary>' + renderPractice() + '</details>' +
     (allDone ? '<section class="coding-unlock-banner"><div><strong>All five coding questions passed.</strong><p>Your topic-specific MCQ exam is now unlocked.</p></div><button type="button" class="button lesson-complete-button" data-view="exam">Open exam <span>→</span></button></section>' : '') +
   '</section>';
 }
