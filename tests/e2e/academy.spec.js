@@ -103,7 +103,7 @@ test('teaching and practice tabs expose valid accessible tab relationships', asy
   await expect(page.locator('.mode-tabs [role="tab"]')).toHaveCount(4);
   await expect(page.locator('#teaching-panel')).toHaveAttribute('aria-labelledby', 'teaching-tab-teacher');
 
-  await page.getByRole('button', { name: 'Overview', exact: true }).click();
+  await page.getByRole('link', { name: 'AHK Academy overview' }).click();
   await page.getByRole('button', { name: 'Practice', exact: true }).click();
   await expect(page.locator('.practice-tabs [role="tab"]')).toHaveCount(3);
   await expect(page.locator('#practice-pane-query')).toHaveAttribute('aria-labelledby', 'practice-tab-query');
