@@ -29,7 +29,7 @@
           "scenario": "The team suspects missing customer identifiers.",
           "request": "Return the number of rows where customer_name is NULL.",
           "output": [
-            "missing_customer_ids"
+            "missing_customer_names"
           ],
           "validation": "customer_name IS NULL"
         },
@@ -127,7 +127,7 @@
         "detailedlearning": "Do not blindly convert NULL to zero; only do so when zero is a valid business interpretation.",
         "expose": "A default value is a business decision, not merely a SQL convenience.",
         "example": "SELECT COALESCE(customer_name,'Unknown Customer') AS customer_name FROM orders;",
-        "business_question": "The reporting team wants missing discount values treated as zero for a calculation.",
+        "business_question": "The reporting team needs a visible fallback for missing customer names.",
         "expected_sql": "SELECT AVG(COALESCE(discount,0)) AS avg_discount FROM orders;"
       },
       "questions": [
@@ -468,7 +468,7 @@
           "request": "Return total rows and missing customer names.",
           "output": [
             "rows",
-            "missing_customer_ids"
+            "missing_customer_names"
           ],
           "validation": "COUNT(*) and customer_name IS NULL"
         },
