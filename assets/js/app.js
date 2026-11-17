@@ -187,7 +187,7 @@ function renderHeader() {
     ['progress', 'Progress']
   ];
   return '<header class="academy-header"><div class="academy-header-inner">' +
-    '<a class="academy-brand" href="./" aria-label="AHK Academy home" data-view="learn"><span class="brand-mark">AHK</span><span class="brand-copy"><strong>AHK Academy</strong><small>Data Analyst Learning Hub</small></span></a>' +
+    '<a class="academy-brand" href="./" aria-label="AHK Academy Data Analyst Learning Hub home" data-view="learn"><span class="brand-mark">AHK</span><span class="brand-copy"><strong>AHK Academy</strong><small>Data Analyst Learning Hub</small></span></a>' +
     '<nav class="academy-nav" aria-label="Main navigation">' +
     items.map(([id, label]) => '<button type="button" class="nav-button ' + (state.view === id ? 'active' : '') + '" data-view="' + id + '">' + label + '</button>').join('') +
     '</nav>' +
@@ -233,10 +233,14 @@ function renderTeaching(topic) {
   const mode = TEACHING_MODES.find(item => item.id === state.teachingMode) || TEACHING_MODES[0];
   const content = teaching[mode.id] || teaching.explain || topic?.business_skill || 'This lesson content will be added in a future curriculum revision.';
   const example = teaching.example || teaching.example_sql || teaching.syntax || teaching.expected_sql || '';
+  const tabs = TEACHING_MODES.map(item => {
+    const selected = item.id === state.teachingMode;
+    return '<button type="button" role="tab" id="teaching-tab-' + escapeHTML(item.id) + '" aria-controls="teaching-panel" aria-selected="' + selected + '" tabindex="' + (selected ? '0' : '-1') + '" class="mode-tab ' + (selected ? 'active' : '') + '" data-mode="' + escapeHTML(item.id) + '"><strong>' + escapeHTML(item.label) + '</strong><small>' + escapeHTML(item.description) + '</small></button>';
+  }).join('');
+
   return '<section class="teaching-panel" id="examples"><div class="section-heading"><div><span class="eyebrow">LEARN THE CONCEPT</span><h3>Teaching workspace</h3></div><span class="content-tag">Guided lesson</span></div>' +
-    '<div class="mode-tabs" role="tablist" aria-label="Teaching modes">' +
-    TEACHING_MODES.map(item => '<button type="button" role="tab" aria-selected="' + (item.id === state.teachingMode) + '" class="mode-tab ' + (item.id === state.teachingMode ? 'active' : '') + '" data-mode="' + item.id + '"><strong>' + escapeHTML(item.label) + '</strong><small>' + escapeHTML(item.description) + '</small></button>').join('') +
-    '</div><div class="teaching-copy" role="tabpanel"><div class="teaching-mode-label">' + escapeHTML(mode.label) + '</div><div class="teaching-text">' + escapeHTML(content) + '</div></div>' +
+    '<div class="mode-tabs" role="tablist" aria-label="Teaching modes">' + tabs + '</div>' +
+    '<div class="teaching-copy" id="teaching-panel" role="tabpanel" aria-labelledby="teaching-tab-' + escapeHTML(mode.id) + '"><div class="teaching-mode-label">' + escapeHTML(mode.label) + '</div><div class="teaching-text">' + escapeHTML(content) + '</div></div>' +
     (example ? '<div class="example-card"><div class="example-card-head"><div><span class="eyebrow">WORKED EXAMPLE</span><strong>Apply the concept</strong></div><button type="button" class="button button-quiet button-small" data-action="copy-example">Copy example</button></div><pre><code>' + escapeHTML(example) + '</code></pre></div>' : '') +
     '</section>';
 }
@@ -276,7 +280,7 @@ function renderLesson() {
     '<div class="lesson-breadcrumb"><span>Learning path</span><span>/</span><strong>' + escapeHTML(day.track) + '</strong><span>/</span><strong>Day ' + String(day.day).padStart(2, '0') + '</strong></div>' +
     '<section class="lesson-hero"><div class="hero-topline"><span class="eyebrow">' + escapeHTML(day.track) + ' · DAY ' + String(day.day).padStart(2, '0') + '</span><span class="release-pill">Published lesson</span></div><h1>' + escapeHTML(day.title) + '</h1><p>' + escapeHTML(day.description || day.learning_objectives?.[0] || 'Build practical analytical capability through guided business learning.') + '</p>' +
     '<div class="hero-metrics"><div><strong>' + topics.length + '</strong><span>Topics</span></div><div><strong>' + total + '</strong><span>Business requests</span></div><div><strong>' + (day.estimated_time_minutes || 45) + ' min</strong><span>Estimated time</span></div><div><strong>' + solved + '/' + total + '</strong><span>Reviewed</span></div></div></section>' +
-    '<section class="topic-navigator panel"><div class="section-heading"><div><span class="eyebrow">LESSON PLAN</span><h3>Today’s topics</h3></div><span class="content-tag">Follow in sequence</span></div><div class="topic-nav-list">' +
+    '<section class="topic-navigator panel"><div class="section-heading"><div><span class="eyebrow">LESSON PLAN</span><h2>Today’s topics</h2></div><span class="content-tag">Follow in sequence</span></div><div class="topic-nav-list">' +
     topics.map((item, index) => {
       const topicSolved = (item.questions || []).filter((question, qi) => progressStore.isSolved(state.activeDay, index, qi)).length;
       return '<button type="button" class="topic-nav-button ' + (index === state.activeTopic ? 'active' : '') + '" data-topic="' + index + '" aria-current="' + (index === state.activeTopic ? 'step' : 'false') + '"><span class="topic-nav-number">' + String(index + 1).padStart(2, '0') + '</span><span class="topic-nav-copy"><strong>' + escapeHTML(item.title) + '</strong><small>' + topicSolved + '/' + (item.questions?.length || 0) + ' tasks reviewed</small></span><span class="topic-nav-arrow">›</span></button>';
@@ -290,9 +294,9 @@ function renderLesson() {
 function renderRightRail(question) {
   const questions = state.day?.topics?.[state.activeTopic]?.questions || [];
   const title = question?.title || 'Stakeholder request';
-  return '<aside class="right-rail"><section class="panel request-panel" id="businessCase"><div class="section-heading"><div><span class="eyebrow">REAL-WORLD SCENARIO</span><h3>Business request</h3></div><span class="question-position">Q' + (state.activeQuestion + 1) + ' / ' + questions.length + '</span></div>' +
+  return '<aside class="right-rail"><section class="panel request-panel" id="businessCase"><div class="section-heading"><div><span class="eyebrow">REAL-WORLD SCENARIO</span><h2>Business request</h2></div><span class="question-position">Q' + (state.activeQuestion + 1) + ' / ' + questions.length + '</span></div>' +
     '<div class="request-switcher">' + questions.map((item, index) => '<button type="button" class="request-chip ' + (index === state.activeQuestion ? 'active' : '') + '" data-question="' + index + '" aria-pressed="' + (index === state.activeQuestion) + '">Q' + (index + 1) + '</button>').join('') + '</div>' +
-    '<span class="request-stakeholder">' + escapeHTML(question?.role || 'Stakeholder') + '</span><h4 class="request-title">' + escapeHTML(title) + '</h4><p class="request-scenario">' + escapeHTML(question?.scenario || 'Select a business request to see its scenario.') + '</p>' +
+    '<span class="request-stakeholder">' + escapeHTML(question?.role || 'Stakeholder') + '</span><h3 class="request-title">' + escapeHTML(title) + '</h4><p class="request-scenario">' + escapeHTML(question?.scenario || 'Select a business request to see its scenario.') + '</p>' +
     '<div class="request-task"><span>What you need to deliver</span><strong>' + escapeHTML(question?.request || question?.question || 'Translate the request into a reproducible analytical output.') + '</strong></div>' +
     '<div class="request-output"><span>Expected output</span><p>' + escapeHTML(Array.isArray(question?.output) ? question.output.join(' · ') : (question?.required_output || 'A clear, auditable analytical result')) + '</p></div>' +
     '</section>' + renderPractice() + '</aside>';
@@ -306,15 +310,26 @@ function renderDatasetOptions() {
 }
 
 function renderPractice() {
-  return '<section class="panel practice-panel" id="practice"><div class="section-heading practice-heading"><div><span class="eyebrow">HANDS-ON WORKSPACE</span><h3>SQL practice</h3><p>Run read-only SQL against the registered learning datasets.</p></div><span class="engine-badge"><i></i> Browser SQL</span></div>' +
+  const tabs = [
+    { id: 'query', label: 'SQL editor' },
+    { id: 'schema', label: 'Dataset schema' },
+    { id: 'task', label: 'Current task' }
+  ];
+  const tabsHTML = tabs.map(item => {
+    const selected = state.practiceTab === item.id;
+    return '<button type="button" role="tab" id="practice-tab-' + item.id + '" aria-controls="practice-pane-' + item.id + '" aria-selected="' + selected + '" tabindex="' + (selected ? '0' : '-1') + '" class="practice-tab ' + (selected ? 'active' : '') + '" data-practice-tab="' + item.id + '">' + item.label + '</button>';
+  }).join('');
+  const queryPane = '<label class="editor-label" for="sqlEditor">Write your query</label><textarea id="sqlEditor" class="sql-editor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="SQL query editor" placeholder="SELECT category, SUM(sales) AS total_sales&#10;FROM orders&#10;GROUP BY category;"></textarea><div class="editor-actions"><button type="button" class="button button-primary" data-action="run-query">▶ Run query</button><button type="button" class="button button-secondary" data-action="format-query">Format</button><button type="button" class="button button-quiet" data-action="clear-query">Clear</button><span id="engineStatus" class="engine-status" role="status">Engine ready to initialize</span></div><div id="queryResults" class="query-results" aria-live="polite"><div class="results-placeholder"><strong>Your query results will appear here.</strong><span>Start with a SELECT statement. The database is read-only.</span></div></div>';
+  const schemaPane = '<div id="datasetDetails" class="dataset-details"><button type="button" class="button button-secondary" data-action="load-preview">Load schema and sample rows</button></div>';
+  const taskPane = '<div class="active-task"><span class="eyebrow">ACTIVE BUSINESS REQUEST</span><strong>' + escapeHTML(currentQuestion()?.request || 'Choose a question from the lesson.') + '</strong><p>Use the stakeholder request as the specification for your analysis. Review the result before marking the task complete.</p></div>';
+  const pane = (id, content) => '<div id="practice-pane-' + id + '" role="tabpanel" aria-labelledby="practice-tab-' + id + '" class="practice-pane" data-pane="' + id + '" ' + (state.practiceTab !== id ? 'hidden' : '') + '>' + content + '</div>';
+
+  return '<section class="panel practice-panel" id="practice"><div class="section-heading practice-heading"><div><span class="eyebrow">HANDS-ON WORKSPACE</span><h2>SQL practice</h2><p>Run read-only SQL against the registered learning datasets.</p></div><span class="engine-badge"><i></i> Browser SQL</span></div>' +
     '<div class="dataset-row"><label for="datasetSelect">Preview dataset</label><select id="datasetSelect" class="dataset-select">' + renderDatasetOptions() + '</select></div>' +
-    '<div class="practice-tabs" role="tablist" aria-label="Practice workspace">' +
-    '<button type="button" class="practice-tab ' + (state.practiceTab === 'query' ? 'active' : '') + '" data-practice-tab="query">SQL editor</button>' +
-    '<button type="button" class="practice-tab ' + (state.practiceTab === 'schema' ? 'active' : '') + '" data-practice-tab="schema">Dataset schema</button>' +
-    '<button type="button" class="practice-tab ' + (state.practiceTab === 'task' ? 'active' : '') + '" data-practice-tab="task">Current task</button></div>' +
-    '<div class="practice-pane" data-pane="query" ' + (state.practiceTab !== 'query' ? 'hidden' : '') + '><label class="editor-label" for="sqlEditor">Write your query</label><textarea id="sqlEditor" class="sql-editor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="SQL query editor" placeholder="SELECT category, SUM(sales) AS total_sales&#10;FROM orders&#10;GROUP BY category;"></textarea><div class="editor-actions"><button type="button" class="button button-primary" data-action="run-query">▶ Run query</button><button type="button" class="button button-secondary" data-action="format-query">Format</button><button type="button" class="button button-quiet" data-action="clear-query">Clear</button><span id="engineStatus" class="engine-status" role="status">Engine ready to initialize</span></div><div id="queryResults" class="query-results" aria-live="polite"><div class="results-placeholder"><strong>Your query results will appear here.</strong><span>Start with a SELECT statement. The database is read-only.</span></div></div></div>' +
-    '<div class="practice-pane" data-pane="schema" ' + (state.practiceTab !== 'schema' ? 'hidden' : '') + '><div id="datasetDetails" class="dataset-details"><button type="button" class="button button-secondary" data-action="load-preview">Load schema and sample rows</button></div></div>' +
-    '<div class="practice-pane" data-pane="task" ' + (state.practiceTab !== 'task' ? 'hidden' : '') + '><div class="active-task"><span class="eyebrow">ACTIVE BUSINESS REQUEST</span><strong>' + escapeHTML(currentQuestion()?.request || 'Choose a question from the lesson.') + '</strong><p>Use the stakeholder request as the specification for your analysis. Review the result before marking the task complete.</p></div></div>' +
+    '<div class="practice-tabs" role="tablist" aria-label="Practice workspace">' + tabsHTML + '</div>' +
+    pane('query', queryPane) +
+    pane('schema', schemaPane) +
+    pane('task', taskPane) +
     '<p class="practice-footnote">All registered datasets are loaded into the local SQL session when you run your first query. Table names use their dataset IDs with hyphens replaced by underscores.</p></section>';
 }
 
@@ -701,7 +716,29 @@ async function handleClick(event) {
   }
 }
 
+function handleTabKeydown(event, selector) {
+  const activeTab = event.target.closest(selector);
+  if (!activeTab || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return false;
+  const tabs = $$(selector);
+  const currentIndex = tabs.indexOf(activeTab);
+  if (currentIndex < 0 || !tabs.length) return false;
+  const nextIndex = event.key === 'Home'
+    ? 0
+    : event.key === 'End'
+      ? tabs.length - 1
+      : (currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+  const nextTab = tabs[nextIndex];
+  const attributeName = activeTab.hasAttribute('data-mode') ? 'data-mode' : 'data-practice-tab';
+  const attributeValue = nextTab.getAttribute(attributeName);
+  event.preventDefault();
+  nextTab.click();
+  document.querySelector(selector + '[' + attributeName + '="' + attributeValue + '"]')?.focus();
+  return true;
+}
+
 function handleKeydown(event) {
+  if (handleTabKeydown(event, '[data-mode]')) return;
+  if (handleTabKeydown(event, '[data-practice-tab]')) return;
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
     event.preventDefault();
     $('#academySearch')?.focus();

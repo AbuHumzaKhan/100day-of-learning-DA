@@ -126,3 +126,7 @@ GitHub Actions runs JavaScript syntax checks, curriculum/data validation and Pla
 - Responsive, keyboard-operable interface.
 - Validation before publishing daily resources.
 - Keep execution engines modular and load expensive runtimes only when used.
+
+## Quality gates
+
+Every pull request runs JavaScript syntax checks, curriculum and dataset contract validation, Playwright interaction tests, and three-run mobile Lighthouse CI measurements. Lighthouse uses the median run and blocks deployment if any mobile category falls below **95/100** for Performance, Accessibility, Best Practices or SEO. HTML and JSON Lighthouse reports are retained as a workflow artifact for each run.
