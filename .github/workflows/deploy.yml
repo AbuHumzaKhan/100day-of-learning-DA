@@ -1,7 +1,9 @@
-name: Deploy AHK Academy
+name: AHK Academy Quality Gate and Deploy
 
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -20,46 +22,41 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Validate JavaScript
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install test dependencies
+        run: npm install --no-package-lock
+
+      - name: Check JavaScript syntax
         run: |
           node --check assets/js/app.js
-          node --check assets/js/sql-engine.js
+          node --check assets/js/core/storage.js
           node --check engines/sql-engine.js
-      - name: Validate curriculum release
-        run: |
-          node - <<'NODE'
-          const fs = require('fs');
-          const manifest = JSON.parse(fs.readFileSync('manifest.json','utf8'));
-          const index = JSON.parse(fs.readFileSync('curriculum/index.json','utf8'));
-          const published = Number(manifest.release_control.published_through_day);
-          if (Number(index.published_through_day) !== published) throw new Error('Manifest/index published-day mismatch');
-          if (manifest.release_control.open_days.join(',') !== index.open_days.join(',')) throw new Error('Manifest/index open-day mismatch');
-          for (const day of index.open_days) {
-            const file = 'curriculum/day-' + String(day).padStart(3,'0') + '.json';
-            if (!fs.existsSync(file)) throw new Error('Missing ' + file);
-            const data = JSON.parse(fs.readFileSync(file,'utf8'));
-            if (!Array.isArray(data.topics) || data.topics.length !== 5) throw new Error(file + ' must contain exactly 5 topics');
-            const questions = data.topics.reduce((n,t) => n + (Array.isArray(t.questions) ? t.questions.length : 0), 0);
-            if (questions !== 15) throw new Error(file + ' must contain exactly 15 questions');
-          }
-          console.log('Curriculum validation passed through Day ' + published);
-          NODE
-      - name: Verify static entry
-        run: |
-          test -f index.html
-          test -f assets/css/app.css
-          test -f assets/js/app.js
-          echo "Static frontend validation passed."
+          node --check scripts/validate-content.mjs
+          node --check playwright.config.mjs
+
+      - name: Validate curriculum, datasets and release contract
+        run: npm run validate:content
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run frontend browser tests
+        run: npm run test:e2e
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: validate
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload static site

@@ -1,142 +1,744 @@
 import { SQLEngine } from '../../engines/sql-engine.js';
+import { progressStore } from './core/storage.js';
 
-const app=document.querySelector('#app');
-const state={
-  manifest:null,
-  index:null,
-  day:null,
-  activeDay:Number(localStorage.getItem('ahk_active_day_v5')||1),
-  activeTopic:0,
-  activeQuestion:0,
-  taskState:readJSON('ahk_task_status_v5',{}),
-  sqlEngine:null,
-  sqlReady:false
+const appRoot = document.querySelector('#app');
+const state = {
+  manifest: null,
+  index: null,
+  day: null,
+  activeDay: 1,
+  activeTopic: 0,
+  activeQuestion: 0,
+  view: 'learn',
+  teachingMode: 'teacher',
+  practiceTab: 'query',
+  selectedDataset: 'orders',
+  dataRegistry: null,
+  sqlEngine: null,
+  searchIndex: null,
+  searchQuery: '',
+  searchResults: [],
+  searchTimer: null,
+  projectSelection: null
 };
-const $=(s,r=document)=>r.querySelector(s);
-const $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const trackFor=d=>d<=25?'SQL':d<=50?'Excel':d<=75?'Power BI & DAX':'Python & Pandas';
-function readJSON(key,fallback){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback))}catch{return fallback}}
-function saveTaskState(){localStorage.setItem('ahk_task_status_v5',JSON.stringify(state.taskState))}
-function taskKey(day,topic,question){return day+':'+topic+':'+question}
-function countQuestions(day){return (day?.topics||[]).reduce((n,t)=>n+(t.questions?.length||0),0)}
-function solvedForDay(day){return Object.entries(state.taskState).filter(([k,v])=>k.startsWith(day+':')&&v==='solved').length}
-async function getJSON(path){const r=await fetch('./'+path+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error(path+' · HTTP '+r.status);return r.json()}
-function toast(message){const old=$('.toast');old?.remove();const el=document.createElement('div');el.className='toast';el.textContent=message;document.body.appendChild(el);setTimeout(()=>el.remove(),2400)}
-function publishedDays(){return Number(state.manifest?.release_control?.published_through_day||state.index?.published_through_day||0)}
-function dayMeta(day){return state.index.days.find(x=>x.day===day)}
-function updateUrl(){history.replaceState(null,'','#day-'+String(state.activeDay).padStart(2,'0'))}
 
-async function loadDay(day){
-  const published=publishedDays();
-  if(day<1||day>published){toast('That day is not published yet.');return}
-  state.activeDay=day;state.activeTopic=0;state.activeQuestion=0;
-  localStorage.setItem('ahk_active_day_v5',String(day));
-  app.innerHTML='<div class="loading">Preparing your learning environment…</div>';
-  try{state.day=await getJSON('curriculum/'+dayMeta(day).file);render();updateUrl();window.scrollTo({top:0,behavior:'smooth'})}
-  catch(e){renderFatal(e)}
-}
-function renderFatal(error){app.innerHTML='<main class="fatal"><div class="fatal-card"><span class="kicker">AHK Academy · Runtime</span><h1>Learning environment could not start.</h1><p>'+esc(error.message)+'</p><button class="retry" onclick="location.reload()">Retry</button></div></main>'}
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;'
+}[char]));
 
-function render(){
- const d=state.day,pub=publishedDays(),solved=solvedForDay(d.day),total=countQuestions(d);
- app.innerHTML='<div class="app-shell">'+renderHeader()+'<main id="main" class="page"><div class="page-grid">'+renderLeftRail(pub)+'<section class="lesson">'+renderLesson(d)+'</section>'+renderRightRail(d)+'</div></main></div>';
- bind();
- updateProgressUI(solved,total);
+const TEACHING_MODES = [
+  { id: 'teacher', label: 'Teacher', description: 'Instructor-led lesson' },
+  { id: 'explain', label: 'Explain', description: 'Concept in plain language' },
+  { id: 'detailedlearning', label: 'Deep learning', description: 'Detailed reasoning and application' },
+  { id: 'expose', label: 'Analyst mindset', description: 'How analysts think at work' }
+];
+
+const PROJECTS = [
+  {
+    id: 'retail-performance',
+    track: 'SQL · Excel',
+    level: 'Intermediate',
+    title: 'Retail Sales & Profitability Review',
+    brief: 'Prepare an auditable sales and margin review for a commercial director. Identify weak categories, regional differences, discount exposure and the products that require follow-up.',
+    deliverables: ['Clean transaction extract', 'Category and region KPI summary', 'Profitability exceptions', 'Management recommendations'],
+    outcome: 'A decision-ready trading review with traceable calculations.'
+  },
+  {
+    id: 'customer-value',
+    track: 'SQL · Python',
+    level: 'Advanced',
+    title: 'Customer Value & Retention Analysis',
+    brief: 'Build a customer-level view from transaction data. Segment customers by revenue contribution, purchase frequency and recency, then identify retention opportunities.',
+    deliverables: ['Customer-level analytical table', 'Segment definitions', 'High-value customer profile', 'Retention action plan'],
+    outcome: 'A customer segmentation analysis that supports targeted commercial action.'
+  },
+  {
+    id: 'executive-bi',
+    track: 'Power BI · DAX',
+    level: 'Advanced',
+    title: 'Executive Performance Dashboard',
+    brief: 'Design a management report that connects revenue, profit, orders and margin trends. Include clear metric definitions, time comparisons and drill-down paths.',
+    deliverables: ['KPI dictionary', 'Star-schema model', 'DAX measures', 'Executive report pages'],
+    outcome: 'A governed dashboard with consistent KPI definitions.'
+  },
+  {
+    id: 'operations-review',
+    track: 'Excel · Power BI',
+    level: 'Intermediate',
+    title: 'Operations & Service-Level Review',
+    brief: 'Investigate delivery performance and operational exceptions. Compare shipping modes, highlight unusual delays and prepare an action-focused summary.',
+    deliverables: ['Validated date fields', 'Service-level calculations', 'Exception analysis', 'Operations action log'],
+    outcome: 'A practical review that helps operations teams prioritize process issues.'
+  }
+];
+
+function appVersion() {
+  return state.manifest?.version || 'local';
 }
-function renderHeader(){return '<header class="topbar"><div class="topbar-inner"><a class="brand" href="./"><span class="logo">AHK</span><span><span class="brand-name">AHK Academy</span><span class="brand-sub">Data Analyst Learning Hub</span></span></a><nav class="primary-nav"><button class="nav-item active" data-scroll="lesson">Learn</button><button class="nav-item" data-scroll="practice">Practice</button><button class="nav-item" data-scroll="projects">Projects</button><button class="nav-item" data-scroll="progress">Progress</button></nav><div class="header-search"><span>⌕</span><input id="globalSearch" placeholder="Search lessons, topics…" aria-label="Search lessons"><kbd>Ctrl K</kbd></div><div class="profile"><span>AK</span><div class="avatar">AK</div></div></div></header>'}
-function renderLeftRail(pub){
- const groups=[['SQL',1,25],['Excel',26,50],['Power BI',51,75],['Python',76,100]];
- let html='<aside class="left-rail"><div class="panel rail-panel"><div class="rail-header"><h2>100-Day Data Analyst Journey</h2><p>Business-first learning path</p></div><div class="program-progress"><div class="progress-row"><span>Day '+state.activeDay+' of 100</span><strong>'+Math.round(state.activeDay)+'%</strong></div><div class="progress-track"><div class="progress-fill" style="width:'+state.activeDay+'%"></div></div></div><div class="track-list">';
- for(const [name,start,end] of groups){html+='<div class="track-label">'+name+'</div>';for(let d=start;d<=end;d++){const meta=dayMeta(d),open=d<=pub,active=d===state.activeDay;html+='<button class="day-button '+(active?'active ':'')+(!open?'locked':'')+'" data-day="'+d+'" '+(!open?'disabled':'')+'><span class="day-line"><span class="day-number">Day '+String(d).padStart(2,'0')+'</span><span class="day-state">'+(open?'OPEN':'LOCKED')+'</span></span><span class="day-title">'+esc(meta?.title?.replace(/^.*?—\s*/,'')||'Content will unlock')+'</span></button>'}}html+='</div></div></aside>';return html;
+
+async function fetchJSON(path) {
+  const url = './' + path + '?v=' + encodeURIComponent(appVersion());
+  const response = await fetch(url, { cache: 'no-cache' });
+  if (!response.ok) throw new Error(path + ' returned HTTP ' + response.status);
+  return response.json();
 }
-function renderLesson(d){
- const topics=d.topics||[],active=state.activeTopic;
- return '<div class="breadcrumb"><span>Learning Path</span><span>›</span><span>'+esc(d.track)+'</span><span>›</span><strong>Day '+d.day+'</strong></div><div class="lesson-hero"><span class="kicker">'+esc(d.track)+' · Day '+String(d.day).padStart(2,'0')+'</span><h1>'+esc(d.title)+'</h1><p>'+esc(d.description||d.learning_objectives?.[0]||'Build practical analytical capability through guided business learning.')+'</p><div class="hero-meta"><span class="meta-pill"><strong>5</strong> topics</span><span class="meta-pill"><strong>15</strong> business requests</span><span class="meta-pill"><strong>'+solvedForDay(d.day)+'</strong>/15 solved</span><span class="meta-pill">~'+(d.estimated_time_minutes||45)+' min</span></div></div><div class="learning-tabs"><button class="learning-tab active">Learn</button><button class="learning-tab" data-scroll="examples">Examples</button><button class="learning-tab" data-scroll="practice">Business Case</button></div><div class="lesson-layout"><aside class="lesson-plan panel"><div class="plan-card"><div class="plan-title">Lesson plan</div>'+topics.map((t,i)=>'<button class="plan-item '+(i===active?'active':'')+'" data-topic="'+i+'"><small>Topic '+(i+1)+'</small><strong>'+esc(t.title)+'</strong><span>'+((i+1)*5+1)+' min · '+(t.questions?.length||3)+' tasks</span></button>').join('')+'</div></aside><div id="topicArea">'+renderTopic(topics[active],active)+'</div></div><div class="daily-checkpoint"><div><h3>Day '+d.day+' learning checkpoint</h3><p id="checkpointText">'+solvedForDay(d.day)+'/15 business requests solved. Progress stays on this device.</p></div><button class="complete-day" id="completeDay" '+(solvedForDay(d.day)<15?'disabled':'')+'>Complete day</button></div>';
+
+async function fetchText(path) {
+  const url = './' + path + '?v=' + encodeURIComponent(appVersion());
+  const response = await fetch(url, { cache: 'no-cache' });
+  if (!response.ok) throw new Error(path + ' returned HTTP ' + response.status);
+  return response.text();
 }
-function renderTopic(t,index){
- if(!t)return '';
- const teaching=t.teaching||{};
- const example=teaching.syntax||teaching.example_sql||teaching.example||'';
- return '<article class="topic-card active"><button class="topic-toggle"><span class="topic-number">'+String(index+1).padStart(2,'0')+'</span><span class="topic-heading"><small>TOPIC '+(index+1)+'</small><strong>'+esc(t.title)+'</strong></span><span class="topic-chevron">⌄</span></button><div class="topic-content"><div class="teacher-grid"><div class="teacher-card"><span class="label">Why this matters</span><p>'+esc(teaching.purpose||teaching.business_context||'Understand the business purpose before writing the analysis.')+'</p></div><div class="teacher-card"><span class="label">How it works</span><p>'+esc(teaching.explanation||teaching.detailedlearning||teaching.explain||'Learn the technique, then apply it to a business request.')+'</p></div><div class="teacher-card"><span class="label">Analyst mindset</span><p>'+esc(teaching.expose||'Keep the business question, data grain, and expected output aligned.')+'</p></div><div class="teacher-card"><span class="label">Practice goal</span><p>'+esc(t.business_skill||'Translate the concept into a reproducible analytical result.')+'</p></div></div>'+(example?'<div class="example-box"><div class="example-head"><span>Worked example</span><button class="copy-button" data-copy="'+esc(example)+'">Copy</button></div><pre>'+esc(example)+'</pre></div>':'')+'<div class="business-list"><div class="section-label"><strong>Business requests</strong><span>3 tasks · solve without a pre-written answer</span></div>'+(t.questions||[]).map((q,i)=>renderQuestion(q,index,i)).join('')+'</div></div></article>';
+
+function publishedThrough() {
+  return Number(state.manifest?.release_control?.published_through_day || state.index?.published_through_day || 0);
 }
-function renderQuestion(q,topicIndex,questionIndex){
- const key=taskKey(state.activeDay,topicIndex,questionIndex),status=state.taskState[key]||'not_started';
- return '<article class="business-card '+(status==='solved'?'solved':'')+'" data-task="'+key+'"><div class="question-top"><span class="role">'+esc(q.role||'Senior Analyst')+'</span><span class="level">'+esc(q.difficulty||'Business task')+'</span></div><p class="scenario">'+esc(q.scenario||'')+'</p><p class="request">'+esc(q.request||q.question||'')+'</p><div class="deliverable">Deliverable: '+esc(Array.isArray(q.output)?q.output.join(' · '):(q.required_output||'Business-ready analytical result'))+'</div><div class="task-actions"><button class="task-btn task-hint">Hint</button><button class="task-btn primary task-solve">Solve in Practice</button><button class="task-btn done-button '+(status==='solved'?'done':'')+'">'+(status==='solved'?'Completed ✓':'Mark done')+'</button></div></article>';
+
+function dayMeta(day) {
+  return state.index?.days?.find(item => Number(item.day) === Number(day));
 }
-function renderRightRail(d){
- const q=(d.topics?.[state.activeTopic]?.questions||[])[state.activeQuestion];
- return `<aside class="right-rail"><section class="panel request-panel" id="businessCase"><div class="request-head"><h2>Business Request</h2><span class="request-count">Question ${state.activeQuestion+1} of 3</span></div><div class="request-selector">${(d.topics?.[state.activeTopic]?.questions||[]).map((x,i)=>`<button class="q-chip ${i===state.activeQuestion?'active':''}" data-question="${i}">Q${i+1}</button>`).join('')}</div><span class="request-role">${esc(q?.role||'Stakeholder')}</span><h3>${esc(q?.title||'Your business task')}</h3><p>${esc(q?.scenario||'')}</p><div class="task-callout"><span>Your task</span><strong>${esc(q?.request||q?.question||'Translate the request into an analytical result.')}</strong></div></section>${renderPractice(d,q)}</aside>`;
+
+function dayQuestions(day) {
+  return (day?.topics || []).reduce((total, topic) => total + (topic.questions?.length || 0), 0);
 }
-function renderPractice(d,q){
- return `<section class="panel practice-panel" id="practice"><div class="practice-header"><div class="practice-title"><span class="code-icon">&lt;/&gt;</span><div><h2>Practice Workspace</h2><span>Write the solution yourself · read-only dataset</span></div></div><select class="dataset-select" id="datasetSelect"><option>orders · 150 rows</option></select></div><div class="practice-tools"><button class="tool-tab active" data-tool="query">Write SQL</button><button class="tool-tab" data-tool="table">Tbl (Data)</button><button class="tool-tab" data-tool="question">Question</button></div><div class="practice-body"><div class="practice-pane active" data-pane="query"><textarea id="sqlEditor" class="sql-editor" spellcheck="false" placeholder="Write your SQL query here…"></textarea><div class="editor-actions"><button class="run-query" id="runQuery">▶ Run Query</button><button class="clear-query" id="clearQuery">Clear</button><button class="format-query" id="formatQuery">Format</button><span class="engine-state" id="engineState">Ready · answer not provided</span></div><div class="hint">No solution is pre-filled. Use the business request, inspect <b>Tbl (Data)</b>, and write your own query.</div><div class="results" id="results"><div class="results-empty">Run your query to see the result here.</div></div></div><div class="practice-pane" data-pane="table"><div class="schema-grid" id="schemaGrid"></div><div class="schema-table" id="sampleTable"></div></div><div class="practice-pane" data-pane="question"><div class="task-callout"><span>Current business request</span><strong id="questionText">${esc(q?.request||'')}</strong></div><p style="font-size:8px;color:#7a857e;line-height:1.6;margin:10px 0 0">Use this request as your analytical specification. Do not copy an answer; derive the query from the requirement.</p></div></div></section>`;
+
+function currentQuestion() {
+  return state.day?.topics?.[state.activeTopic]?.questions?.[state.activeQuestion] || null;
 }
-function bind(){
- $$('.day-button').forEach(b=>b.addEventListener('click',()=>loadDay(Number(b.dataset.day))));
- $$('.plan-item').forEach(b=>b.addEventListener('click',()=>{state.activeTopic=Number(b.dataset.topic);state.activeQuestion=0;render();document.querySelector('#topicArea')?.scrollIntoView({behavior:'smooth',block:'start'})}));
- $$('.q-chip').forEach(b=>b.addEventListener('click',()=>{state.activeQuestion=Number(b.dataset.question);renderRightRailOnly()}));
- $$('.task-solve').forEach(b=>b.addEventListener('click',()=>{const card=b.closest('[data-task]');state.taskState[card.dataset.task]='attempted';saveTaskState();openPractice();}));
- $$('.task-hint').forEach(b=>b.addEventListener('click',()=>{const card=b.closest('[data-task]');const q=findQuestionByKey(card.dataset.task);toast('Hint: '+(q?.validation||'Translate the business request into the fields, filters, and calculations it requires.'))}));
- $$('.done-button').forEach(b=>b.addEventListener('click',()=>{const card=b.closest('[data-task]');const current=state.taskState[card.dataset.task];state.taskState[card.dataset.task]=current==='solved'?'not_started':'solved';saveTaskState();render()}));
- $('#completeDay')?.addEventListener('click',()=>{localStorage.setItem('ahk_completed_day_'+state.activeDay,'true');toast('Day '+state.activeDay+' completed locally.');});
- $$('.topic-toggle').forEach(b=>b.addEventListener('click',()=>b.closest('.topic-card').classList.toggle('active')));
- $$('.copy-button').forEach(b=>b.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(b.dataset.copy||'');b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1000)}catch{}}));
- $$('.tool-tab').forEach(b=>b.addEventListener('click',()=>switchPracticeTool(b.dataset.tool)));
- $$('[data-scroll]').forEach(b=>b.addEventListener('click',()=>document.getElementById(b.dataset.scroll)?.scrollIntoView({behavior:'smooth',block:'start'})));
- $('#runQuery')?.addEventListener('click',runQuery);
- $('#clearQuery')?.addEventListener('click',()=>{$('#sqlEditor').value='';$('#results').innerHTML='<div class="results-empty">Editor cleared. Write your own query.</div>'});
- $('#formatQuery')?.addEventListener('click',()=>{$('#sqlEditor').value=basicFormat($('#sqlEditor').value)});
- bindSearch();
- renderSchema();
+
+function isUnlocked(day) {
+  return progressStore.isDayUnlocked(day, publishedThrough());
 }
-function renderRightRailOnly(){
- const old=$('.right-rail'),newHTML=renderRightRail(state.day);old.outerHTML=newHTML;bindPracticeOnly();renderSchema();
+
+function toast(message, tone = 'info') {
+  const element = $('#academyToast');
+  if (!element) return;
+  element.textContent = message;
+  element.dataset.tone = tone;
+  element.classList.add('visible');
+  window.clearTimeout(toast.timer);
+  toast.timer = window.setTimeout(() => element.classList.remove('visible'), 2800);
 }
-function bindPracticeOnly(){
- $$('.q-chip').forEach(b=>b.addEventListener('click',()=>{state.activeQuestion=Number(b.dataset.question);renderRightRailOnly()}));
- $$('.tool-tab').forEach(b=>b.addEventListener('click',()=>switchPracticeTool(b.dataset.tool)));
- $('#runQuery')?.addEventListener('click',runQuery);$('#clearQuery')?.addEventListener('click',()=>{$('#sqlEditor').value='';$('#results').innerHTML='<div class="results-empty">Editor cleared. Write your own query.</div>'});$('#formatQuery')?.addEventListener('click',()=>{$('#sqlEditor').value=basicFormat($('#sqlEditor').value)});
+
+function setBusy(value) {
+  appRoot.setAttribute('aria-busy', value ? 'true' : 'false');
 }
-function switchPracticeTool(tool){$$('.tool-tab').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));$$('.practice-pane').forEach(p=>p.classList.toggle('active',p.dataset.pane===tool))}
-function openPractice(){document.querySelector('#practice')?.scrollIntoView({behavior:'smooth',block:'start'});switchPracticeTool('query');setTimeout(()=>$('#sqlEditor')?.focus(),250)}
-function findQuestionByKey(key){const [,ti,qi]=key.split(':').map(Number);return state.day?.topics?.[ti]?.questions?.[qi]}
-function updateProgressUI(solved,total){const fill=$('.program-progress .progress-fill');if(fill)fill.style.width=Math.min(100,(state.activeDay/100)*100)+'%';const text=$('#checkpointText');if(text)text.textContent=solved+'/'+total+' business requests solved. Progress stays on this device.'}
-function bindSearch(){const input=$('#globalSearch');if(!input)return;input.addEventListener('input',e=>{const q=e.target.value.toLowerCase().trim();$$('.day-button').forEach(b=>b.style.display=!q||b.textContent.toLowerCase().includes(q)?'block':'none')});document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();input.focus()}})}
-function basicFormat(sql){return String(sql||'').replace(/\s+/g,' ').replace(/\s+(FROM|WHERE|GROUP BY|ORDER BY|HAVING|LIMIT)\s+/gi,'\\n$1 ').replace(/,/g,', ')}
-async function ensureSQLEngine(){
- if(state.sqlReady)return state.sqlEngine;
- state.sqlEngine=new SQLEngine();
- $('#engineState').textContent='Starting local SQL engine…';
- await state.sqlEngine.init();
- state.sqlReady=true;
- return state.sqlEngine;
+
+function updateHash(day) {
+  history.replaceState(null, '', '#day-' + String(day).padStart(2, '0'));
 }
-async function runQuery(){
- const input=$('#sqlEditor'),out=$('#results'),status=$('#engineState');if(!input||!out)return;
- const sql=input.value.trim();if(!sql){out.innerHTML='<div class="results-empty">Write a SQL query first.</div>';return}
- status.textContent='Executing…';out.innerHTML='<div class="results-empty">Running your query locally…</div>';
- try{
-  const engine=await ensureSQLEngine();const r=await engine.run(sql);status.textContent=r.elapsed+' ms · '+r.rows.length+' rows';
-  if(!r.rows.length){out.innerHTML='<div class="results-empty">Query executed successfully but returned no rows.</div>';return}
-  out.innerHTML='<div class="results-meta">'+r.rows.length+' row(s) returned · local execution</div><table><thead><tr>'+r.columns.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+r.rows.map(row=>'<tr>'+r.columns.map(c=>'<td>'+esc(row[c])+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
- }catch(e){status.textContent='Ready · query needs attention';out.innerHTML='<div class="results-empty error">'+esc(e.message)+'</div>'}
+
+async function loadDay(day, options = {}) {
+  const target = Number(day);
+  if (!isUnlocked(target)) {
+    toast('Complete the previous published day to unlock this lesson.', 'warning');
+    return;
+  }
+
+  const meta = dayMeta(target);
+  if (!meta?.file) {
+    toast('This curriculum resource is not available yet.', 'warning');
+    return;
+  }
+
+  state.activeDay = target;
+  state.activeTopic = Number(options.topic || 0);
+  state.activeQuestion = Number(options.question || 0);
+  state.teachingMode = 'teacher';
+  state.view = 'learn';
+  progressStore.setActiveDay(target);
+  setBusy(true);
+  appRoot.innerHTML = '<div class="academy-loading"><span class="loading-mark">AHK</span><strong>Preparing your learning workspace</strong><span>Loading Day ' + target + ' curriculum…</span></div>';
+
+  try {
+    state.day = await fetchJSON('curriculum/' + meta.file);
+    const topicCount = state.day.topics?.length || 0;
+    state.activeTopic = Math.min(state.activeTopic, Math.max(0, topicCount - 1));
+    const questionCount = state.day.topics?.[state.activeTopic]?.questions?.length || 0;
+    state.activeQuestion = Math.min(state.activeQuestion, Math.max(0, questionCount - 1));
+    render();
+    updateHash(target);
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  } catch (error) {
+    renderFatal(error);
+  } finally {
+    setBusy(false);
+  }
 }
-async function renderSchema(){
- const schemaGrid=$('#schemaGrid'),sample=$('#sampleTable');if(!schemaGrid||!sample)return;
- try{
-  const s=await getJSON('datasets/orders/schema.json');schemaGrid.innerHTML=s.columns.map(([name,type])=>'<div class="schema-item"><strong>'+esc(name)+'</strong><span>'+esc(type)+'</span></div>').join('');
-  const data=await getJSON('datasets/orders/data.csv');const rows=parseCSV(data);sample.innerHTML='<table><thead><tr>'+rows.headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.rows.slice(0,8).map(r=>'<tr>'+r.map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
- }catch(e){schemaGrid.innerHTML='<div class="results-empty error">Dataset metadata unavailable.</div>'}
+
+function renderFatal(error) {
+  appRoot.innerHTML = '<main class="academy-fatal"><div class="fatal-card"><span class="eyebrow">AHK Academy · Runtime</span><h1>The learning workspace could not load.</h1><p>' +
+    escapeHTML(error?.message || 'An unexpected error occurred.') +
+    '</p><button type="button" class="button button-primary" data-action="retry">Retry loading</button></div></main>';
+  setBusy(false);
 }
-function parseCSV(text){
- const lines=text.replace(/^\uFEFF/,'').trim().split(/\r?\n/);if(!lines.length)return{headers:[],rows:[]};
- const parse=line=>{const out=[];let cur='',quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(quoted&&line[i+1]==='"'){cur+='"';i++}else quoted=!quoted}else if(ch===','&&!quoted){out.push(cur);cur=''}else cur+=ch}out.push(cur);return out};const headers=parse(lines.shift());return{headers,rows:lines.map(parse)};
+
+function renderHeader() {
+  const items = [
+    ['learn', 'Learn'],
+    ['practice', 'Practice'],
+    ['projects', 'Projects'],
+    ['progress', 'Progress']
+  ];
+  return '<header class="academy-header"><div class="academy-header-inner">' +
+    '<a class="academy-brand" href="./" aria-label="AHK Academy home" data-view="learn"><span class="brand-mark">AHK</span><span class="brand-copy"><strong>AHK Academy</strong><small>Data Analyst Learning Hub</small></span></a>' +
+    '<nav class="academy-nav" aria-label="Main navigation">' +
+    items.map(([id, label]) => '<button type="button" class="nav-button ' + (state.view === id || (id === 'learn' && state.view === 'practice') ? 'active' : '') + '" data-view="' + id + '">' + label + '</button>').join('') +
+    '</nav>' +
+    '<div class="academy-search-wrap"><label class="search-box"><span aria-hidden="true">⌕</span><input id="academySearch" type="search" value="' + escapeHTML(state.searchQuery) + '" placeholder="Search lessons and tasks" autocomplete="off" aria-label="Search lessons, topics and business requests"><kbd>Ctrl K</kbd></label><div id="academySearchResults" class="search-results" hidden></div></div>' +
+    '<div class="learner-chip"><span class="learner-avatar">AK</span><span><strong>Learner workspace</strong><small>Progress saved on this device</small></span></div>' +
+    '</div></header>';
 }
-async function boot(){
- try{
-  state.manifest=await getJSON('manifest.json');state.index=await getJSON('curriculum/index.json');
-  const pub=publishedDays(),hash=location.hash.match(/day-(\d+)/),wanted=hash?Number(hash[1]):Number(localStorage.getItem('ahk_active_day_v5')||pub||1);
-  await loadDay(Math.min(Math.max(1,wanted),pub));
- }catch(e){renderFatal(e)}
+
+function renderSidebar() {
+  const groups = [
+    { title: 'SQL', start: 1, end: 25 },
+    { title: 'Excel', start: 26, end: 50 },
+    { title: 'Power BI & DAX', start: 51, end: 75 },
+    { title: 'Python & Pandas', start: 76, end: 100 }
+  ];
+  const published = publishedThrough();
+  const stateData = progressStore.getState();
+  const completed = stateData.completedDays.filter(day => day <= published).length;
+  let html = '<aside class="left-rail"><section class="panel roadmap-panel"><div class="panel-heading"><div><span class="eyebrow">YOUR LEARNING PATH</span><h2>100-Day Journey</h2><p>Business-first analyst training</p></div><span class="roadmap-count">' + published + '/100</span></div>' +
+    '<div class="release-summary"><div class="summary-line"><span>Published lessons</span><strong>' + published + ' / 100</strong></div><div class="mini-progress"><span style="width:' + Math.round(published) + '%"></span></div><div class="summary-line muted"><span>Completed days</span><strong>' + completed + '</strong></div></div><div class="roadmap-groups">';
+
+  for (const group of groups) {
+    html += '<section class="roadmap-group"><h3>' + escapeHTML(group.title) + '</h3><div class="day-list">';
+    for (let day = group.start; day <= group.end; day += 1) {
+      const meta = dayMeta(day);
+      const publishedDay = day <= published && !!meta;
+      const unlocked = publishedDay && isUnlocked(day);
+      const isCurrent = day === state.activeDay;
+      const isComplete = progressStore.isDayCompleted(day);
+      const title = meta?.title?.replace(/^.*?—\s*/, '') || 'Content not published';
+      html += '<button type="button" class="day-button ' + (isCurrent ? 'current ' : '') + (isComplete ? 'completed ' : '') + (!unlocked ? 'locked' : '') + '" data-day="' + day + '" ' + (!unlocked ? 'disabled' : '') + ' aria-current="' + (isCurrent ? 'page' : 'false') + '" title="' + escapeHTML(title) + '">' +
+        '<span class="day-topline"><span>DAY ' + String(day).padStart(2, '0') + '</span><span class="day-state">' + (isComplete ? 'DONE' : unlocked ? 'OPEN' : publishedDay ? 'LOCKED' : 'SOON') + '</span></span>' +
+        '<span class="day-name">' + escapeHTML(title) + '</span></button>';
+    }
+    html += '</div></section>';
+  }
+  html += '</div></section></aside>';
+  return html;
 }
+
+function renderTeaching(topic) {
+  const teaching = topic?.teaching || {};
+  const mode = TEACHING_MODES.find(item => item.id === state.teachingMode) || TEACHING_MODES[0];
+  const content = teaching[mode.id] || teaching.explain || topic?.business_skill || 'This lesson content will be added in a future curriculum revision.';
+  const example = teaching.example || teaching.example_sql || teaching.syntax || teaching.expected_sql || '';
+  return '<section class="teaching-panel" id="examples"><div class="section-heading"><div><span class="eyebrow">LEARN THE CONCEPT</span><h3>Teaching workspace</h3></div><span class="content-tag">Guided lesson</span></div>' +
+    '<div class="mode-tabs" role="tablist" aria-label="Teaching modes">' +
+    TEACHING_MODES.map(item => '<button type="button" role="tab" aria-selected="' + (item.id === state.teachingMode) + '" class="mode-tab ' + (item.id === state.teachingMode ? 'active' : '') + '" data-mode="' + item.id + '"><strong>' + escapeHTML(item.label) + '</strong><small>' + escapeHTML(item.description) + '</small></button>').join('') +
+    '</div><div class="teaching-copy" role="tabpanel"><div class="teaching-mode-label">' + escapeHTML(mode.label) + '</div><div class="teaching-text">' + escapeHTML(content) + '</div></div>' +
+    (example ? '<div class="example-card"><div class="example-card-head"><div><span class="eyebrow">WORKED EXAMPLE</span><strong>Apply the concept</strong></div><button type="button" class="button button-quiet button-small" data-action="copy-example">Copy example</button></div><pre><code>' + escapeHTML(example) + '</code></pre></div>' : '') +
+    '</section>';
+}
+
+function renderQuestionCard(question, topicIndex, questionIndex) {
+  const solved = progressStore.isSolved(state.activeDay, topicIndex, questionIndex);
+  const status = solved ? 'Reviewed' : 'Not reviewed';
+  const output = Array.isArray(question.output) ? question.output.join(' · ') : (question.required_output || 'Business-ready analytical result');
+  const hint = question.validation || question.success_criteria || question.request || 'Identify the required fields, filters and calculations before writing your solution.';
+  return '<article class="question-card ' + (solved ? 'solved' : '') + '" data-task="' + topicIndex + ':' + questionIndex + '">' +
+    '<div class="question-card-head"><div class="question-label"><span class="question-number">Q' + (questionIndex + 1) + '</span><span class="stakeholder">' + escapeHTML(question.role || 'Business stakeholder') + '</span></div><span class="difficulty">' + escapeHTML(question.difficulty || 'Business task') + '</span></div>' +
+    '<p class="scenario-text">' + escapeHTML(question.scenario || '') + '</p><p class="request-text"><strong>Request</strong>' + escapeHTML(question.request || question.question || '') + '</p>' +
+    '<div class="deliverable"><span>Expected output</span><p>' + escapeHTML(output) + '</p></div>' +
+    '<div class="question-actions"><button type="button" class="button button-quiet button-small" data-task-action="hint" data-hint="' + escapeHTML(hint) + '">Show hint</button><button type="button" class="button button-secondary button-small" data-task-action="practice" data-topic="' + topicIndex + '" data-question="' + questionIndex + '">Practice this</button><button type="button" class="button button-complete button-small ' + (solved ? 'is-done' : '') + '" data-task-action="toggle" data-topic="' + topicIndex + '" data-question="' + questionIndex + '">' + (solved ? '✓ ' + status : 'Mark reviewed') + '</button></div>' +
+    '<div class="hint-panel" hidden></div></article>';
+}
+
+function renderTopic(topic, index) {
+  if (!topic) return '<div class="empty-state">No topic is available for this day.</div>';
+  const questions = topic.questions || [];
+  const solved = questions.filter((question, questionIndex) => progressStore.isSolved(state.activeDay, index, questionIndex)).length;
+  return '<section class="topic-section"><div class="topic-title-row"><div><span class="eyebrow">TOPIC ' + String(index + 1).padStart(2, '0') + '</span><h2>' + escapeHTML(topic.title) + '</h2><p>' + escapeHTML(topic.business_skill || 'Apply this skill to a practical business request.') + '</p></div><span class="topic-counter">' + solved + '/' + questions.length + ' reviewed</span></div>' +
+    renderTeaching(topic) +
+    '<section class="business-requests"><div class="section-heading"><div><span class="eyebrow">PRACTICAL APPLICATION</span><h3>Business requests</h3></div><span class="content-tag">' + questions.length + ' tasks</span></div>' +
+    questions.map((question, questionIndex) => renderQuestionCard(question, index, questionIndex)).join('') + '</section></section>';
+}
+
+function renderLesson() {
+  const day = state.day;
+  const topics = day?.topics || [];
+  const solved = progressStore.getSolvedCount(state.activeDay);
+  const total = dayQuestions(day);
+  const completed = progressStore.isDayCompleted(state.activeDay);
+  const question = currentQuestion();
+  const topic = topics[state.activeTopic];
+  return '<div class="page-grid">' + renderSidebar() + '<section class="lesson-column">' +
+    '<div class="lesson-breadcrumb"><span>Learning path</span><span>/</span><strong>' + escapeHTML(day.track) + '</strong><span>/</span><strong>Day ' + String(day.day).padStart(2, '0') + '</strong></div>' +
+    '<section class="lesson-hero"><div class="hero-topline"><span class="eyebrow">' + escapeHTML(day.track) + ' · DAY ' + String(day.day).padStart(2, '0') + '</span><span class="release-pill">Published lesson</span></div><h1>' + escapeHTML(day.title) + '</h1><p>' + escapeHTML(day.description || day.learning_objectives?.[0] || 'Build practical analytical capability through guided business learning.') + '</p>' +
+    '<div class="hero-metrics"><div><strong>' + topics.length + '</strong><span>Topics</span></div><div><strong>' + total + '</strong><span>Business requests</span></div><div><strong>' + (day.estimated_time_minutes || 45) + ' min</strong><span>Estimated time</span></div><div><strong>' + solved + '/' + total + '</strong><span>Reviewed</span></div></div></section>' +
+    '<section class="topic-navigator panel"><div class="section-heading"><div><span class="eyebrow">LESSON PLAN</span><h3>Today’s topics</h3></div><span class="content-tag">Follow in sequence</span></div><div class="topic-nav-list">' +
+    topics.map((item, index) => {
+      const topicSolved = (item.questions || []).filter((question, qi) => progressStore.isSolved(state.activeDay, index, qi)).length;
+      return '<button type="button" class="topic-nav-button ' + (index === state.activeTopic ? 'active' : '') + '" data-topic="' + index + '" aria-current="' + (index === state.activeTopic ? 'step' : 'false') + '"><span class="topic-nav-number">' + String(index + 1).padStart(2, '0') + '</span><span class="topic-nav-copy"><strong>' + escapeHTML(item.title) + '</strong><small>' + topicSolved + '/' + (item.questions?.length || 0) + ' tasks reviewed</small></span><span class="topic-nav-arrow">›</span></button>';
+    }).join('') +
+    '</div></section>' +
+    renderTopic(topic, state.activeTopic) +
+    '<section class="day-checkpoint panel"><div><span class="eyebrow">DAILY CHECKPOINT</span><h3>' + (completed ? 'Day completed' : 'Finish this learning day') + '</h3><p>' + solved + ' of ' + total + ' business requests reviewed. Progress is stored locally on this device.</p></div><button type="button" class="button button-primary" data-action="complete-day" ' + (completed || solved < total ? 'disabled' : '') + '>' + (completed ? 'Completed ✓' : 'Complete day') + '</button></section>' +
+    '</section>' + renderRightRail(question) + '</div>';
+}
+
+function renderRightRail(question) {
+  const questions = state.day?.topics?.[state.activeTopic]?.questions || [];
+  const title = question?.title || 'Stakeholder request';
+  return '<aside class="right-rail"><section class="panel request-panel" id="businessCase"><div class="section-heading"><div><span class="eyebrow">REAL-WORLD SCENARIO</span><h3>Business request</h3></div><span class="question-position">Q' + (state.activeQuestion + 1) + ' / ' + questions.length + '</span></div>' +
+    '<div class="request-switcher">' + questions.map((item, index) => '<button type="button" class="request-chip ' + (index === state.activeQuestion ? 'active' : '') + '" data-question="' + index + '" aria-pressed="' + (index === state.activeQuestion) + '">Q' + (index + 1) + '</button>').join('') + '</div>' +
+    '<span class="request-stakeholder">' + escapeHTML(question?.role || 'Stakeholder') + '</span><h4 class="request-title">' + escapeHTML(title) + '</h4><p class="request-scenario">' + escapeHTML(question?.scenario || 'Select a business request to see its scenario.') + '</p>' +
+    '<div class="request-task"><span>What you need to deliver</span><strong>' + escapeHTML(question?.request || question?.question || 'Translate the request into a reproducible analytical output.') + '</strong></div>' +
+    '<div class="request-output"><span>Expected output</span><p>' + escapeHTML(Array.isArray(question?.output) ? question.output.join(' · ') : (question?.required_output || 'A clear, auditable analytical result')) + '</p></div>' +
+    '</section>' + renderPractice() + '</aside>';
+}
+
+function renderDatasetOptions() {
+  const datasets = state.dataRegistry?.datasets || [];
+  return datasets.filter(dataset => dataset.status !== 'disabled').map(dataset =>
+    '<option value="' + escapeHTML(dataset.id) + '" ' + (dataset.id === state.selectedDataset ? 'selected' : '') + '>' + escapeHTML(dataset.name) + ' · ' + Number(dataset.row_count || 0) + ' rows</option>'
+  ).join('');
+}
+
+function renderPractice() {
+  return '<section class="panel practice-panel" id="practice"><div class="section-heading practice-heading"><div><span class="eyebrow">HANDS-ON WORKSPACE</span><h3>SQL practice</h3><p>Run read-only SQL against the registered learning datasets.</p></div><span class="engine-badge"><i></i> Browser SQL</span></div>' +
+    '<div class="dataset-row"><label for="datasetSelect">Preview dataset</label><select id="datasetSelect" class="dataset-select">' + renderDatasetOptions() + '</select></div>' +
+    '<div class="practice-tabs" role="tablist" aria-label="Practice workspace">' +
+    '<button type="button" class="practice-tab ' + (state.practiceTab === 'query' ? 'active' : '') + '" data-practice-tab="query">SQL editor</button>' +
+    '<button type="button" class="practice-tab ' + (state.practiceTab === 'schema' ? 'active' : '') + '" data-practice-tab="schema">Dataset schema</button>' +
+    '<button type="button" class="practice-tab ' + (state.practiceTab === 'task' ? 'active' : '') + '" data-practice-tab="task">Current task</button></div>' +
+    '<div class="practice-pane" data-pane="query" ' + (state.practiceTab !== 'query' ? 'hidden' : '') + '><label class="editor-label" for="sqlEditor">Write your query</label><textarea id="sqlEditor" class="sql-editor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="SQL query editor" placeholder="SELECT category, SUM(sales) AS total_sales&#10;FROM orders&#10;GROUP BY category;"></textarea><div class="editor-actions"><button type="button" class="button button-primary" data-action="run-query">▶ Run query</button><button type="button" class="button button-secondary" data-action="format-query">Format</button><button type="button" class="button button-quiet" data-action="clear-query">Clear</button><span id="engineStatus" class="engine-status" role="status">Engine ready to initialize</span></div><div id="queryResults" class="query-results" aria-live="polite"><div class="results-placeholder"><strong>Your query results will appear here.</strong><span>Start with a SELECT statement. The database is read-only.</span></div></div></div>' +
+    '<div class="practice-pane" data-pane="schema" ' + (state.practiceTab !== 'schema' ? 'hidden' : '') + '><div id="datasetDetails" class="dataset-details"><button type="button" class="button button-secondary" data-action="load-preview">Load schema and sample rows</button></div></div>' +
+    '<div class="practice-pane" data-pane="task" ' + (state.practiceTab !== 'task' ? 'hidden' : '') + '><div class="active-task"><span class="eyebrow">ACTIVE BUSINESS REQUEST</span><strong>' + escapeHTML(currentQuestion()?.request || 'Choose a question from the lesson.') + '</strong><p>Use the stakeholder request as the specification for your analysis. Review the result before marking the task complete.</p></div></div>' +
+    '<p class="practice-footnote">All registered datasets are loaded into the local SQL session when you run your first query. Table names use their dataset IDs with hyphens replaced by underscores.</p></section>';
+}
+
+function renderProjects() {
+  const selected = PROJECTS.find(project => project.id === state.projectSelection);
+  if (selected) {
+    return '<section class="content-view projects-view"><div class="view-heading"><div><span class="eyebrow">PORTFOLIO WORKSPACE</span><h1>Project brief</h1><p>Translate the learning path into a business-facing analytical deliverable.</p></div><button type="button" class="button button-secondary" data-action="back-projects">← All projects</button></div><article class="project-detail panel"><span class="project-track">' + escapeHTML(selected.track) + ' · ' + escapeHTML(selected.level) + '</span><h2>' + escapeHTML(selected.title) + '</h2><p>' + escapeHTML(selected.brief) + '</p><h3>Required deliverables</h3><ol>' + selected.deliverables.map(item => '<li>' + escapeHTML(item) + '</li>').join('') + '</ol><div class="project-outcome"><strong>Business outcome</strong><p>' + escapeHTML(selected.outcome) + '</p></div><p class="project-note">Project briefs are planning resources. Add your completed workbook, SQL script, dashboard or notebook to your portfolio when you finish the work.</p></article></section>';
+  }
+  return '<section class="content-view projects-view"><div class="view-heading"><div><span class="eyebrow">BUILD PROOF OF SKILL</span><h1>Analytical project library</h1><p>Practical project briefs designed around real business decisions, not isolated tool exercises.</p></div><span class="content-tag">4 project briefs</span></div><div class="project-grid">' +
+    PROJECTS.map(project => '<article class="project-card panel"><span class="project-track">' + escapeHTML(project.track) + '</span><h2>' + escapeHTML(project.title) + '</h2><p>' + escapeHTML(project.brief) + '</p><div class="project-meta"><span>' + escapeHTML(project.level) + '</span><span>' + project.deliverables.length + ' deliverables</span></div><button type="button" class="button button-secondary" data-project="' + project.id + '">Open project brief →</button></article>').join('') +
+    '</div></section>';
+}
+
+function renderProgress() {
+  const stats = progressStore.getStats(publishedThrough());
+  const stateData = progressStore.getState();
+  const publishedDays = state.index?.days || [];
+  const completedList = stateData.completedDays;
+  return '<section class="content-view progress-view"><div class="view-heading"><div><span class="eyebrow">LEARNING ANALYTICS</span><h1>Your progress</h1><p>Track completed work separately from the amount of curriculum currently published.</p></div><span class="content-tag">Saved on this device</span></div>' +
+    '<div class="progress-metric-grid"><article class="metric-card panel"><span>Questions reviewed</span><strong>' + stats.solvedQuestions + '</strong><small>Of ' + stats.publishedQuestions + ' published questions</small></article><article class="metric-card panel"><span>Days completed</span><strong>' + stats.completedDays + '</strong><small>Of 100 total days</small></article><article class="metric-card panel"><span>Published curriculum</span><strong>' + stats.publishedDays + '%</strong><small>' + stats.publishedDays + ' days available in the repository</small></article><article class="metric-card panel"><span>Published question review</span><strong>' + stats.courseCompletion + '%</strong><small>Based on currently published questions</small></article></div>' +
+    '<section class="panel progress-breakdown"><div class="section-heading"><div><span class="eyebrow">DAY-BY-DAY</span><h2>Published learning days</h2></div><span class="content-tag">' + publishedDays.length + ' available resources</span></div>' +
+    publishedDays.map(meta => {
+      const day = Number(meta.day);
+      const solved = progressStore.getSolvedCount(day);
+      const total = Number(meta.business_questions || 15);
+      const done = progressStore.isDayCompleted(day);
+      const unlocked = isUnlocked(day);
+      return '<div class="day-progress-row"><div class="day-progress-title"><strong>Day ' + String(day).padStart(2, '0') + '</strong><span>' + escapeHTML(meta.title.replace(/^.*?—\s*/, '')) + '</span></div><div class="day-progress-track"><span style="width:' + Math.min(100, (solved / Math.max(1, total)) * 100) + '%"></span></div><span class="day-progress-count">' + solved + '/' + total + '</span><span class="day-progress-status ' + (done ? 'done' : unlocked ? 'available' : 'locked') + '">' + (done ? 'Completed' : unlocked ? 'Available' : 'Locked') + '</span><button type="button" class="button button-quiet button-small" data-open-day="' + day + '" ' + (!unlocked ? 'disabled' : '') + '>Open</button></div>';
+    }).join('') +
+    '</section><div class="progress-note"><strong>How progress is calculated</strong><p>Question review counts only tasks you explicitly mark as reviewed. A day becomes complete only when all questions in that day are reviewed and you select Complete day. The next published day then unlocks.</p></div>' +
+    (completedList.length ? '<button type="button" class="button button-quiet" data-action="export-progress">Export my progress (JSON)</button>' : '') +
+    '</section>';
+}
+
+function render() {
+  const activeView = state.view === 'practice' ? 'learn' : state.view;
+  const viewContent = activeView === 'projects'
+    ? renderProjects()
+    : activeView === 'progress'
+      ? renderProgress()
+      : renderLesson();
+
+  appRoot.innerHTML = '<div class="academy-shell">' + renderHeader() +
+    '<main id="main" class="academy-main"><div class="view-panel" data-view-panel="' + activeView + '">' + viewContent + '</div></main>' +
+    '<div id="academyToast" class="academy-toast" role="status" aria-live="polite"></div></div>';
+  setBusy(false);
+}
+
+function parseCSVPreview(source) {
+  const rows = [];
+  let row = [];
+  let field = '';
+  let quoted = false;
+  const input = String(source || '').replace(/^\uFEFF/, '');
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index];
+    if (char === '"') {
+      if (quoted && input[index + 1] === '"') {
+        field += '"';
+        index += 1;
+      } else quoted = !quoted;
+    } else if (char === ',' && !quoted) {
+      row.push(field);
+      field = '';
+    } else if ((char === '\n' || char === '\r') && !quoted) {
+      if (char === '\r' && input[index + 1] === '\n') index += 1;
+      row.push(field);
+      if (row.some(value => value !== '')) rows.push(row);
+      row = [];
+      field = '';
+    } else field += char;
+  }
+  if (field !== '' || row.length) {
+    row.push(field);
+    if (row.some(value => value !== '')) rows.push(row);
+  }
+  return { headers: rows.shift() || [], rows };
+}
+
+async function renderDatasetPreview() {
+  const container = $('#datasetDetails');
+  const meta = state.dataRegistry?.datasets?.find(dataset => dataset.id === state.selectedDataset);
+  if (!container || !meta) return;
+  container.innerHTML = '<div class="results-placeholder">Loading dataset metadata…</div>';
+  try {
+    const [schema, csv] = await Promise.all([fetchJSON(meta.schema), fetchText(meta.data)]);
+    const parsed = parseCSVPreview(csv);
+    container.innerHTML = '<div class="dataset-schema-grid">' + (schema.columns || []).map(column => {
+      const name = Array.isArray(column) ? column[0] : column.name;
+      const type = Array.isArray(column) ? column[1] : column.type;
+      return '<div class="schema-item"><strong>' + escapeHTML(name) + '</strong><span>' + escapeHTML(type) + '</span></div>';
+    }).join('') + '</div><div class="sample-data-heading"><strong>' + escapeHTML(meta.name) + '</strong><span>' + parsed.rows.length + ' rows · sample of 8</span></div><div class="table-scroll"><table class="data-table"><thead><tr>' + parsed.headers.map(header => '<th>' + escapeHTML(header) + '</th>').join('') + '</tr></thead><tbody>' + parsed.rows.slice(0, 8).map(row => '<tr>' + row.map(value => '<td>' + escapeHTML(value) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
+  } catch (error) {
+    container.innerHTML = '<div class="results-placeholder error-state">' + escapeHTML(error.message) + '</div>';
+  }
+}
+
+async function ensureSQLEngine() {
+  if (state.sqlEngine?.ready) return state.sqlEngine;
+  if (!state.sqlEngine) state.sqlEngine = new SQLEngine();
+  const status = $('#engineStatus');
+  if (status) status.textContent = 'Loading SQL.js and registered datasets…';
+  await state.sqlEngine.init();
+  if (status) status.textContent = 'Ready · ' + state.sqlEngine.getDatasets().length + ' tables loaded';
+  return state.sqlEngine;
+}
+
+function renderQueryResults(result) {
+  const container = $('#queryResults');
+  if (!container) return;
+  if (!result.columns.length) {
+    container.innerHTML = '<div class="results-placeholder">Query executed successfully. No tabular result was returned.</div>';
+    return;
+  }
+  container.innerHTML = '<div class="results-meta">' + result.totalRows + ' row(s) returned · ' + result.elapsed + ' ms' + (result.truncated ? ' · showing first ' + result.values.length : '') + '</div><div class="table-scroll"><table class="data-table"><thead><tr>' +
+    result.columns.map(column => '<th>' + escapeHTML(column) + '</th>').join('') + '</tr></thead><tbody>' +
+    result.rows.map(row => '<tr>' + result.columns.map(column => '<td>' + escapeHTML(row[column] === null ? 'NULL' : row[column]) + '</td>').join('') + '</tr>').join('') +
+    '</tbody></table></div>';
+}
+
+async function runQuery() {
+  const editor = $('#sqlEditor');
+  const output = $('#queryResults');
+  const status = $('#engineStatus');
+  if (!editor || !output) return;
+  const query = editor.value.trim();
+  if (!query) {
+    output.innerHTML = '<div class="results-placeholder">Write a SQL query before running it.</div>';
+    return;
+  }
+  status.textContent = 'Executing query…';
+  output.innerHTML = '<div class="results-placeholder">Running against your local learning datasets…</div>';
+  try {
+    const engine = await ensureSQLEngine();
+    const result = await engine.run(query);
+    renderQueryResults(result);
+    status.textContent = result.elapsed + ' ms · ' + result.totalRows + ' rows';
+  } catch (error) {
+    status.textContent = 'Query needs attention';
+    output.innerHTML = '<div class="results-placeholder error-state">' + escapeHTML(error.message) + '</div>';
+  }
+}
+
+function formatSQL(query) {
+  return String(query || '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+(FROM|WHERE|GROUP BY|ORDER BY|HAVING|LIMIT|JOIN|LEFT JOIN|INNER JOIN|ON)\s+/gi, '\n$1 ')
+    .replace(/,\s*/g, ', ')
+    .trim();
+}
+
+async function ensureSearchIndex() {
+  if (state.searchIndex) return state.searchIndex;
+  const metas = state.index?.days || [];
+  const days = await Promise.all(metas.map(async meta => {
+    try {
+      return await fetchJSON('curriculum/' + meta.file);
+    } catch {
+      return null;
+    }
+  }));
+  const entries = [];
+  for (const day of days.filter(Boolean)) {
+    entries.push({
+      type: 'Day',
+      day: day.day,
+      topic: 0,
+      question: 0,
+      title: day.title,
+      text: [day.track, day.description].join(' ')
+    });
+    (day.topics || []).forEach((topic, topicIndex) => {
+      entries.push({
+        type: 'Topic',
+        day: day.day,
+        topic: topicIndex,
+        question: 0,
+        title: topic.title,
+        text: [day.track, topic.business_skill, topic.teaching?.explain, topic.teaching?.teacher].join(' ')
+      });
+      (topic.questions || []).forEach((question, questionIndex) => {
+        entries.push({
+          type: 'Business request',
+          day: day.day,
+          topic: topicIndex,
+          question: questionIndex,
+          title: question.role || 'Business request',
+          text: [question.scenario, question.request, question.validation, question.output].join(' ')
+        });
+      });
+    });
+  }
+  state.searchIndex = entries;
+  return entries;
+}
+
+async function searchContent(query) {
+  const text = query.toLowerCase().trim();
+  if (text.length < 2) return [];
+  const entries = await ensureSearchIndex();
+  return entries.filter(entry => (entry.title + ' ' + entry.text).toLowerCase().includes(text)).slice(0, 12);
+}
+
+function updateSearchResults(results) {
+  const container = $('#academySearchResults');
+  if (!container) return;
+  if (!state.searchQuery.trim()) {
+    container.hidden = true;
+    return;
+  }
+  container.hidden = false;
+  container.innerHTML = results.length
+    ? results.map((result, index) => '<button type="button" class="search-result" data-search-result="' + index + '"><span class="search-result-type">' + escapeHTML(result.type) + ' · Day ' + String(result.day).padStart(2, '0') + '</span><strong>' + escapeHTML(result.title) + '</strong><small>' + escapeHTML(result.text).slice(0, 130) + '</small></button>').join('')
+    : '<div class="search-empty">No matching published content. Try another keyword.</div>';
+  state.searchResults = results;
+}
+
+function handleInput(event) {
+  if (event.target.id !== 'academySearch') return;
+  state.searchQuery = event.target.value;
+  window.clearTimeout(state.searchTimer);
+  state.searchTimer = window.setTimeout(async () => {
+    try {
+      const results = await searchContent(state.searchQuery);
+      updateSearchResults(results);
+    } catch (error) {
+      updateSearchResults([]);
+      toast('Search could not load curriculum content.', 'warning');
+    }
+  }, 180);
+}
+
+function handleChange(event) {
+  if (event.target.id === 'datasetSelect') {
+    state.selectedDataset = event.target.value;
+    if (state.practiceTab === 'schema') renderDatasetPreview();
+  }
+}
+
+async function handleClick(event) {
+  const viewButton = event.target.closest('[data-view]');
+  if (viewButton) {
+    event.preventDefault();
+    const target = viewButton.dataset.view;
+    if (target === 'practice') {
+      state.view = 'learn';
+      render();
+      window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    } else {
+      state.view = target;
+      state.projectSelection = null;
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    return;
+  }
+
+  const searchResult = event.target.closest('[data-search-result]');
+  if (searchResult) {
+    const result = state.searchResults[Number(searchResult.dataset.searchResult)];
+    if (!result || !isUnlocked(result.day)) {
+      toast('That lesson is still locked by the learning sequence.', 'warning');
+      return;
+    }
+    state.searchQuery = '';
+    await loadDay(result.day, { topic: result.topic, question: result.question });
+    return;
+  }
+
+  const dayButton = event.target.closest('[data-day], [data-open-day]');
+  if (dayButton) {
+    const day = Number(dayButton.dataset.day || dayButton.dataset.openDay);
+    await loadDay(day);
+    return;
+  }
+
+  const topicButton = event.target.closest('[data-topic]:not([data-task-action])');
+  if (topicButton) {
+    state.activeTopic = Number(topicButton.dataset.topic);
+    state.activeQuestion = 0;
+    render();
+    return;
+  }
+
+  const questionButton = event.target.closest('[data-question]');
+  if (questionButton && !questionButton.dataset.taskAction) {
+    state.activeQuestion = Number(questionButton.dataset.question);
+    render();
+    return;
+  }
+
+  const modeButton = event.target.closest('[data-mode]');
+  if (modeButton) {
+    state.teachingMode = modeButton.dataset.mode;
+    render();
+    return;
+  }
+
+  const practiceTab = event.target.closest('[data-practice-tab]');
+  if (practiceTab) {
+    state.practiceTab = practiceTab.dataset.practiceTab;
+    render();
+    if (state.practiceTab === 'schema') renderDatasetPreview();
+    return;
+  }
+
+  const taskAction = event.target.closest('[data-task-action]');
+  if (taskAction) {
+    const topicIndex = Number(taskAction.dataset.topic ?? state.activeTopic);
+    const questionIndex = Number(taskAction.dataset.question ?? state.activeQuestion);
+    if (taskAction.dataset.taskAction === 'toggle') {
+      const solved = !progressStore.isSolved(state.activeDay, topicIndex, questionIndex);
+      progressStore.setSolved(state.activeDay, topicIndex, questionIndex, solved);
+      render();
+      toast(solved ? 'Question marked as reviewed.' : 'Question review status removed.');
+    } else if (taskAction.dataset.taskAction === 'hint') {
+      const panel = taskAction.closest('.question-card')?.querySelector('.hint-panel');
+      if (panel) {
+        panel.hidden = !panel.hidden;
+        panel.textContent = taskAction.dataset.hint || 'Identify the required fields, filters and calculations before writing your solution.';
+        taskAction.textContent = panel.hidden ? 'Show hint' : 'Hide hint';
+      }
+    } else if (taskAction.dataset.taskAction === 'practice') {
+      state.activeTopic = topicIndex;
+      state.activeQuestion = questionIndex;
+      state.practiceTab = 'query';
+      render();
+      window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    }
+    return;
+  }
+
+  const projectButton = event.target.closest('[data-project]');
+  if (projectButton) {
+    state.projectSelection = projectButton.dataset.project;
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  const action = event.target.closest('[data-action]')?.dataset.action;
+  if (!action) return;
+  if (action === 'retry') {
+    boot();
+  } else if (action === 'complete-day') {
+    const result = progressStore.completeDay(state.activeDay, dayQuestions(state.day));
+    if (!result.ok) {
+      toast(result.reason, 'warning');
+      return;
+    }
+    render();
+    const next = state.activeDay + 1;
+    toast(next <= publishedThrough() ? 'Day completed. Day ' + next + ' is now unlocked.' : 'Day completed. Your progress is saved.', 'success');
+  } else if (action === 'run-query') {
+    runQuery();
+  } else if (action === 'clear-query') {
+    if ($('#sqlEditor')) $('#sqlEditor').value = '';
+    if ($('#queryResults')) $('#queryResults').innerHTML = '<div class="results-placeholder">Editor cleared. Write a new query.</div>';
+  } else if (action === 'format-query') {
+    if ($('#sqlEditor')) $('#sqlEditor').value = formatSQL($('#sqlEditor').value);
+  } else if (action === 'load-preview') {
+    renderDatasetPreview();
+  } else if (action === 'copy-example') {
+    const code = $('.example-card code')?.textContent || '';
+    try {
+      await navigator.clipboard.writeText(code);
+      toast('Worked example copied.', 'success');
+    } catch {
+      toast('Clipboard access is unavailable in this browser.', 'warning');
+    }
+  } else if (action === 'back-projects') {
+    state.projectSelection = null;
+    render();
+  } else if (action === 'export-progress') {
+    const data = progressStore.getState();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'ahk-academy-progress.json';
+    link.click();
+    URL.revokeObjectURL(url);
+    toast('Progress export prepared.', 'success');
+  }
+}
+
+function handleKeydown(event) {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+    event.preventDefault();
+    $('#academySearch')?.focus();
+  }
+  if (event.key === 'Escape') {
+    const results = $('#academySearchResults');
+    if (results) results.hidden = true;
+  }
+}
+
+async function boot() {
+  setBusy(true);
+  try {
+    const [manifest, index, registry] = await Promise.all([
+      fetchJSON('manifest.json'),
+      fetchJSON('curriculum/index.json'),
+      fetchJSON('datasets/index.json')
+    ]);
+    state.manifest = manifest;
+    state.index = index;
+    state.dataRegistry = registry;
+
+    const published = publishedThrough();
+    const hash = location.hash.match(/day-(\d+)/);
+    const requestedDay = hash ? Number(hash[1]) : progressStore.getState().activeDay;
+    const firstUnlocked = Array.from({ length: published }, (_, index) => index + 1).find(day => isUnlocked(day)) || 1;
+    const target = isUnlocked(requestedDay) ? requestedDay : firstUnlocked;
+    state.activeDay = target;
+    await loadDay(target);
+  } catch (error) {
+    renderFatal(error);
+  }
+}
+
+appRoot.addEventListener('click', handleClick);
+appRoot.addEventListener('input', handleInput);
+appRoot.addEventListener('change', handleChange);
+document.addEventListener('keydown', handleKeydown);
+
 boot();
