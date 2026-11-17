@@ -874,7 +874,7 @@ async function handleClick(event) {
       state.view = target;
     }
     state.projectSelection = null;
-    if (target === 'dashboard') history.replaceState(null, '', location.pathname + location.search);
+    if (target === 'dashboard') history.replaceState(null, '', '#overview');
     else if (target === 'learn' || target === 'exam') updateHash(state.activeDay);
     else history.replaceState(null, '', '#' + target);
     render();
@@ -1150,14 +1150,14 @@ async function boot() {
 
     const published = publishedThrough();
     const hash = location.hash.match(/day-(\d+)/);
-    const route = ['projects', 'progress', 'practice'].includes(location.hash.slice(1)) ? location.hash.slice(1) : '';
+    const route = ['overview', 'projects', 'progress', 'practice'].includes(location.hash.slice(1)) ? location.hash.slice(1) : '';
     const requestedDay = hash ? Number(hash[1]) : progressStore.getState().activeDay;
     const firstUnlocked = Array.from({ length: published }, (_, index) => index + 1).find(day => isUnlocked(day)) || 1;
     const target = isUnlocked(requestedDay) ? requestedDay : firstUnlocked;
     state.activeDay = target;
     const hasLessonLink = Boolean(hash);
     await loadDay(target, { updateUrl: hasLessonLink, render: false });
-    if (!hasLessonLink) state.view = route || 'dashboard';
+    if (!hasLessonLink) state.view = route === 'overview' ? 'dashboard' : route || (areAllLessonsComplete() ? 'exam' : 'learn');
     render();
     if (route === 'practice') window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'auto', block: 'start' }), 50);
   } catch (error) {
