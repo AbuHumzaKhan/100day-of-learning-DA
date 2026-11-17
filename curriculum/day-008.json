@@ -64,6 +64,63 @@
           ],
           "validation": "JOIN then GROUP BY customer"
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d08-t01-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The manager wants order details with customer names.",
+          "prompt": "The manager wants order details with customer names.",
+          "hint": "A join is a data relationship, not merely a way to add columns.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, c.customer_name, o.sales FROM orders o INNER JOIN customers c ON o.customer_name = c.customer_name;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t01-c2",
+          "title": "Sales Manager request",
+          "difficulty": "Basic",
+          "scenario": "Sales needs customer names alongside order transactions.",
+          "prompt": "Return order ID, customer name, and sales using the customer relationship.",
+          "hint": "INNER JOIN orders to customers on customer_id",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, c.customer_name, o.sales FROM orders o INNER JOIN customers c ON o.customer_name = c.customer_name;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t01-c3",
+          "title": "Customer Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The team wants customer segment on every order.",
+          "prompt": "Return order ID, customer name, segment, and sales.",
+          "hint": "Join customer attributes",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, c.customer_name, c.segment, o.sales FROM orders o INNER JOIN customers c ON o.customer_name = c.customer_name;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t01-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "A customer-level sales review requires transaction and customer data.",
+          "prompt": "Return customer ID, customer name, segment, total sales, and order count.",
+          "hint": "JOIN then GROUP BY customer",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT c.customer_name, c.segment, SUM(o.sales) AS total_sales, COUNT(*) AS order_count FROM orders o INNER JOIN customers c ON o.customer_name = c.customer_name GROUP BY c.customer_name, c.segment;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t01-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return order ID, customer name, segment, and customer region using the customer master.",
+          "prompt": "Return order ID, customer name, segment, and customer region using the customer master.",
+          "hint": "A join is a data relationship, not merely a way to add columns.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT c.region, COUNT(*) AS orders, SUM(o.sales) AS total_sales FROM orders o INNER JOIN customers c ON o.customer_name = c.customer_name GROUP BY c.region;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -121,6 +178,63 @@
           ],
           "validation": "Consistent aliases and qualification"
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d08-t02-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The senior analyst wants a clean customer-order query.",
+          "prompt": "The senior analyst wants a clean customer-order query.",
+          "hint": "Readable SQL is easier to audit and less likely to reference the wrong column.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, o.sales, c.customer_name, c.segment FROM orders AS o JOIN customers AS c ON o.customer_name = c.customer_name;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t02-c2",
+          "title": "Senior Analyst request",
+          "difficulty": "Basic",
+          "scenario": "A join contains repeated column names.",
+          "prompt": "Use aliases and fully qualify order and customer columns.",
+          "hint": "Qualified columns",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, c.customer_name, o.sales FROM orders AS o JOIN customers AS c ON o.customer_name = c.customer_name;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t02-c3",
+          "title": "BI Developer request",
+          "difficulty": "Intermediate",
+          "scenario": "The query will be maintained by multiple analysts.",
+          "prompt": "Write the customer-order join using clear aliases and qualified columns.",
+          "hint": "Readable alias pattern",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, o.customer_name, c.segment, o.sales FROM orders AS o JOIN customers AS c ON o.customer_name = c.customer_name;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t02-c4",
+          "title": "Data Lead request",
+          "difficulty": "Intermediate",
+          "scenario": "The team is standardizing SQL style.",
+          "prompt": "Return customer-level sales using aliases for every table reference.",
+          "hint": "Consistent aliases and qualification",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT c.customer_name, SUM(o.sales) AS total_sales FROM orders AS o JOIN customers AS c ON o.customer_name = c.customer_name GROUP BY c.customer_name;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t02-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return order ID, sales, customer name, and segment using table aliases for every joined field.",
+          "prompt": "Return order ID, sales, customer name, and segment using table aliases for every joined field.",
+          "hint": "Readable SQL is easier to audit and less likely to reference the wrong column.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT c.region, c.segment, SUM(o.profit) AS total_profit FROM orders AS o JOIN customers AS c ON o.customer_name = c.customer_name GROUP BY c.region, c.segment;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -175,6 +289,63 @@
           ],
           "validation": "Conditional aggregation after LEFT JOIN"
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d08-t03-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "Data quality wants every order, including orders with no customer match.",
+          "prompt": "Data quality wants every order, including orders with no customer match.",
+          "hint": "Moving a filter on the right table into WHERE can accidentally turn a LEFT JOIN into an INNER JOIN.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, o.customer_name, c.segment FROM orders o LEFT JOIN customers c ON o.customer_name = c.customer_name;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t03-c2",
+          "title": "Data Quality Manager request",
+          "difficulty": "Basic",
+          "scenario": "Every order must remain visible even when customer data is missing.",
+          "prompt": "Return all orders with customer name when available.",
+          "hint": "LEFT JOIN",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, o.customer_name, c.segment FROM orders o LEFT JOIN customers c ON o.customer_name = c.customer_name;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t03-c3",
+          "title": "Customer Operations Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The team wants unmatched order customer IDs.",
+          "prompt": "Return order IDs whose customer record does not exist.",
+          "hint": "LEFT JOIN plus c.customer_id IS NULL",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, o.customer_name FROM orders o LEFT JOIN customers c ON o.customer_name = c.customer_name WHERE c.customer_name IS NULL;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t03-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "Management needs order coverage by customer match status.",
+          "prompt": "Return matched and unmatched order counts.",
+          "hint": "Conditional aggregation after LEFT JOIN",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT CASE WHEN c.customer_name IS NULL THEN 'Unmatched' ELSE 'Matched' END AS match_status, COUNT(*) AS orders FROM orders o LEFT JOIN customers c ON o.customer_name = c.customer_name GROUP BY match_status;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t03-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return unmatched orders and their customer names after a left join.",
+          "prompt": "Return unmatched orders and their customer names after a left join.",
+          "hint": "Moving a filter on the right table into WHERE can accidentally turn a LEFT JOIN into an INNER JOIN.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.customer_name, COUNT(*) AS order_count FROM orders o LEFT JOIN customers c ON o.customer_name = c.customer_name WHERE c.customer_name IS NULL GROUP BY o.customer_name;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -227,6 +398,63 @@
             "duplicate_rows"
           ],
           "validation": "GROUP BY customer_id HAVING COUNT(*) > 1"
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d08-t04-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The analyst suspects a join has inflated sales.",
+          "prompt": "The analyst suspects a join has inflated sales.",
+          "hint": "A query can run successfully while producing incorrect KPIs.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "WITH before_join AS (SELECT COUNT(*) AS row_count, SUM(sales) AS total_sales FROM orders), after_join AS (SELECT COUNT(*) AS row_count, SUM(o.sales) AS total_sales FROM orders o LEFT JOIN customers c ON o.customer_name = c.customer_name) SELECT before_join.row_count AS rows_before, after_join.row_count AS rows_after, before_join.total_sales AS sales_before, after_join.total_sales AS sales_after FROM before_join CROSS JOIN after_join;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t04-c2",
+          "title": "Senior Analyst request",
+          "difficulty": "Basic",
+          "scenario": "A customer join may have changed transaction volume.",
+          "prompt": "Return the order-row count before the join and after joining customers.",
+          "hint": "Compare counts at order grain",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "WITH before_join AS (SELECT COUNT(*) AS row_count FROM orders), after_join AS (SELECT COUNT(*) AS row_count FROM orders o LEFT JOIN customers c ON o.customer_name = c.customer_name) SELECT before_join.row_count AS rows_before, after_join.row_count AS rows_after FROM before_join CROSS JOIN after_join;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t04-c3",
+          "title": "Finance Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "Total sales increased unexpectedly after a join.",
+          "prompt": "Compare total sales before and after the customer join.",
+          "hint": "Detect inflated aggregate",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "WITH before_join AS (SELECT SUM(sales) AS total_sales FROM orders), after_join AS (SELECT SUM(o.sales) AS total_sales FROM orders o LEFT JOIN customers c ON o.customer_name = c.customer_name) SELECT before_join.total_sales AS sales_before, after_join.total_sales AS sales_after FROM before_join CROSS JOIN after_join;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t04-c4",
+          "title": "Data Lead request",
+          "difficulty": "Intermediate",
+          "scenario": "A many-to-one customer relationship is expected.",
+          "prompt": "Identify customer IDs that appear more than once in the customer table.",
+          "hint": "GROUP BY customer_id HAVING COUNT(*) > 1",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM customers;",
+          "expected_sql": "SELECT customer_id, COUNT(*) AS customer_rows FROM customers GROUP BY customer_id HAVING COUNT(*) > 1;",
+          "dataset": "customers"
+        },
+        {
+          "id": "sql-d08-t04-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Compare order counts by customer segment before and after aggregating at customer grain.",
+          "prompt": "Compare order counts by customer segment before and after aggregating at customer grain.",
+          "hint": "A query can run successfully while producing incorrect KPIs.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM customers;",
+          "expected_sql": "SELECT customer_name, COUNT(*) AS customer_rows FROM customers GROUP BY customer_name HAVING COUNT(*) > 1;",
+          "dataset": "customers"
         }
       ]
     },
@@ -284,6 +512,63 @@
             "sales"
           ],
           "validation": "COUNT DISTINCT order_id plus grouped sales"
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d08-t05-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The customer director wants segment-level order and sales KPIs.",
+          "prompt": "The customer director wants segment-level order and sales KPIs.",
+          "hint": "Correct joins are part of KPI governance.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT c.segment, COUNT(DISTINCT o.order_id) AS orders, SUM(o.sales) AS sales FROM orders o JOIN customers c ON o.customer_name=c.customer_name GROUP BY c.segment;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t05-c2",
+          "title": "Customer Director request",
+          "difficulty": "Basic",
+          "scenario": "Management wants sales by customer segment.",
+          "prompt": "Return segment, order count, and total sales.",
+          "hint": "Join then GROUP BY segment",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT c.segment, COUNT(DISTINCT o.order_id) AS orders, SUM(o.sales) AS sales FROM orders o JOIN customers c ON o.customer_name=c.customer_name GROUP BY c.segment;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t05-c3",
+          "title": "Sales Director request",
+          "difficulty": "Intermediate",
+          "scenario": "Leadership wants segment profitability.",
+          "prompt": "Return segment, orders, sales, and profit.",
+          "hint": "Validated joined KPI",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT c.segment, COUNT(DISTINCT o.order_id) AS orders, SUM(o.sales) AS sales, SUM(o.profit) AS profit FROM orders o JOIN customers c ON o.customer_name=c.customer_name GROUP BY c.segment;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t05-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "The executive report needs segment KPIs while guarding against duplicate customer keys.",
+          "prompt": "Build the segment KPI and use a distinct order count to protect the order metric.",
+          "hint": "COUNT DISTINCT order_id plus grouped sales",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT c.region, COUNT(DISTINCT o.order_id) AS orders, SUM(o.sales) AS sales, SUM(o.profit) AS profit FROM orders o JOIN customers c ON o.customer_name=c.customer_name GROUP BY c.region;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d08-t05-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return segment, customer count, order count, and total profit.",
+          "prompt": "Return segment, customer count, order count, and total profit.",
+          "hint": "Correct joins are part of KPI governance.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT c.segment, COUNT(DISTINCT o.order_id) AS orders, SUM(o.sales) AS sales, AVG(o.discount) AS avg_discount FROM orders o JOIN customers c ON o.customer_name=c.customer_name GROUP BY c.segment;",
+          "dataset": "orders"
         }
       ]
     }
