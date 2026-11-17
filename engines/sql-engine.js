@@ -179,6 +179,38 @@ export class SQLEngine {
     };
   }
 
+
+  async validate(query, expectedQuery, options = {}) {
+    const actual = await this.run(query);
+    const expected = await this.run(expectedQuery);
+    const normalizeValue = value => {
+      if (typeof value === 'number' && Number.isFinite(value)) return Number(value.toFixed(7));
+      return value;
+    };
+    const normalizeRows = result => result.values.map(row => JSON.stringify(row.map(normalizeValue)));
+    const actualColumns = actual.columns.map(column => String(column).toLowerCase());
+    const expectedColumns = expected.columns.map(column => String(column).toLowerCase());
+    const columnsMatch = actualColumns.length === expectedColumns.length &&
+      actualColumns.every((column, index) => column === expectedColumns[index]);
+    let actualRows = normalizeRows(actual);
+    let expectedRows = normalizeRows(expected);
+    if (!options.orderSensitive) {
+      actualRows = actualRows.sort();
+      expectedRows = expectedRows.sort();
+    }
+    const rowsMatch = actualRows.length === expectedRows.length &&
+      actualRows.every((row, index) => row === expectedRows[index]);
+    return {
+      passed: columnsMatch && rowsMatch,
+      columnsMatch,
+      rowsMatch,
+      actual,
+      expectedColumns: expected.columns,
+      expectedRowCount: expected.totalRows,
+      orderSensitive: options.orderSensitive === true
+    };
+  }
+
   getDatasets() {
     return this.datasets.map(dataset => ({ ...dataset, columns: [...dataset.columns] }));
   }
