@@ -35,14 +35,14 @@ const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, char => ({
 
 function renderInlineMarkdown(value) {
   let html = escapeHTML(value);
-  html = html.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>');
-  html = html.replace(/\\*(.+?)\\*/g, '<em>$1</em>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
   html = html.replace(/\\`([^\\`]+)\\`/g, '<code>$1</code>');
   return html;
 }
 
 function renderLessonMarkdown(value) {
-  const lines = String(value || '').split(/\\r?\\n/);
+  const lines = String(value || '').split(/\r?\n/);
   const output = [];
   let listOpen = false;
   const closeList = () => {
@@ -58,15 +58,15 @@ function renderLessonMarkdown(value) {
       closeList();
       continue;
     }
-    if (/^###\\s+/.test(line)) {
+    if (/^###\s+/.test(line)) {
       closeList();
-      output.push('<h4>' + renderInlineMarkdown(line.replace(/^###\\s+/, '')) + '</h4>');
-    } else if (/^##\\s+/.test(line)) {
+      output.push('<h4>' + renderInlineMarkdown(line.replace(/^###\s+/, '')) + '</h4>');
+    } else if (/^##\s+/.test(line)) {
       closeList();
-      output.push('<h3>' + renderInlineMarkdown(line.replace(/^##\\s+/, '')) + '</h3>');
-    } else if (/^#\\s+/.test(line)) {
+      output.push('<h3>' + renderInlineMarkdown(line.replace(/^##\s+/, '')) + '</h3>');
+    } else if (/^#\s+/.test(line)) {
       closeList();
-      output.push('<h2>' + renderInlineMarkdown(line.replace(/^#\\s+/, '')) + '</h2>');
+      output.push('<h2>' + renderInlineMarkdown(line.replace(/^#\s+/, '')) + '</h2>');
     } else if (/^[-*]\\s+/.test(line)) {
       if (!listOpen) {
         output.push('<ul>');
@@ -581,7 +581,7 @@ async function searchContent(query) {
   const text = query.toLowerCase().trim();
   if (text.length < 2) return [];
   const entries = await ensureSearchIndex();
-  const tokens = text.split(/\\s+/).filter(Boolean);
+  const tokens = text.split(/\s+/).filter(Boolean);
   return entries
     .map(entry => {
       const haystack = (entry.title + ' ' + entry.text).toLowerCase();
