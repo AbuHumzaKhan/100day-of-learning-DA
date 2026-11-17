@@ -272,7 +272,7 @@ function renderLesson() {
   const completed = progressStore.isDayCompleted(state.activeDay);
   const question = currentQuestion();
   const topic = topics[state.activeTopic];
-  return '<div class="page-grid"><section class="lesson-column">' +
+  return '<div class="page-grid">' + renderSidebar() + '<section class="lesson-column">' +
     '<div class="lesson-breadcrumb"><span>Learning path</span><span>/</span><strong>' + escapeHTML(day.track) + '</strong><span>/</span><strong>Day ' + String(day.day).padStart(2, '0') + '</strong></div>' +
     '<section class="lesson-hero"><div class="hero-topline"><span class="eyebrow">' + escapeHTML(day.track) + ' · DAY ' + String(day.day).padStart(2, '0') + '</span><span class="release-pill">Published lesson</span></div><h1>' + escapeHTML(day.title) + '</h1><p>' + escapeHTML(day.description || day.learning_objectives?.[0] || 'Build practical analytical capability through guided business learning.') + '</p>' +
     '<div class="hero-metrics"><div><strong>' + topics.length + '</strong><span>Topics</span></div><div><strong>' + total + '</strong><span>Business requests</span></div><div><strong>' + (day.estimated_time_minutes || 45) + ' min</strong><span>Estimated time</span></div><div><strong>' + solved + '/' + total + '</strong><span>Reviewed</span></div></div></section>' +
