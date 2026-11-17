@@ -2,27 +2,24 @@ const STORAGE_KEY = 'ahk_academy_state_v1';
 const LEGACY_TASK_KEY = 'ahk_task_status_v5';
 
 function safeGetItem(key) {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
+  try { return localStorage.getItem(key); } catch { return null; }
 }
 
 function safeRead(key, fallback) {
   try {
     const value = localStorage.getItem(key);
     return value ? JSON.parse(value) : fallback;
-  } catch {
-    return fallback;
-  }
+  } catch { return fallback; }
 }
 
 function createDefaultState() {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     activeDay: 1,
     completedDays: [],
+    completedTopics: {},
+    codingProgress: {},
+    topicExams: {},
     completedLessons: {},
     exams: {},
     tasks: {},
@@ -30,18 +27,61 @@ function createDefaultState() {
   };
 }
 
-function normalizeCompletedLessons(value) {
+function normalizeDayArrays(value, maxIndex = 4) {
   const result = {};
   if (!value || typeof value !== 'object' || Array.isArray(value)) return result;
-  for (const [dayKey, lessonIndexes] of Object.entries(value)) {
+  for (const [dayKey, indexes] of Object.entries(value)) {
     const day = Number(dayKey);
-    if (!Number.isInteger(day) || day < 1 || day > 100 || !Array.isArray(lessonIndexes)) continue;
-    result[day] = [...new Set(lessonIndexes.map(Number).filter(index => Number.isInteger(index) && index >= 0 && index < 5))].sort((a, b) => a - b);
+    if (!Number.isInteger(day) || day < 1 || day > 100 || !Array.isArray(indexes)) continue;
+    result[day] = [...new Set(indexes.map(Number).filter(index =>
+      Number.isInteger(index) && index >= 0 && index <= maxIndex
+    ))].sort((a, b) => a - b);
   }
   return result;
 }
 
-function normalizeExams(value) {
+function normalizeCodingProgress(value) {
+  const result = {};
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return result;
+  for (const [key, indexes] of Object.entries(value)) {
+    if (!/^\d+:\d+$/.test(key) || !Array.isArray(indexes)) continue;
+    result[key] = [...new Set(indexes.map(Number).filter(index =>
+      Number.isInteger(index) && index >= 0 && index < 5
+    ))].sort((a, b) => a - b);
+  }
+  return result;
+}
+
+function normalizeTopicExams(value) {
+  const result = {};
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return result;
+  for (const [key, exam] of Object.entries(value)) {
+    if (!/^\d+:\d+$/.test(key) || !exam || typeof exam !== 'object') continue;
+    const answers = {};
+    if (exam.answers && typeof exam.answers === 'object' && !Array.isArray(exam.answers)) {
+      for (const [questionKey, optionValue] of Object.entries(exam.answers)) {
+        const question = Number(questionKey);
+        const option = Number(optionValue);
+        if (Number.isInteger(question) && question >= 0 && question < 5 &&
+            Number.isInteger(option) && option >= 0 && option < 4) {
+          answers[question] = option;
+        }
+      }
+    }
+    const score = Number(exam.score);
+    result[key] = {
+      answers,
+      submitted: exam.submitted === true,
+      score: exam.score == null ? null : Number.isInteger(score) && score >= 0 && score <= 5 ? score : null,
+      passed: exam.passed === true,
+      attempts: Number.isInteger(Number(exam.attempts)) ? Math.max(0, Number(exam.attempts)) : 0,
+      submittedAt: typeof exam.submittedAt === 'string' ? exam.submittedAt : null
+    };
+  }
+  return result;
+}
+
+function normalizeLegacyExams(value) {
   const result = {};
   if (!value || typeof value !== 'object' || Array.isArray(value)) return result;
   for (const [dayKey, exam] of Object.entries(value)) {
@@ -52,9 +92,8 @@ function normalizeExams(value) {
       for (const [questionKey, optionValue] of Object.entries(exam.answers)) {
         const question = Number(questionKey);
         const option = Number(optionValue);
-        if (Number.isInteger(question) && question >= 0 && question < 5 && Number.isInteger(option) && option >= 0 && option < 4) {
-          answers[question] = option;
-        }
+        if (Number.isInteger(question) && question >= 0 && question < 5 &&
+            Number.isInteger(option) && option >= 0 && option < 4) answers[question] = option;
       }
     }
     const score = Number(exam.score);
@@ -76,22 +115,21 @@ function normalizeState(value) {
   const completedDays = Array.isArray(value.completedDays)
     ? value.completedDays.map(Number).filter(day => Number.isInteger(day) && day >= 1 && day <= 100)
     : [];
-  const tasks = value.tasks && typeof value.tasks === 'object' && !Array.isArray(value.tasks)
-    ? value.tasks
-    : {};
+  const tasks = value.tasks && typeof value.tasks === 'object' && !Array.isArray(value.tasks) ? value.tasks : {};
   const normalizedTasks = {};
   for (const [key, status] of Object.entries(tasks)) {
-    if (/^\d+:\d+:\d+$/.test(key) && ['solved', 'attempted'].includes(status)) {
-      normalizedTasks[key] = status;
-    }
+    if (/^\d+:\d+:\d+$/.test(key) && ['solved', 'attempted'].includes(status)) normalizedTasks[key] = status;
   }
   const activeDay = Number(value.activeDay);
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     activeDay: Number.isInteger(activeDay) ? Math.min(100, Math.max(1, activeDay)) : 1,
     completedDays: [...new Set(completedDays)].sort((a, b) => a - b),
-    completedLessons: normalizeCompletedLessons(value.completedLessons),
-    exams: normalizeExams(value.exams),
+    completedTopics: normalizeDayArrays(value.completedTopics),
+    codingProgress: normalizeCodingProgress(value.codingProgress),
+    topicExams: normalizeTopicExams(value.topicExams),
+    completedLessons: normalizeDayArrays(value.completedLessons),
+    exams: normalizeLegacyExams(value.exams),
     tasks: normalizedTasks,
     updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : new Date().toISOString()
   };
@@ -102,22 +140,14 @@ function migrateLegacyState() {
   const legacyTasks = safeRead(LEGACY_TASK_KEY, {});
   if (legacyTasks && typeof legacyTasks === 'object') {
     for (const [key, status] of Object.entries(legacyTasks)) {
-      if (/^\d+:\d+:\d+$/.test(key) && status === 'solved') {
-        state.tasks[key] = 'solved';
-      } else if (/^\d+:\d+:\d+$/.test(key) && status === 'attempted') {
-        state.tasks[key] = 'attempted';
-      }
+      if (/^\d+:\d+:\d+$/.test(key) && ['solved', 'attempted'].includes(status)) state.tasks[key] = status;
     }
   }
   for (let day = 1; day <= 100; day += 1) {
-    if (safeGetItem('ahk_completed_day_' + day) === 'true') {
-      state.completedDays.push(day);
-    }
+    if (safeGetItem('ahk_completed_day_' + day) === 'true') state.completedDays.push(day);
   }
   const oldActiveDay = Number(safeGetItem('ahk_active_day_v5'));
-  if (Number.isInteger(oldActiveDay) && oldActiveDay >= 1 && oldActiveDay <= 100) {
-    state.activeDay = oldActiveDay;
-  }
+  if (Number.isInteger(oldActiveDay) && oldActiveDay >= 1 && oldActiveDay <= 100) state.activeDay = oldActiveDay;
   state.completedDays = [...new Set(state.completedDays)].sort((a, b) => a - b);
   return state;
 }
@@ -126,11 +156,7 @@ function readInitialState() {
   const current = safeRead(STORAGE_KEY, null);
   if (current) return normalizeState(current);
   const migrated = migrateLegacyState();
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
-  } catch {
-    // The application remains usable for the current session if storage is blocked.
-  }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated)); } catch { /* Session still works without storage. */ }
   return migrated;
 }
 
@@ -141,24 +167,27 @@ function persist() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     return true;
-  } catch {
-    return false;
-  }
+  } catch { return false; }
+}
+
+function topicKey(day, topicIndex) {
+  return String(Number(day)) + ':' + String(Number(topicIndex));
 }
 
 function taskKey(day, topicIndex, questionIndex) {
   return [Number(day), Number(topicIndex), Number(questionIndex)].join(':');
 }
 
-function examForDay(day) {
-  return state.exams[Number(day)] || {
-    answers: {},
-    submitted: false,
-    score: null,
-    passed: false,
-    attempts: 0,
-    submittedAt: null
-  };
+function createEmptyExam() {
+  return { answers: {}, submitted: false, score: null, passed: false, attempts: 0, submittedAt: null };
+}
+
+function topicExamFor(day, topicIndex) {
+  return state.topicExams[topicKey(day, topicIndex)] || createEmptyExam();
+}
+
+function legacyExamForDay(day) {
+  return state.exams[Number(day)] || createEmptyExam();
 }
 
 export const progressStore = {
@@ -172,6 +201,114 @@ export const progressStore = {
       persist();
     }
   },
+
+  // Topic-first learning flow
+  isTopicCompleted(day, topicIndex) {
+    return (state.completedTopics[Number(day)] || []).includes(Number(topicIndex));
+  },
+  getCompletedTopicCount(day, totalTopics = 5) {
+    return (state.completedTopics[Number(day)] || []).filter(index => index < Number(totalTopics)).length;
+  },
+  isTopicUnlocked(day, topicIndex, totalTopics = 5) {
+    const target = Number(topicIndex);
+    return Number.isInteger(target) && target >= 0 && target < Number(totalTopics) &&
+      (target <= this.getCompletedTopicCount(day, totalTopics));
+  },
+  getCodingQuestionCount(day, topicIndex) {
+    return (state.codingProgress[topicKey(day, topicIndex)] || []).length;
+  },
+  isCodingQuestionCompleted(day, topicIndex, questionIndex) {
+    return (state.codingProgress[topicKey(day, topicIndex)] || []).includes(Number(questionIndex));
+  },
+  areCodingQuestionsCompleted(day, topicIndex, totalQuestions = 5) {
+    return this.getCodingQuestionCount(day, topicIndex) >= Number(totalQuestions);
+  },
+  completeCodingQuestion(day, topicIndex, questionIndex, totalQuestions = 5) {
+    const key = topicKey(day, topicIndex);
+    const question = Number(questionIndex);
+    if (!this.isTopicUnlocked(day, topicIndex) ||
+        !Number.isInteger(question) || question < 0 || question >= Number(totalQuestions)) {
+      return { ok: false, reason: 'This coding question is not available yet.' };
+    }
+    const completed = state.codingProgress[key] || [];
+    if (completed.includes(question)) {
+      return { ok: true, completedCount: completed.length, allCompleted: completed.length >= Number(totalQuestions) };
+    }
+    if (question > completed.length) {
+      return { ok: false, reason: 'Complete coding questions in order before moving on.' };
+    }
+    completed.push(question);
+    completed.sort((a, b) => a - b);
+    state.codingProgress[key] = completed;
+    persist();
+    return { ok: true, completedCount: completed.length, allCompleted: completed.length >= Number(totalQuestions) };
+  },
+  getTopicExamState(day, topicIndex) {
+    return JSON.parse(JSON.stringify(topicExamFor(day, topicIndex)));
+  },
+  setTopicExamAnswer(day, topicIndex, questionIndex, optionIndex) {
+    if (!this.areCodingQuestionsCompleted(day, topicIndex)) return false;
+    const exam = topicExamFor(day, topicIndex);
+    const question = Number(questionIndex);
+    const option = Number(optionIndex);
+    if (exam.submitted || !Number.isInteger(question) || question < 0 || question >= 5 ||
+        !Number.isInteger(option) || option < 0 || option >= 4) return false;
+    exam.answers[question] = option;
+    state.topicExams[topicKey(day, topicIndex)] = exam;
+    persist();
+    return true;
+  },
+  submitTopicExam(day, topicIndex, correctOptions, passMark = 4, totalTopics = 5) {
+    if (!this.areCodingQuestionsCompleted(day, topicIndex)) {
+      return { ok: false, reason: 'Complete all five coding questions before opening this topic exam.' };
+    }
+    const key = topicKey(day, topicIndex);
+    const exam = topicExamFor(day, topicIndex);
+    const expected = Array.isArray(correctOptions) ? correctOptions : [];
+    if (exam.submitted) return { ok: false, reason: 'This exam attempt has already been submitted.' };
+    if (expected.length !== 5 || expected.some((option, index) => !Number.isInteger(Number(exam.answers[index])))) {
+      return { ok: false, reason: 'Answer all five MCQs before submitting the topic exam.' };
+    }
+    const score = expected.reduce((total, correct, index) =>
+      total + (Number(exam.answers[index]) === Number(correct) ? 1 : 0), 0);
+    const passed = score >= Number(passMark);
+    const updated = {
+      ...exam,
+      submitted: true,
+      score,
+      passed,
+      attempts: exam.attempts + 1,
+      submittedAt: new Date().toISOString()
+    };
+    state.topicExams[key] = updated;
+    if (passed) {
+      const topics = state.completedTopics[Number(day)] || [];
+      if (!topics.includes(Number(topicIndex))) {
+        topics.push(Number(topicIndex));
+        topics.sort((a, b) => a - b);
+        state.completedTopics[Number(day)] = topics;
+      }
+      if (topics.length >= Number(totalTopics) && !state.completedDays.includes(Number(day))) {
+        state.completedDays.push(Number(day));
+        state.completedDays.sort((a, b) => a - b);
+      }
+    }
+    persist();
+    return { ok: true, score, passed, attempts: updated.attempts, dayCompleted: state.completedDays.includes(Number(day)) };
+  },
+  retryTopicExam(day, topicIndex) {
+    const key = topicKey(day, topicIndex);
+    const exam = topicExamFor(day, topicIndex);
+    if (!exam.submitted || exam.passed) return false;
+    state.topicExams[key] = {
+      answers: {}, submitted: false, score: null, passed: false,
+      attempts: exam.attempts, submittedAt: null
+    };
+    persist();
+    return true;
+  },
+
+  // Previous release progress retained for backwards compatibility.
   isLessonCompleted(day, lessonIndex) {
     return (state.completedLessons[Number(day)] || []).includes(Number(lessonIndex));
   },
@@ -190,12 +327,8 @@ export const progressStore = {
       return { ok: false, reason: 'This lesson cannot be completed because its lesson data is invalid.' };
     }
     const completed = state.completedLessons[targetDay] || [];
-    if (completed.includes(targetLesson)) {
-      return { ok: true, completedCount: completed.length, allCompleted: completed.length >= total };
-    }
-    if (targetLesson > completed.length) {
-      return { ok: false, reason: 'Complete the lessons in sequence before continuing.' };
-    }
+    if (completed.includes(targetLesson)) return { ok: true, completedCount: completed.length, allCompleted: completed.length >= total };
+    if (targetLesson > completed.length) return { ok: false, reason: 'Complete the lessons in sequence before continuing.' };
     completed.push(targetLesson);
     completed.sort((a, b) => a - b);
     state.completedLessons[targetDay] = completed;
@@ -203,23 +336,22 @@ export const progressStore = {
     return { ok: true, completedCount: completed.length, allCompleted: completed.length >= total };
   },
   getExamState(day) {
-    return JSON.parse(JSON.stringify(examForDay(day)));
+    return JSON.parse(JSON.stringify(legacyExamForDay(day)));
   },
   setExamAnswer(day, questionIndex, optionIndex) {
-    const targetDay = Number(day);
+    const exam = legacyExamForDay(day);
     const question = Number(questionIndex);
     const option = Number(optionIndex);
-    const exam = examForDay(targetDay);
     if (exam.submitted || !Number.isInteger(question) || question < 0 || question >= 5 ||
         !Number.isInteger(option) || option < 0 || option >= 4) return false;
     exam.answers[question] = option;
-    state.exams[targetDay] = exam;
+    state.exams[Number(day)] = exam;
     persist();
     return true;
   },
   submitExam(day, correctOptions, passMark = 4) {
     const targetDay = Number(day);
-    const exam = examForDay(targetDay);
+    const exam = legacyExamForDay(targetDay);
     const expected = Array.isArray(correctOptions) ? correctOptions : [];
     if (exam.submitted) return { ok: false, reason: 'This attempt has already been submitted.' };
     if (expected.length !== 5 || expected.some((option, index) => !Number.isInteger(Number(exam.answers[index])))) {
@@ -227,34 +359,19 @@ export const progressStore = {
     }
     const score = expected.reduce((total, correct, index) => total + (Number(exam.answers[index]) === Number(correct) ? 1 : 0), 0);
     const passed = score >= Number(passMark);
-    const updated = {
-      ...exam,
-      submitted: true,
-      score,
-      passed,
-      attempts: exam.attempts + 1,
-      submittedAt: new Date().toISOString()
-    };
-    state.exams[targetDay] = updated;
+    state.exams[targetDay] = { ...exam, submitted: true, score, passed, attempts: exam.attempts + 1, submittedAt: new Date().toISOString() };
     if (passed && !state.completedDays.includes(targetDay)) {
       state.completedDays.push(targetDay);
       state.completedDays.sort((a, b) => a - b);
     }
     persist();
-    return { ok: true, score, passed, attempts: updated.attempts };
+    return { ok: true, score, passed, attempts: state.exams[targetDay].attempts };
   },
   retryExam(day) {
     const targetDay = Number(day);
-    const exam = examForDay(targetDay);
+    const exam = legacyExamForDay(targetDay);
     if (!exam.submitted || exam.passed) return false;
-    state.exams[targetDay] = {
-      answers: {},
-      submitted: false,
-      score: null,
-      passed: false,
-      attempts: exam.attempts,
-      submittedAt: null
-    };
+    state.exams[targetDay] = { answers: {}, submitted: false, score: null, passed: false, attempts: exam.attempts, submittedAt: null };
     persist();
     return true;
   },
@@ -301,17 +418,19 @@ export const progressStore = {
     }
     return true;
   },
-  getStats(publishedThrough, questionsPerDay = 15) {
+  getStats(publishedThrough, questionsPerDay = 25) {
     const published = Math.max(0, Number(publishedThrough) || 0);
     const publishedQuestions = published * questionsPerDay;
-    const solvedQuestions = Object.entries(state.tasks).filter(([key, value]) => Number(key.split(':')[0]) <= published && value === 'solved').length;
+    const solvedCodingQuestions = Object.values(state.codingProgress).reduce((total, completed) => total + completed.length, 0);
+    const solvedQuestions = solvedCodingQuestions + Object.entries(state.tasks).filter(([key, value]) =>
+      Number(key.split(':')[0]) <= published && value === 'solved').length;
     const completedDays = state.completedDays.filter(day => day <= published).length;
     return {
       publishedDays: published,
       publishedQuestions,
-      solvedQuestions,
+      solvedQuestions: Math.min(publishedQuestions, solvedQuestions),
       completedDays,
-      courseCompletion: publishedQuestions ? Math.round((solvedQuestions / publishedQuestions) * 100) : 0,
+      courseCompletion: publishedQuestions ? Math.round((Math.min(publishedQuestions, solvedQuestions) / publishedQuestions) * 100) : 0,
       releaseCompletion: Math.round((published / 100) * 100),
       nextDay: completedDays < published ? Math.min(published, completedDays + 1) : Math.min(100, published + 1)
     };

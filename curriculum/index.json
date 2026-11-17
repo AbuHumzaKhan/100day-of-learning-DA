@@ -116,7 +116,8 @@
       ],
       "topics": 5,
       "business_questions": 15,
-      "status": "open"
+      "status": "open",
+      "coding_questions": 25
     },
     {
       "day": 2,
@@ -128,7 +129,8 @@
       ],
       "topics": 5,
       "business_questions": 15,
-      "status": "open"
+      "status": "open",
+      "coding_questions": 25
     },
     {
       "day": 3,
@@ -140,7 +142,8 @@
       ],
       "topics": 5,
       "business_questions": 15,
-      "status": "open"
+      "status": "open",
+      "coding_questions": 25
     },
     {
       "day": 4,
@@ -152,7 +155,8 @@
       ],
       "topics": 5,
       "business_questions": 15,
-      "status": "open"
+      "status": "open",
+      "coding_questions": 25
     },
     {
       "day": 5,
@@ -164,7 +168,8 @@
       ],
       "topics": 5,
       "business_questions": 15,
-      "status": "open"
+      "status": "open",
+      "coding_questions": 25
     },
     {
       "day": 6,
@@ -176,7 +181,8 @@
       ],
       "topics": 5,
       "business_questions": 15,
-      "status": "open"
+      "status": "open",
+      "coding_questions": 25
     },
     {
       "day": 7,
@@ -188,7 +194,8 @@
       ],
       "topics": 5,
       "business_questions": 15,
-      "status": "open"
+      "status": "open",
+      "coding_questions": 25
     },
     {
       "day": 8,
@@ -200,7 +207,8 @@
       ],
       "topics": 5,
       "business_questions": 15,
-      "status": "open"
+      "status": "open",
+      "coding_questions": 25
     },
     {
       "day": 9,
@@ -212,7 +220,8 @@
       ],
       "topics": 5,
       "business_questions": 15,
-      "status": "open"
+      "status": "open",
+      "coding_questions": 25
     },
     {
       "day": 10,
@@ -224,7 +233,8 @@
       ],
       "topics": 5,
       "business_questions": 15,
-      "status": "open"
+      "status": "open",
+      "coding_questions": 25
     },
     {
       "day": 11,
@@ -238,8 +248,10 @@
       ],
       "topics": 5,
       "business_questions": 15,
-      "status": "open"
+      "status": "open",
+      "coding_questions": 25
     }
   ],
-  "release_rule": "Days 1-11 are published and available. Day 12 onward is locked until its curriculum resource is published."
+  "release_rule": "Days 1-11 are published and available. Day 12 onward is locked until its curriculum resource is published.",
+  "total_coding_questions": 275
 }

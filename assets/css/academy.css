@@ -1328,3 +1328,703 @@ html[data-theme="dark"] .lesson-content-card .teaching-panel .section-heading .c
   border: 1px solid #3a744b;
   background: #173822;
 }
+
+
+
+/* AHK Academy — readable, modern topic learning and coding practice */
+.academy-main {
+  width: min(1560px, calc(100% - 56px));
+  padding-top: 30px;
+  padding-bottom: 48px;
+}
+.academy-header-inner { gap: 20px; }
+.academy-brand { min-width: 210px; }
+.academy-mode-nav { gap: 6px; padding: 6px; }
+.academy-mode-nav .nav-button {
+  min-width: 112px;
+  min-height: 52px;
+  padding: 8px 15px;
+  gap: 4px;
+}
+.academy-mode-nav .nav-button > span:first-child { font-size: 13px; }
+.academy-mode-nav .nav-button small { font-size: 10px; }
+
+.learning-context,.learning-breadcrumb,.exam-breadcrumb {
+  gap: 11px;
+  font-size: 11px;
+}
+.mode-label { padding: 9px 14px; font-size: 10px; }
+.learning-day-heading h1,.exam-heading h1 {
+  font-size: clamp(30px,3vw,38px);
+  line-height: 1.13;
+  letter-spacing: -.045em;
+}
+.learning-day-heading p,.exam-heading p {
+  max-width: 900px;
+  font-size: 15px;
+  line-height: 1.65;
+}
+.day-status-pill,.lesson-content-status {
+  padding: 9px 13px;
+  font-size: 10px;
+}
+.lesson-stepper { gap: 11px; }
+.lesson-step {
+  min-height: 76px;
+  grid-template-columns: 43px minmax(0,1fr) 18px;
+  gap: 12px;
+  padding: 11px 13px;
+  border-radius: 13px;
+}
+.lesson-step-number { width: 42px; height: 42px; font-size: 15px; }
+.lesson-step-copy strong { font-size: 12px; white-space: normal; line-height: 1.35; }
+.lesson-step-copy small { font-size: 10px; }
+.lesson-step-state { font-size: 14px; }
+.lesson-progress-bar { gap: 18px; font-size: 12px; }
+.lesson-progress-bar strong { font-size: 12px; }
+.lesson-progress-track,.exam-progress-track { height: 10px; }
+
+.lesson-main-grid { grid-template-columns: minmax(0,1fr) 330px; gap: 19px; }
+.lesson-content-card { padding: 30px; border-radius: 20px; }
+.lesson-content-heading { margin-bottom: 22px; gap: 18px; }
+.lesson-content-title { font-size: clamp(27px,2.6vw,34px); line-height: 1.2; }
+.lesson-content-heading p { font-size: 14px; line-height: 1.7; }
+.lesson-content-card .teaching-panel { padding: 23px; border-radius: 15px; }
+.lesson-content-card .section-heading h3 { font-size: 18px; }
+.lesson-content-card .section-heading .eyebrow { font-size: 10px; }
+.lesson-content-card .mode-tabs { gap: 8px; }
+.lesson-content-card .mode-tab {
+  min-height: 60px;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+.lesson-content-card .mode-tab strong { font-size: 12px; }
+.lesson-content-card .mode-tab small { font-size: 10px; line-height: 1.45; }
+.lesson-content-card .teaching-copy { margin-top: 14px; padding: 20px; }
+.lesson-content-card .teaching-mode-label { margin-bottom: 12px; font-size: 10px; }
+.lesson-content-card .teaching-text {
+  font-size: 15px;
+  line-height: 1.85;
+}
+.lesson-content-card .teaching-text h2,
+.lesson-content-card .teaching-text h3,
+.lesson-content-card .teaching-text h4 {
+  margin-top: 1.25em;
+  margin-bottom: .55em;
+  font-size: 19px;
+  line-height: 1.35;
+}
+.lesson-content-card .teaching-text p,
+.lesson-content-card .teaching-text li { font-size: 15px; line-height: 1.85; }
+.lesson-content-card .teaching-text code { font-size: .92em; }
+.lesson-content-card .example-card { margin-top: 15px; border-radius: 12px; }
+.lesson-content-card .example-card-head { min-height: 50px; padding: 11px 15px; }
+.lesson-content-card .example-card-head strong { font-size: 13px; }
+.lesson-content-card .example-card pre {
+  padding: 17px;
+  overflow-x: auto;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.lesson-business-task { gap: 17px; padding: 19px 21px; border-radius: 14px; }
+.business-task-icon { width: 48px; height: 48px; font-size: 21px; }
+.lesson-business-task .eyebrow { font-size: 10px; }
+.lesson-business-task p { font-size: 14px; line-height: 1.7; }
+.business-task-note { font-size: 11px; line-height: 1.5; }
+.lesson-start-practice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 17px;
+  padding: 19px 21px;
+  border: 1px solid #a9d8b7;
+  border-radius: 14px;
+  background: #f0faf2;
+}
+.lesson-start-copy { display: grid; gap: 5px; }
+.lesson-start-copy .eyebrow { color: #24784a; font-size: 10px; }
+.lesson-start-copy strong { color: #203d2b; font-size: 16px; }
+.lesson-start-copy p { margin: 0; color: #5d7363; font-size: 12px; line-height: 1.55; }
+.lesson-start-practice .lesson-complete-button { white-space: nowrap; }
+.lesson-extra-practice summary { padding: 15px 16px; font-size: 12px; }
+.lesson-side-column { gap: 16px; }
+.lesson-side-card { padding: 21px; border-radius: 15px; }
+.lesson-side-card h3 { margin-bottom: 16px; padding-bottom: 13px; font-size: 12px; }
+.lesson-outline li { min-height: 45px; }
+.lesson-outline p { font-size: 12px; }
+.lesson-learning-target { padding: 15px; font-size: 13px; line-height: 1.7; }
+.lesson-progress-caption { font-size: 13px; }
+.lesson-progress-card > p { font-size: 11px; }
+
+/* Coding practice workspace */
+.coding-practice-screen { width: 100%; max-width: 1480px; margin: 0 auto; display: grid; gap: 19px; }
+.coding-practice-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 2px 3px 5px;
+}
+.coding-practice-heading .eyebrow { color: #258052; font-size: 11px; }
+.coding-practice-heading h1 {
+  margin: 7px 0 7px;
+  color: #1e3427;
+  font-size: clamp(29px,2.8vw,36px);
+  line-height: 1.15;
+  letter-spacing: -.045em;
+}
+.coding-practice-heading p {
+  max-width: 920px;
+  margin: 0;
+  color: #687c6f;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.coding-practice-count {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border: 1px solid #b7dfc2;
+  border-radius: 99px;
+  color: #236d43;
+  background: #edf8f0;
+  font-size: 11px;
+  font-weight: 900;
+}
+.coding-question-nav {
+  display: grid;
+  grid-template-columns: repeat(5,minmax(0,1fr));
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid #d8e5da;
+  border-radius: 15px;
+  background: #f7faf7;
+}
+.coding-question-nav-item {
+  min-width: 0;
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px;
+  border: 1px solid #dce7de;
+  border-radius: 12px;
+  color: #33483a;
+  background: #fff;
+  text-align: left;
+}
+.coding-nav-number {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 2px solid #9fb2a4;
+  border-radius: 50%;
+  color: #526a59;
+  font-size: 14px;
+  font-weight: 900;
+}
+.coding-question-nav-item > span:last-child { min-width: 0; display: grid; gap: 5px; }
+.coding-question-nav-item strong { color: #2d4434; font-size: 12px; }
+.coding-question-nav-item small { color: #75877a; font-size: 10px; }
+.coding-question-nav-item.is-current { border: 2px solid #40a96c; background: #ebf8ee; }
+.coding-question-nav-item.is-current .coding-nav-number,
+.coding-question-nav-item.is-complete .coding-nav-number {
+  border-color: #29945a;
+  color: white;
+  background: #29945a;
+}
+.coding-question-nav-item.is-locked { opacity: .58; cursor: not-allowed; }
+.coding-practice-progress {
+  display: grid;
+  grid-template-columns: auto minmax(150px,1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 0 7px;
+  color: #66796c;
+  font-size: 12px;
+}
+.coding-practice-progress strong { color: #2f4636; font-size: 13px; }
+.coding-practice-grid {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 330px;
+  align-items: start;
+  gap: 19px;
+}
+.coding-workspace-card,.coding-practice-side .lesson-side-card {
+  min-width: 0;
+  border: 1px solid #dce7de;
+  border-radius: 19px;
+  background: #fff;
+  box-shadow: 0 8px 26px rgba(21,54,34,.045);
+}
+.coding-workspace-card { padding: 27px; }
+.coding-task-header { display: flex; align-items: start; justify-content: space-between; gap: 17px; }
+.coding-task-header .eyebrow { color: #2b8353; font-size: 10px; }
+.coding-task-header h2 {
+  margin: 7px 0 0;
+  color: #21372a;
+  font-size: 24px;
+  line-height: 1.3;
+  letter-spacing: -.03em;
+}
+.coding-difficulty {
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border: 1px solid #d6e4d9;
+  border-radius: 99px;
+  color: #54705d;
+  background: #f5f9f5;
+  font-size: 10px;
+  font-weight: 800;
+}
+.coding-scenario,.coding-task-prompt {
+  margin-top: 16px;
+  padding: 17px 19px;
+  border: 1px solid #deeadf;
+  border-radius: 12px;
+  background: #f7faf7;
+}
+.coding-scenario { border-left: 4px solid #43a86c; }
+.coding-scenario .eyebrow,.coding-task-prompt .eyebrow { color: #2d8152; font-size: 10px; }
+.coding-scenario p,.coding-task-prompt p {
+  margin: 7px 0 0;
+  color: #354b3c;
+  font-size: 15px;
+  line-height: 1.75;
+}
+.coding-task-prompt { border-color: #d5e8d9; background: #f1f8f2; }
+.coding-hint {
+  margin-top: 13px;
+  border: 1px solid #e0e9e1;
+  border-radius: 11px;
+  background: #fcfdfc;
+}
+.coding-hint summary {
+  padding: 13px 16px;
+  color: #47634f;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.coding-hint p { margin: 0; padding: 0 16px 15px; color: #63766a; font-size: 13px; line-height: 1.7; }
+.coding-editor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 19px 0 9px;
+}
+.coding-editor-heading label { color: #23392b; font-size: 14px; font-weight: 900; }
+.coding-editor-heading span { color: #718277; font-size: 11px; }
+.coding-sql-editor {
+  display: block;
+  width: 100%;
+  min-height: 310px;
+  padding: 19px 20px;
+  resize: vertical;
+  border: 1px solid #344e3d;
+  border-radius: 13px;
+  outline: none;
+  color: #e5f1e8;
+  background: #102319;
+  font-family: "Cascadia Code","SFMono-Regular",Consolas,monospace;
+  font-size: 15px;
+  line-height: 1.75;
+  tab-size: 2;
+  white-space: pre;
+}
+.coding-sql-editor:focus { border-color: #45b776; box-shadow: 0 0 0 3px rgba(53,165,102,.15); }
+.coding-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.coding-run-button { min-height: 46px; padding: 0 18px; font-size: 13px; }
+.coding-secondary-button {
+  min-height: 44px;
+  padding: 0 15px;
+  border: 1px solid #d3e0d6;
+  border-radius: 10px;
+  color: #47604f;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+#codingEngineStatus { flex: 1 1 180px; color: #738278; font-size: 11px; }
+.coding-feedback {
+  margin-top: 18px;
+  padding: 17px;
+  border: 1px solid #d6e5d9;
+  border-radius: 13px;
+  background: #f7faf7;
+}
+.coding-feedback.is-correct { border-color: #a7d8b4; background: #eff9f1; }
+.coding-feedback.needs-fix { border-color: #e3c8a2; background: #fffaf0; }
+.coding-feedback-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.coding-feedback-heading strong { color: #28573a; font-size: 14px; }
+.coding-feedback-heading span { color: #65796b; font-size: 11px; font-weight: 800; }
+.coding-feedback p { margin: 8px 0 12px; color: #4f6657; font-size: 13px; line-height: 1.7; }
+.coding-result-meta { margin: 10px 0; color: #65796b; font-size: 11px; }
+.coding-result-table { max-height: 270px; overflow: auto; }
+.coding-result-table .data-table { font-size: 12px; }
+.coding-result-table .data-table th,.coding-result-table .data-table td { padding: 9px 11px; }
+.coding-result-empty { color: #667b6c; font-size: 13px; }
+.coding-feedback-placeholder { border-style: dashed; background: #fbfcfb; }
+.coding-feedback-placeholder strong { color: #425b4a; font-size: 13px; }
+.coding-feedback-placeholder p { margin-bottom: 0; }
+.coding-practice-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: 20px;
+  padding-top: 17px;
+  border-top: 1px solid #e3ebe4;
+}
+.coding-practice-footer .lesson-complete-button { min-height: 45px; font-size: 12px; }
+.coding-practice-side { display: grid; gap: 15px; }
+.coding-practice-side .lesson-side-card { padding: 21px; }
+.coding-checklist { display: grid; gap: 11px; }
+.coding-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+.coding-checklist-item > span {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid #b8c8bc;
+  border-radius: 50%;
+  color: #687e6f;
+  font-size: 11px;
+  font-weight: 900;
+}
+.coding-checklist-item.is-done > span { border-color: #34965c; color: white; background: #34965c; }
+.coding-checklist-item > div { min-width: 0; display: grid; gap: 4px; }
+.coding-checklist-item strong { color: #2f4737; font-size: 12px; }
+.coding-checklist-item small { overflow: hidden; color: #728277; font-size: 10px; line-height: 1.45; text-overflow: ellipsis; }
+.coding-unlock-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 21px;
+  border: 1px solid #96d2a7;
+  border-radius: 14px;
+  background: #eff9f1;
+}
+.coding-unlock-banner strong { color: #205b37; font-size: 15px; }
+.coding-unlock-banner p { margin: 5px 0 0; color: #5b7562; font-size: 12px; }
+.coding-unlock-banner .lesson-complete-button { white-space: nowrap; }
+.coding-full-sql-workspace { margin-top: 17px; border: 1px solid #dce6de; border-radius: 13px; background: #fff; }
+.coding-full-sql-workspace summary { padding: 14px 17px; color: #395643; font-size: 12px; font-weight: 850; cursor: pointer; }
+.coding-full-sql-workspace > .practice-panel { margin: 0; border: 0; box-shadow: none; }
+
+/* MCQ layout readability */
+.exam-heading h1 { font-size: clamp(30px,2.9vw,37px); }
+.exam-heading p { font-size: 14px; }
+.exam-question-nav { gap: 11px; padding: 12px; }
+.exam-question-nav-item { min-height: 76px; gap: 11px; padding: 12px; }
+.exam-nav-number { width: 43px; height: 43px; font-size: 14px; }
+.exam-question-nav-item strong { font-size: 12px; }
+.exam-question-nav-item small { font-size: 10px; }
+.exam-progress-row { gap: 16px; font-size: 12px; }
+.exam-progress-row strong { font-size: 13px; }
+.exam-main-grid { grid-template-columns: minmax(0,1fr) 350px; gap: 19px; }
+.exam-question-card { padding: 30px; }
+.exam-question-meta { margin-bottom: 17px; font-size: 10px; }
+.exam-question-card > h2 { margin-bottom: 11px; font-size: 24px; line-height: 1.35; }
+.exam-business-prompt { margin-bottom: 21px; padding: 16px 18px; font-size: 15px; line-height: 1.75; }
+.exam-options { gap: 12px; }
+.exam-option { grid-template-columns: 22px 30px minmax(0,1fr) auto; gap: 12px; padding: 15px 17px; border-radius: 12px; }
+.exam-option.is-selected { padding: 14px 16px; }
+.exam-option-radio { width: 21px; height: 21px; }
+.exam-option-letter { font-size: 13px; }
+.exam-option code { font-size: 14px; line-height: 1.7; }
+.exam-answer-mark { font-size: 10px; }
+.exam-question-footer { margin-top: 22px; padding-top: 18px; }
+.exam-next-button,.exam-save-button { min-height: 46px; font-size: 12px; }
+.exam-summary-card { padding: 23px; }
+.exam-summary-card > h2 { font-size: 15px; }
+.exam-summary-row { padding: 10px 1px; font-size: 13px; }
+.exam-summary-row strong { font-size: 14px; }
+.exam-summary-progress > div:first-child { font-size: 12px; }
+.exam-guidance { margin-top: 19px; padding: 15px; }
+.exam-guidance strong { font-size: 12px; }
+.exam-guidance p { font-size: 12px; line-height: 1.65; }
+.exam-pass-rule { margin-top: 17px; padding-top: 15px; font-size: 10px; }
+.exam-pass-rule strong { font-size: 19px; }
+.exam-pass-rule span { font-size: 10px; }
+.exam-result-banner strong { font-size: 13px; }
+.exam-result-banner small { font-size: 11px; line-height: 1.65; }
+
+@media (max-width: 1180px) {
+  .coding-practice-grid { grid-template-columns: minmax(0,1fr) 290px; }
+  .exam-main-grid { grid-template-columns: minmax(0,1fr) 310px; }
+}
+@media (max-width: 980px) {
+  .coding-practice-grid,.exam-main-grid,.lesson-main-grid { grid-template-columns: minmax(0,1fr); }
+  .coding-practice-side { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .coding-practice-side .lesson-side-card:last-child { grid-column: 1/-1; }
+  .exam-summary-card { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+  .exam-summary-card > h2,.exam-summary-progress,.exam-guidance,.exam-pass-rule { grid-column: 1/-1; }
+}
+@media (max-width: 760px) {
+  .academy-main { width: calc(100% - 28px); padding-top: 18px; }
+  .academy-mode-nav { width: 100%; }
+  .academy-mode-nav .nav-button { min-height: 54px; flex: 1 1 0; }
+  .learning-day-heading h1,.coding-practice-heading h1,.exam-heading h1 { font-size: 28px; }
+  .learning-day-heading p,.coding-practice-heading p,.exam-heading p { font-size: 14px; }
+  .lesson-stepper,.coding-question-nav,.exam-question-nav {
+    display: flex;
+    overflow-x: auto;
+    padding: 8px;
+    scroll-snap-type: x mandatory;
+  }
+  .lesson-step,.coding-question-nav-item,.exam-question-nav-item { min-width: 185px; scroll-snap-align: start; }
+  .coding-practice-heading { align-items: start; flex-direction: column; }
+  .coding-practice-progress { grid-template-columns: 1fr auto; gap: 8px 12px; }
+  .coding-practice-progress .lesson-progress-track { grid-column: 1/-1; grid-row: 2; }
+  .coding-workspace-card,.exam-question-card,.lesson-content-card { padding: 18px; }
+  .coding-task-header h2 { font-size: 21px; }
+  .coding-sql-editor { min-height: 280px; padding: 15px; font-size: 14px; }
+  .coding-practice-side { grid-template-columns: 1fr; }
+  .coding-practice-side .lesson-side-card:last-child { grid-column: auto; }
+  .coding-editor-actions { align-items: stretch; }
+  #codingEngineStatus { flex-basis: 100%; }
+  .coding-practice-footer,.coding-unlock-banner,.lesson-start-practice {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .coding-practice-footer > *, .coding-unlock-banner > *, .lesson-start-practice > * { width: 100%; }
+  .exam-question-card > h2 { font-size: 21px; }
+  .exam-option { grid-template-columns: 20px 25px minmax(0,1fr); padding: 13px; }
+  .exam-option.is-selected { padding: 12px; }
+  .exam-option code { font-size: 13px; }
+  .exam-answer-mark { grid-column: 3; }
+}
+@media (max-width: 420px) {
+  .academy-main { width: calc(100% - 20px); }
+  .lesson-content-card .teaching-panel { padding: 14px; }
+  .lesson-content-card .teaching-copy { padding: 13px; }
+  .lesson-content-card .teaching-text,.lesson-content-card .teaching-text p,
+  .lesson-content-card .teaching-text li { font-size: 14px; }
+  .coding-workspace-card,.exam-question-card,.lesson-content-card { padding: 14px; }
+  .coding-sql-editor { min-height: 240px; font-size: 13px; }
+  .exam-summary-card { padding: 15px; }
+}
+
+/* Dark green companion palette */
+html[data-theme="dark"] .lesson-start-practice,
+html[data-theme="dark"] .coding-scenario,
+html[data-theme="dark"] .coding-task-prompt,
+html[data-theme="dark"] .coding-feedback,
+html[data-theme="dark"] .coding-full-sql-workspace {
+  border-color: #385a43;
+  background: #13281b;
+}
+html[data-theme="dark"] .lesson-start-copy strong,
+html[data-theme="dark"] .coding-task-header h2,
+html[data-theme="dark"] .coding-editor-heading label,
+html[data-theme="dark"] .coding-feedback-heading strong,
+html[data-theme="dark"] .coding-checklist-item strong {
+  color: #e9f5ec;
+}
+html[data-theme="dark"] .lesson-start-copy p,
+html[data-theme="dark"] .coding-practice-heading p,
+html[data-theme="dark"] .coding-scenario p,
+html[data-theme="dark"] .coding-task-prompt p,
+html[data-theme="dark"] .coding-feedback p,
+html[data-theme="dark"] .coding-hint p,
+html[data-theme="dark"] .coding-checklist-item small,
+html[data-theme="dark"] .coding-result-meta {
+  color: #bbd0c1;
+}
+html[data-theme="dark"] .coding-practice-heading h1 { color: #f0f8f2; }
+html[data-theme="dark"] .coding-practice-count,
+html[data-theme="dark"] .coding-unlock-banner {
+  border-color: #42895a;
+  color: #b9efc5;
+  background: #153622;
+}
+html[data-theme="dark"] .coding-question-nav {
+  border-color: #385344;
+  background: #0e1e15;
+}
+html[data-theme="dark"] .coding-question-nav-item {
+  border-color: #3b5747;
+  color: #e0ece3;
+  background: #12251a;
+}
+html[data-theme="dark"] .coding-question-nav-item strong { color: #e5f1e8; }
+html[data-theme="dark"] .coding-question-nav-item small { color: #b6cbbb; }
+html[data-theme="dark"] .coding-question-nav-item.is-current { border-color: #60d28a; background: #153b24; }
+html[data-theme="dark"] .coding-nav-number { border-color: #91a898; color: #e0eee4; background: #162c1d; }
+html[data-theme="dark"] .coding-question-nav-item.is-current .coding-nav-number,
+html[data-theme="dark"] .coding-question-nav-item.is-complete .coding-nav-number { border-color: #52cd80; color: #082314; background: #70df98; }
+html[data-theme="dark"] .coding-practice-progress { color: #bacdc0; }
+html[data-theme="dark"] .coding-practice-progress strong { color: #e1efe5; }
+html[data-theme="dark"] .coding-workspace-card,
+html[data-theme="dark"] .coding-practice-side .lesson-side-card {
+  border-color: #385244;
+  background: linear-gradient(145deg,#102219,#0c1a13);
+}
+html[data-theme="dark"] .coding-task-header .eyebrow,
+html[data-theme="dark"] .coding-scenario .eyebrow,
+html[data-theme="dark"] .coding-task-prompt .eyebrow { color: #8de5a8; }
+html[data-theme="dark"] .coding-difficulty,
+html[data-theme="dark"] .coding-hint {
+  border-color: #425b49;
+  color: #c5daca;
+  background: #152a1d;
+}
+html[data-theme="dark"] .coding-scenario p,
+html[data-theme="dark"] .coding-task-prompt p { color: #e0eee4; }
+html[data-theme="dark"] .coding-editor-heading label { color: #e2eee5; }
+html[data-theme="dark"] .coding-editor-heading span,
+html[data-theme="dark"] #codingEngineStatus { color: #b2c7b8; }
+html[data-theme="dark"] .coding-sql-editor { border-color: #477253; background: #08170e; color: #e7f5e9; }
+html[data-theme="dark"] .coding-secondary-button {
+  border-color: #496451;
+  color: #d4e5d9;
+  background: #12251a;
+}
+html[data-theme="dark"] .coding-feedback { color: #dcebe0; }
+html[data-theme="dark"] .coding-feedback.is-correct { border-color: #429560; background: #143421; }
+html[data-theme="dark"] .coding-feedback.needs-fix { border-color: #9a7742; background: #302617; }
+html[data-theme="dark"] .coding-feedback-heading span { color: #c1d4c7; }
+html[data-theme="dark"] .coding-feedback-placeholder { border-color: #415849; background: #0e1d14; }
+html[data-theme="dark"] .coding-feedback-placeholder strong { color: #d5e7da; }
+html[data-theme="dark"] .coding-practice-footer { border-color: #385044; }
+html[data-theme="dark"] .coding-checklist-item > span { border-color: #809787; color: #cce0d1; }
+html[data-theme="dark"] .coding-checklist-item.is-done > span { border-color: #54c980; color: #061d10; background: #68d991; }
+html[data-theme="dark"] .coding-full-sql-workspace summary { color: #d1e8d7; }
+html[data-theme="dark"] .coding-unlock-banner strong { color: #c6f3cf; }
+html[data-theme="dark"] .coding-unlock-banner p { color: #b5d1bc; }
+
+
+/* Responsive overflow + accessible contrast corrections */
+html[data-theme="dark"] .lesson-start-copy .eyebrow {
+  color: #94e4a9;
+}
+html[data-theme="dark"] .lesson-start-copy strong {
+  color: #eff9f1;
+}
+html[data-theme="dark"] .lesson-start-copy p {
+  color: #c1d7c8;
+}
+html[data-theme="dark"] .lesson-start-practice {
+  border-color: #3f8152;
+  background: #13281b;
+}
+html[data-theme="dark"] .lesson-start-practice .lesson-complete-button {
+  color: #082114;
+}
+html[data-theme="dark"] .lesson-content-card .lesson-start-practice .eyebrow {
+  color: #9ce7b0;
+}
+@media (max-width: 760px) {
+  html, body, #app, .academy-shell, .academy-main, .view-panel,
+  .lesson-experience, .lesson-content-card, .coding-practice-screen,
+  .coding-workspace-card, .exam-screen, .exam-question-card {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .academy-main {
+    width: calc(100% - 20px);
+    overflow-x: clip;
+  }
+  .academy-header-inner { min-width: 0; }
+  .learning-context {
+    min-width: 0;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .learning-breadcrumb {
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+    overflow-wrap: anywhere;
+  }
+  .lesson-progress-bar {
+    min-width: 0;
+    grid-template-columns: minmax(0,1fr) auto;
+    gap: 8px 12px;
+    padding: 0 2px;
+  }
+  .lesson-progress-bar > span { min-width: 0; }
+  .lesson-progress-bar .lesson-progress-track {
+    grid-column: 1/-1;
+    grid-row: 2;
+    min-width: 0;
+  }
+  .lesson-stepper { min-width: 0; max-width: 100%; }
+  .lesson-step { flex: 0 0 185px; min-width: 185px; }
+  .lesson-content-heading,.lesson-completion-footer { min-width: 0; }
+  .lesson-content-title { overflow-wrap: anywhere; }
+  .lesson-start-practice { min-width: 0; align-items: stretch; }
+  .lesson-start-practice .lesson-complete-button { width: 100%; }
+  .coding-question-nav,.exam-question-nav { min-width: 0; max-width: 100%; }
+  .coding-question-nav-item,.exam-question-nav-item { flex: 0 0 170px; min-width: 170px; }
+  .coding-practice-progress,.exam-progress-row {
+    min-width: 0;
+    grid-template-columns: minmax(0,1fr) auto;
+  }
+  .coding-practice-progress > *, .exam-progress-row > * { min-width: 0; }
+  .coding-practice-progress .lesson-progress-track,
+  .exam-progress-row .exam-progress-track {
+    grid-column: 1/-1;
+    grid-row: 2;
+  }
+  .exam-progress-row > span { white-space: normal; text-align: right; }
+  .exam-heading { min-width: 0; }
+  .exam-completion-badge { white-space: normal; }
+  .exam-option code { overflow-wrap: anywhere; white-space: pre-wrap; }
+}
+@media (max-width: 420px) {
+  .academy-header-inner { width: 100%; }
+  .academy-brand { min-width: 0; }
+  .academy-mode-nav .nav-button { min-width: 0; }
+  .lesson-progress-caption { flex-wrap: wrap; }
+  .lesson-content-card .teaching-panel,
+  .lesson-content-card .teaching-copy,
+  .lesson-business-task,
+  .lesson-start-practice { min-width: 0; }
+  .coding-practice-heading,.coding-task-header,.coding-editor-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .exam-heading { gap: 10px; }
+  .exam-summary-card { min-width: 0; }
+}
+
+
+/* Final WCAG contrast fixes for the dark practice workspace */
+html[data-theme="dark"] .coding-practice-screen .eyebrow,
+html[data-theme="dark"] .coding-task-header .eyebrow,
+html[data-theme="dark"] .coding-editor-heading .eyebrow {
+  color: #9be7b2;
+}
+html[data-theme="dark"] .coding-hint summary {
+  color: #d2e6d7;
+}
+html[data-theme="dark"] .coding-practice-screen .button-primary,
+html[data-theme="dark"] .coding-practice-screen .coding-run-button {
+  color: #062113;
+}
+html[data-theme="dark"] .coding-practice-screen .lesson-complete-button {
+  color: #062113;
+}
+html[data-theme="dark"] .coding-practice-screen .button-primary:hover,
+html[data-theme="dark"] .coding-practice-screen .coding-run-button:hover {
+  color: #04180d;
+}

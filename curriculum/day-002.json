@@ -55,6 +55,63 @@
           ],
           "validation": "Each customer appears at most once."
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d02-t01-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The regional sales manager wants a list of every unique product category represented in the transaction table.",
+          "prompt": "The regional sales manager wants a list of every unique product category represented in the transaction table.",
+          "hint": "When a manager says 'list each unique...' think DISTINCT.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT DISTINCT category FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t01-c2",
+          "title": "Sales Manager request",
+          "difficulty": "Basic",
+          "scenario": "The manager is preparing a category review.",
+          "prompt": "Return each unique category once.",
+          "hint": "No duplicate category values.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT DISTINCT category FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t01-c3",
+          "title": "Regional Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Leadership wants to understand the regions represented in the order book.",
+          "prompt": "Return each unique region once.",
+          "hint": "No duplicate region values.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT DISTINCT region FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t01-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "The analyst is building a customer coverage check.",
+          "prompt": "Return each unique customer name once.",
+          "hint": "Each customer appears at most once.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT DISTINCT customer_name FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t01-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return each unique ship mode once.",
+          "prompt": "Return each unique ship mode once.",
+          "hint": "When a manager says 'list each unique...' think DISTINCT.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT DISTINCT ship_mode FROM orders;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -109,6 +166,63 @@
             "quantity"
           ],
           "validation": "Quantity DESC with order_id ASC tie-break."
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d02-t02-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The sales manager wants orders listed from the highest sales value to the lowest.",
+          "prompt": "The sales manager wants orders listed from the highest sales value to the lowest.",
+          "hint": "Words like highest, lowest, largest, smallest, latest, and earliest are signals for ORDER BY.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, sales FROM orders ORDER BY sales DESC;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t02-c2",
+          "title": "Sales Manager request",
+          "difficulty": "Basic",
+          "scenario": "The manager wants the largest transactions first.",
+          "prompt": "Return order ID and sales sorted from highest to lowest sales.",
+          "hint": "Sales must be descending.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales FROM orders ORDER BY sales DESC;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t02-c3",
+          "title": "Finance Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "Finance is reviewing the most profitable transactions first.",
+          "prompt": "Return order ID, customer name, and profit sorted from highest to lowest profit.",
+          "hint": "Profit must be descending.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, profit FROM orders ORDER BY profit DESC;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t02-c4",
+          "title": "Operations Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Operations wants the largest quantities reviewed first.",
+          "prompt": "Return order ID, product name, and quantity sorted from highest to lowest quantity, then order ID ascending for ties.",
+          "hint": "Quantity DESC with order_id ASC tie-break.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, product_name, quantity FROM orders ORDER BY quantity DESC, order_id ASC;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t02-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return order ID, category, and sales sorted by category ascending and sales descending.",
+          "prompt": "Return order ID, category, and sales sorted by category ascending and sales descending.",
+          "hint": "Words like highest, lowest, largest, smallest, latest, and earliest are signals for ORDER BY.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, region, sales FROM orders ORDER BY region ASC, sales DESC;",
+          "dataset": "orders"
         }
       ]
     },
@@ -166,6 +280,63 @@
           ],
           "validation": "Exactly ten rows, quantity descending."
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d02-t03-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The commercial director wants the five largest individual orders by sales.",
+          "prompt": "The commercial director wants the five largest individual orders by sales.",
+          "hint": "'Top 5', 'first 10', and 'highest 20' require a ranking rule before LIMIT.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, sales FROM orders ORDER BY sales DESC LIMIT 5;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t03-c2",
+          "title": "Sales Manager request",
+          "difficulty": "Basic",
+          "scenario": "The manager needs a quick list of the three largest orders.",
+          "prompt": "Return the top three orders by sales.",
+          "hint": "Exactly three rows, highest sales first.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, sales FROM orders ORDER BY sales DESC LIMIT 3;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t03-c3",
+          "title": "Finance Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Finance wants the five orders with the highest profit.",
+          "prompt": "Return the top five orders by profit.",
+          "hint": "Exactly five rows, highest profit first.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, profit FROM orders ORDER BY profit DESC LIMIT 5;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t03-c4",
+          "title": "Operations Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Operations is investigating the largest unit orders.",
+          "prompt": "Return the top ten orders by quantity with order ID, product name, and quantity.",
+          "hint": "Exactly ten rows, quantity descending.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, product_name, quantity FROM orders ORDER BY quantity DESC LIMIT 10;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t03-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return the top eight orders by profit, showing order ID, customer, and profit.",
+          "prompt": "Return the top eight orders by profit, showing order ID, customer, and profit.",
+          "hint": "'Top 5', 'first 10', and 'highest 20' require a ranking rule before LIMIT.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, category, sales FROM orders ORDER BY sales DESC LIMIT 8;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -219,6 +390,63 @@
           ],
           "validation": "One row per customer with SUM(sales)."
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d02-t04-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The category manager wants total sales by product category.",
+          "prompt": "The category manager wants total sales by product category.",
+          "hint": "When the manager asks 'by region', 'by category', or 'per customer', GROUP BY is usually involved.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT category, SUM(sales) AS total_sales FROM orders GROUP BY category;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t04-c2",
+          "title": "Category Manager request",
+          "difficulty": "Basic",
+          "scenario": "The manager wants category-level revenue.",
+          "prompt": "Return each category and its total sales.",
+          "hint": "One row per category with SUM(sales).",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT category, SUM(sales) AS total_sales FROM orders GROUP BY category;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t04-c3",
+          "title": "Regional Director request",
+          "difficulty": "Intermediate",
+          "scenario": "Leadership wants revenue by region.",
+          "prompt": "Return each region and total sales.",
+          "hint": "One row per region with SUM(sales).",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT region, SUM(sales) AS total_sales FROM orders GROUP BY region;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t04-c4",
+          "title": "Customer Analytics Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The team is identifying customers with the largest order-book value.",
+          "prompt": "Return each customer and total sales generated by that customer.",
+          "hint": "One row per customer with SUM(sales).",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT customer_name, SUM(sales) AS total_sales FROM orders GROUP BY customer_name;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t04-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return each ship mode with order count and average sales.",
+          "prompt": "Return each ship mode with order count and average sales.",
+          "hint": "When the manager asks 'by region', 'by category', or 'per customer', GROUP BY is usually involved.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT ship_mode, COUNT(*) AS order_count, SUM(sales) AS total_sales FROM orders GROUP BY ship_mode;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -271,6 +499,63 @@
             "total_sales"
           ],
           "validation": "SUM(sales) > 10000 and total_sales descending."
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d02-t05-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The commercial director wants only categories whose total sales exceed 100,000.",
+          "prompt": "The commercial director wants only categories whose total sales exceed 100,000.",
+          "hint": "If the condition contains SUM, AVG, COUNT, MIN, or MAX and applies to groups, think HAVING.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT category, SUM(sales) AS total_sales FROM orders GROUP BY category HAVING SUM(sales) > 100000;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t05-c2",
+          "title": "Commercial Manager request",
+          "difficulty": "Basic",
+          "scenario": "Management wants only categories generating more than 50,000 in sales.",
+          "prompt": "Return category and total sales for qualifying categories.",
+          "hint": "Grouped sales must exceed 50000.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT category, SUM(sales) AS total_sales FROM orders GROUP BY category HAVING SUM(sales) > 50000;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t05-c3",
+          "title": "Regional Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The regional manager wants regions with at least 75,000 in sales.",
+          "prompt": "Return region and total sales for regions meeting the threshold.",
+          "hint": "Grouped sales must be >= 75000.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT region, SUM(sales) AS total_sales FROM orders GROUP BY region HAVING SUM(sales) >= 75000;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t05-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "Leadership wants customers whose cumulative sales exceed 10,000.",
+          "prompt": "Return customer name and total sales for customers above the threshold, ordered from highest total sales.",
+          "hint": "SUM(sales) > 10000 and total_sales descending.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT customer_name, SUM(sales) AS total_sales FROM orders GROUP BY customer_name HAVING SUM(sales) > 10000 ORDER BY total_sales DESC;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d02-t05-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return categories with total profit greater than zero, sorted by total profit from highest to lowest.",
+          "prompt": "Return categories with total profit greater than zero, sorted by total profit from highest to lowest.",
+          "hint": "If the condition contains SUM, AVG, COUNT, MIN, or MAX and applies to groups, think HAVING.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT category, SUM(profit) AS total_profit FROM orders GROUP BY category HAVING SUM(profit) > 0;",
+          "dataset": "orders"
         }
       ]
     }

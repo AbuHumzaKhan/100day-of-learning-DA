@@ -1,14 +1,26 @@
 {
   "name": "100day-of-learning-DA",
-  "version": "3.3.0",
+  "version": "3.4.0",
   "description": "AHK Academy runtime content manifest — business-first 100-Day Data Analyst Business Trainer.",
   "owner": "AbuHumzaKhan",
   "release_control": {
     "mode": "sequential",
     "published_through_day": 11,
-    "open_days": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+    "open_days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
     "next_day": 12,
-    "unlock_rule": "A day becomes available only when its curriculum resource is published and the previous day is completed locally.",
+    "unlock_rule": "A topic unlocks after all five SQL coding questions in the preceding topic pass and the topic MCQ exam score is at least 4/5. The next day unlocks after all five topics are passed.",
     "learner_progress_storage": "versioned-local",
     "note": "Days 1-11 are published. Day 12 onward remains locked until its curriculum resource is published."
   },
@@ -22,15 +34,34 @@
     "topics_per_day": 5,
     "business_questions_per_topic": 3,
     "total_questions": 1500,
-    "learning_modes": ["teacher", "explain", "detailedlearning", "expose"],
-    "progression": "topic-by-topic"
+    "learning_modes": [
+      "teacher",
+      "explain",
+      "detailedlearning",
+      "expose"
+    ],
+    "progression": "topic-by-topic",
+    "coding_questions_per_topic": 5,
+    "total_coding_questions": 275
   },
   "coding_arena": {
     "questions_per_day": 10,
     "range": "10-20",
-    "difficulty_levels": ["Basic", "Medium", "Intermediate", "Advanced", "Expert"],
-    "execution_targets": ["SQL", "Excel", "PowerBI-DAX", "Python"],
-    "business_scenario_contract": true
+    "difficulty_levels": [
+      "Basic",
+      "Medium",
+      "Intermediate",
+      "Advanced",
+      "Expert"
+    ],
+    "execution_targets": [
+      "SQL",
+      "Excel",
+      "PowerBI-DAX",
+      "Python"
+    ],
+    "business_scenario_contract": true,
+    "unlock_rule": "Topic exam unlocks only after five coding questions are passed."
   },
   "datasets": {
     "registry": "datasets/index.json",
@@ -44,7 +75,7 @@
     "coding_arena": "coding-arena/index.json",
     "datasets": "datasets/index.json"
   },
-  "content_contract": "1 JSON resource per learning day and 1 JSON resource per coding-arena day.",
+  "content_contract": "Each published day contains five learning topics, three business discussion questions per topic, and five executable SQL coding questions per topic.",
   "versioning": {
     "policy": "Content changes are committed to GitHub and identified by the manifest version.",
     "learner_state": "Never stored in GitHub."
@@ -65,7 +96,11 @@
       "progress": "Versioned local learner state",
       "sql": "Browser-local read-only SQLite with registered datasets"
     },
-    "extension_targets": ["Excel", "PowerBI-DAX", "Python"],
+    "extension_targets": [
+      "Excel",
+      "PowerBI-DAX",
+      "Python"
+    ],
     "lazy_loading": true
   },
   "ui": {

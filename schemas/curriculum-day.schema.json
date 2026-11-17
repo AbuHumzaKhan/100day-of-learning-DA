@@ -4,37 +4,118 @@
   "title": "AHK Academy Curriculum Day",
   "description": "Contract for one day of the 100-Day Data Analyst Business Trainer.",
   "type": "object",
-  "required": ["day", "track", "title", "topics"],
+  "required": [
+    "day",
+    "track",
+    "title",
+    "topics"
+  ],
   "properties": {
-    "day": { "type": "integer", "minimum": 1, "maximum": 100 },
-    "track": { "type": "string", "minLength": 1 },
-    "title": { "type": "string", "minLength": 1 },
-    "description": { "type": "string" },
-    "dataset_refs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
-    "estimated_time_minutes": { "type": "number", "minimum": 1 },
+    "day": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100
+    },
+    "track": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "dataset_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "estimated_time_minutes": {
+      "type": "number",
+      "minimum": 1
+    },
     "topics": {
       "type": "array",
       "minItems": 5,
       "maxItems": 5,
       "items": {
         "type": "object",
-        "required": ["title", "questions"],
+        "required": [
+          "title",
+          "questions",
+          "coding_questions"
+        ],
         "properties": {
-          "id": { "type": "string" },
-          "sequence": { "type": "integer", "minimum": 1, "maximum": 5 },
-          "title": { "type": "string", "minLength": 1 },
-          "business_skill": { "type": "string" },
+          "id": {
+            "type": "string"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "business_skill": {
+            "type": "string"
+          },
           "teaching": {
             "type": "object",
             "properties": {
-              "teacher": { "type": ["string", "null"] },
-              "explain": { "type": ["string", "null"] },
-              "detailedlearning": { "type": ["string", "null"] },
-              "expose": { "type": ["string", "null"] },
-              "example": { "type": ["string", "null"] },
-              "example_sql": { "type": ["string", "null"] },
-              "syntax": { "type": ["string", "null"] },
-              "expected_sql": { "type": ["string", "null"] }
+              "teacher": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "explain": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "detailedlearning": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "expose": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "example": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "example_sql": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "syntax": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "expected_sql": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
             },
             "additionalProperties": true
           },
@@ -44,20 +125,108 @@
             "maxItems": 3,
             "items": {
               "type": "object",
-              "required": ["role", "scenario", "request"],
+              "required": [
+                "role",
+                "scenario",
+                "request"
+              ],
               "properties": {
-                "id": { "type": "string" },
-                "difficulty": { "type": "string" },
-                "role": { "type": "string", "minLength": 1 },
-                "scenario": { "type": "string", "minLength": 1 },
-                "request": { "type": "string", "minLength": 1 },
-                "output": { "type": ["array", "string"] },
-                "required_output": { "type": "string" },
-                "validation": { "type": "string" },
-                "success_criteria": { "type": "string" },
-                "constraints": { "type": "array" },
-                "business_objective": { "type": "string" },
-                "decision_use": { "type": "string" }
+                "id": {
+                  "type": "string"
+                },
+                "difficulty": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "scenario": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "request": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "output": {
+                  "type": [
+                    "array",
+                    "string"
+                  ]
+                },
+                "required_output": {
+                  "type": "string"
+                },
+                "validation": {
+                  "type": "string"
+                },
+                "success_criteria": {
+                  "type": "string"
+                },
+                "constraints": {
+                  "type": "array"
+                },
+                "business_objective": {
+                  "type": "string"
+                },
+                "decision_use": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "coding_questions": {
+            "type": "array",
+            "minItems": 5,
+            "maxItems": 5,
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "title",
+                "prompt",
+                "starter_sql",
+                "expected_sql",
+                "dataset"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "difficulty": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "scenario": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "prompt": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "hint": {
+                  "type": "string"
+                },
+                "starter_sql": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "expected_sql": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "dataset": {
+                  "type": "string",
+                  "minLength": 1
+                }
               },
               "additionalProperties": true
             }

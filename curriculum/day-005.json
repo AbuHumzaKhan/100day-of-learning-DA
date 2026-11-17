@@ -61,6 +61,63 @@
           ],
           "validation": "CASE on ship_mode"
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d05-t01-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The manager wants orders classified as High, Medium, or Low value.",
+          "prompt": "The manager wants orders classified as High, Medium, or Low value.",
+          "hint": "CASE is business-rule encoding, so validate the rules and boundaries before coding.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales, CASE WHEN sales >= 1500 THEN 'High' WHEN sales >= 500 THEN 'Medium' ELSE 'Low' END AS sales_band FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t01-c2",
+          "title": "Sales Manager request",
+          "difficulty": "Basic",
+          "scenario": "Sales wants three order-value bands.",
+          "prompt": "Classify each order as High when sales are at least 1500, Medium when sales are at least 500, otherwise Low.",
+          "hint": "Three CASE bands",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales, CASE WHEN sales >= 1500 THEN 'High' WHEN sales >= 500 THEN 'Medium' ELSE 'Low' END AS sales_band FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t01-c3",
+          "title": "Finance Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "Finance wants profit status labels.",
+          "prompt": "Classify rows as Loss for profit below zero and Profit for zero or above.",
+          "hint": "CASE on profit",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, profit, CASE WHEN profit < 0 THEN 'Loss' ELSE 'Profit' END AS profit_status FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t01-c4",
+          "title": "Operations Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Operations needs a shipment priority label.",
+          "prompt": "Classify orders as Premium for First Class, Standard for Second Class, and Economy otherwise.",
+          "hint": "CASE on ship_mode",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, ship_mode, CASE WHEN ship_mode = 'First Class' THEN 'Premium' WHEN ship_mode = 'Second Class' THEN 'Standard' ELSE 'Economy' END AS shipping_tier FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t01-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Create a simple order-value label: Large when quantity is at least 8, otherwise Standard.",
+          "prompt": "Create a simple order-value label: Large when quantity is at least 8, otherwise Standard.",
+          "hint": "CASE is business-rule encoding, so validate the rules and boundaries before coding.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, quantity, CASE WHEN quantity >= 10 THEN 'Bulk' ELSE 'Regular' END AS order_size FROM orders;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -120,6 +177,63 @@
           ],
           "validation": "CASE with sales and profit/sales"
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d05-t02-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "Commercial leadership wants high-value orders split by profitability.",
+          "prompt": "Commercial leadership wants high-value orders split by profitability.",
+          "hint": "Complex CASE statements should be written from business rules, not improvised while typing.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales, profit, CASE WHEN sales >= 1000 AND profit > 0 THEN 'High Value Profitable' WHEN sales >= 1000 THEN 'High Value Loss' ELSE 'Other' END AS segment FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t02-c2",
+          "title": "Commercial Manager request",
+          "difficulty": "Basic",
+          "scenario": "High-value orders must be separated by profit status.",
+          "prompt": "Classify orders as High Value Profitable, High Value Loss, or Other.",
+          "hint": "Compound CASE",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales, profit, CASE WHEN sales >= 1000 AND profit > 0 THEN 'High Value Profitable' WHEN sales >= 1000 THEN 'High Value Loss' ELSE 'Other' END AS segment FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t02-c3",
+          "title": "Regional Director request",
+          "difficulty": "Intermediate",
+          "scenario": "Leadership wants West Technology orders identified separately.",
+          "prompt": "Create a label for rows that are both West and Technology, with Other for all remaining rows.",
+          "hint": "region='West' AND category='Technology'",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, region, category, CASE WHEN region = 'West' AND category = 'Technology' THEN 'Target' ELSE 'Other' END AS business_flag FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t02-c4",
+          "title": "Finance Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Finance defines healthy transactions as sales at least 1000 and profit margin proxy profit/sales at least 10%.",
+          "prompt": "Create Healthy, High Sales Low Margin, and Other labels using sales and profit.",
+          "hint": "CASE with sales and profit/sales",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales, profit, CASE WHEN sales > 0 AND profit / sales >= 0.10 THEN 'Healthy' WHEN sales >= 1000 THEN 'High Sales Low Margin' ELSE 'Other' END AS status FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t02-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Classify orders as High Discount when discount is at least 25%, otherwise Regular Discount.",
+          "prompt": "Classify orders as High Discount when discount is at least 25%, otherwise Regular Discount.",
+          "hint": "Complex CASE statements should be written from business rules, not improvised while typing.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, discount, profit, CASE WHEN discount >= 0.30 AND profit < 0 THEN 'Review' ELSE 'Normal' END AS review_flag FROM orders;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -176,6 +290,63 @@
           ],
           "validation": "GROUP BY region with conditional aggregates"
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d05-t03-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The CFO wants profitable and loss-making sales side by side.",
+          "prompt": "The CFO wants profitable and loss-making sales side by side.",
+          "hint": "The condition belongs inside the aggregate when you need multiple subsets side by side.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT SUM(CASE WHEN profit >= 0 THEN sales ELSE 0 END) AS profitable_sales, SUM(CASE WHEN profit < 0 THEN sales ELSE 0 END) AS loss_sales FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t03-c2",
+          "title": "Finance Manager request",
+          "difficulty": "Basic",
+          "scenario": "Finance needs profitable sales and loss sales.",
+          "prompt": "Return profitable sales and loss-making sales as separate metrics.",
+          "hint": "Conditional SUM",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT SUM(CASE WHEN profit >= 0 THEN sales ELSE 0 END) AS profitable_sales, SUM(CASE WHEN profit < 0 THEN sales ELSE 0 END) AS loss_sales FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t03-c3",
+          "title": "Sales Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The manager wants order counts by value band in one result.",
+          "prompt": "Return counts for High, Medium, and Low sales bands.",
+          "hint": "Conditional COUNT/SUM",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT SUM(CASE WHEN sales >= 1500 THEN 1 ELSE 0 END) AS high_orders, SUM(CASE WHEN sales >= 500 AND sales < 1500 THEN 1 ELSE 0 END) AS medium_orders, SUM(CASE WHEN sales < 500 THEN 1 ELSE 0 END) AS low_orders FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t03-c4",
+          "title": "Regional Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The region review needs total sales and loss sales for each region.",
+          "prompt": "Return region, total sales, loss sales, and profitable sales.",
+          "hint": "GROUP BY region with conditional aggregates",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT region, SUM(sales) AS total_sales, SUM(CASE WHEN profit < 0 THEN sales ELSE 0 END) AS loss_sales, SUM(CASE WHEN profit >= 0 THEN sales ELSE 0 END) AS profitable_sales FROM orders GROUP BY region;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t03-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return the number of profitable and loss-making orders using conditional aggregation.",
+          "prompt": "Return the number of profitable and loss-making orders using conditional aggregation.",
+          "hint": "The condition belongs inside the aggregate when you need multiple subsets side by side.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT category, SUM(CASE WHEN profit < 0 THEN 1 ELSE 0 END) AS loss_orders, SUM(CASE WHEN profit >= 0 THEN 1 ELSE 0 END) AS profitable_orders FROM orders GROUP BY category;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -228,6 +399,63 @@
             "status"
           ],
           "validation": "Custom business priority ordering"
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d05-t04-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "Management wants Technology first, Furniture second, and all other categories afterward.",
+          "prompt": "Management wants Technology first, Furniture second, and all other categories afterward.",
+          "hint": "Display labels and sort logic can be different fields.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT category, SUM(sales) AS sales FROM orders GROUP BY category ORDER BY CASE WHEN category='Technology' THEN 1 WHEN category='Furniture' THEN 2 ELSE 3 END;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t04-c2",
+          "title": "Category Manager request",
+          "difficulty": "Basic",
+          "scenario": "Technology must appear first in the management report.",
+          "prompt": "Sort category results with Technology first, Furniture second, and remaining categories after them.",
+          "hint": "Custom CASE ordering",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT category, SUM(sales) AS sales FROM orders GROUP BY category ORDER BY CASE WHEN category='Technology' THEN 1 WHEN category='Furniture' THEN 2 ELSE 3 END;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t04-c3",
+          "title": "Finance Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Loss-making regions should be reviewed before profitable regions.",
+          "prompt": "Sort regions so negative-profit regions appear first.",
+          "hint": "CASE in ORDER BY",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT region, SUM(profit) AS total_profit FROM orders GROUP BY region ORDER BY CASE WHEN SUM(profit) < 0 THEN 1 ELSE 2 END, total_profit ASC;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t04-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "A review queue prioritizes High Value Loss, High Value Profitable, then Other.",
+          "prompt": "Sort order-level classifications in that business priority.",
+          "hint": "Custom business priority ordering",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales, profit, CASE WHEN sales >= 1000 AND profit < 0 THEN 'High Value Loss' WHEN sales >= 1000 AND profit >= 0 THEN 'High Value Profitable' ELSE 'Other' END AS priority FROM orders ORDER BY CASE WHEN sales >= 1000 AND profit < 0 THEN 1 WHEN sales >= 1000 THEN 2 ELSE 3 END;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t04-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Sort ship modes in the order First Class, Second Class, Standard Class, then other values.",
+          "prompt": "Sort ship modes in the order First Class, Second Class, Standard Class, then other values.",
+          "hint": "Display labels and sort logic can be different fields.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT ship_mode, COUNT(*) AS orders FROM orders GROUP BY ship_mode ORDER BY CASE ship_mode WHEN 'First Class' THEN 1 WHEN 'Second Class' THEN 2 ELSE 3 END;",
+          "dataset": "orders"
         }
       ]
     },
@@ -287,6 +515,63 @@
             "profit"
           ],
           "validation": "Two-dimensional classified aggregation"
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d05-t05-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The sales director wants order volume and sales by value band.",
+          "prompt": "The sales director wants order volume and sales by value band.",
+          "hint": "Separating classification from aggregation improves readability and validation.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "WITH classified AS (SELECT *, CASE WHEN sales>=1500 THEN 'High' ELSE 'Standard' END AS band FROM orders) SELECT band, COUNT(*) AS orders, SUM(sales) AS sales FROM classified GROUP BY band;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t05-c2",
+          "title": "Sales Director request",
+          "difficulty": "Basic",
+          "scenario": "Management wants sales by order-value band.",
+          "prompt": "Return band, order count, and total sales for High versus Standard orders using the stated threshold.",
+          "hint": "CASE then GROUP BY",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "WITH classified AS (SELECT *, CASE WHEN sales >= 1500 THEN 'High' ELSE 'Standard' END AS band FROM orders) SELECT band, COUNT(*) AS orders, SUM(sales) AS sales FROM classified GROUP BY band;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t05-c3",
+          "title": "Finance Director request",
+          "difficulty": "Intermediate",
+          "scenario": "Finance wants profit performance by profit status.",
+          "prompt": "Return profit status, order count, sales, and profit.",
+          "hint": "Classify then aggregate",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "WITH classified AS (SELECT *, CASE WHEN profit < 0 THEN 'Loss' ELSE 'Profit' END AS profit_status FROM orders) SELECT profit_status, COUNT(*) AS orders, SUM(sales) AS sales, SUM(profit) AS profit FROM classified GROUP BY profit_status;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t05-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "The executive dashboard needs regional value-band performance.",
+          "prompt": "Return region, value band, order count, sales, and profit.",
+          "hint": "Two-dimensional classified aggregation",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "WITH classified AS (SELECT *, CASE WHEN sales >= 1500 THEN 'High' ELSE 'Standard' END AS value_band FROM orders) SELECT region, value_band, COUNT(*) AS orders, SUM(sales) AS sales, SUM(profit) AS profit FROM classified GROUP BY region, value_band;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d05-t05-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Create a value band CTE using sales >= 1500 and return order counts by band.",
+          "prompt": "Create a value band CTE using sales >= 1500 and return order counts by band.",
+          "hint": "Separating classification from aggregation improves readability and validation.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "WITH classified AS (SELECT *, CASE WHEN discount >= 0.25 THEN 'High Discount' ELSE 'Regular Discount' END AS discount_band FROM orders) SELECT discount_band, COUNT(*) AS orders, SUM(sales) AS sales FROM classified GROUP BY discount_band;",
+          "dataset": "orders"
         }
       ]
     }

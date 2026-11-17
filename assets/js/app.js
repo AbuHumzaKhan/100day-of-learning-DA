@@ -9,7 +9,10 @@ const state = {
   activeDay: 1,
   activeTopic: 0,
   activeQuestion: 0,
+  activeCodingQuestion: 0,
   examQuestionIndex: 0,
+  codingDrafts: (() => { try { return JSON.parse(localStorage.getItem('ahk_academy_coding_drafts_v1') || '{}'); } catch { return {}; } })(),
+  codingFeedback: {},
   view: 'dashboard',
   teachingMode: 'teacher',
   practiceTab: 'query',
@@ -159,35 +162,161 @@ function dayQuestions(day) {
   return (day?.topics || []).reduce((total, topic) => total + (topic.questions?.length || 0), 0);
 }
 
-function currentQuestion() {
-  return state.day?.topics?.[state.activeTopic]?.questions?.[state.activeQuestion] || null;
+function currentTopic() {
+  return state.day?.topics?.[state.activeTopic] || null;
 }
 
-function buildExamQuestions(day) {
-  const topics = (day?.topics || []).slice(0, 5);
-  const statements = topics.map(topic => String(topic.teaching?.expected_sql || topic.teaching?.example || '').trim());
-  if (topics.length !== 5 || statements.some(statement => !statement)) return [];
-  return topics.map((topic, index) => {
-    const distractors = statements.filter((statement, statementIndex) => statementIndex !== index && statement !== statements[index]);
-    const correctOption = [1, 3, 0, 2, 1][index] ?? 0;
-    const options = distractors.slice(0, 3);
-    while (options.length < 3) options.push('SELECT * FROM orders;');
-    options.splice(correctOption, 0, statements[index]);
+function currentCodingQuestion() {
+  return currentTopic()?.coding_questions?.[state.activeCodingQuestion] || null;
+}
+
+function completedTopicCount() {
+  return progressStore.getCompletedTopicCount(state.activeDay, state.day?.topics?.length || 5);
+}
+
+function codingQuestionCount() {
+  return currentTopic()?.coding_questions?.length || 5;
+}
+
+function completedCodingQuestionCount() {
+  return progressStore.getCodingQuestionCount(state.activeDay, state.activeTopic);
+}
+
+function areCodingQuestionsComplete() {
+  return progressStore.areCodingQuestionsCompleted(state.activeDay, state.activeTopic, codingQuestionCount());
+}
+
+function codingDraftKey(questionIndex = state.activeCodingQuestion) {
+  return [state.activeDay, state.activeTopic, questionIndex].join(':');
+}
+
+function buildExamQuestions(topic) {
+  const challenges = topic?.coding_questions || [];
+  if (challenges.length !== 5 || challenges.some(item => !item.expected_sql || !item.prompt)) return [];
+
+  const fallbackStatements = [
+    'SELECT order_id, sales FROM orders;',
+    'SELECT category, SUM(sales) AS total_sales FROM orders GROUP BY category;',
+    'SELECT region, COUNT(*) AS order_count FROM orders GROUP BY region;',
+    'SELECT * FROM orders LIMIT 10;',
+    'SELECT customer_name, SUM(sales) AS total_sales FROM orders GROUP BY customer_name;'
+  ];
+  const answerPositions = [1, 3, 0, 2, 1];
+
+  return challenges.map((challenge, index) => {
+    const correctSql = String(challenge.expected_sql).trim();
+    const alternatives = [...new Set(challenges
+      .map(item => String(item.expected_sql || '').trim())
+      .filter(statement => statement && statement !== correctSql))];
+    for (const statement of fallbackStatements) {
+      if (alternatives.length >= 3) break;
+      if (statement !== correctSql && !alternatives.includes(statement)) alternatives.push(statement);
+    }
+    const correctOption = answerPositions[index];
+    const options = alternatives.slice(0, 3);
+    options.splice(correctOption, 0, correctSql);
     return {
-      id: topic.id || 'lesson-' + (index + 1),
-      title: topic.title || 'Lesson ' + (index + 1),
-      skill: topic.business_skill || 'Apply the lesson concept to a business request.',
-      prompt: topic.teaching?.business_question || topic.business_skill || 'Choose the SQL statement that best demonstrates this lesson.',
+      id: challenge.id || 'coding-' + (index + 1),
+      title: challenge.title || 'Coding challenge ' + (index + 1),
+      prompt: challenge.prompt,
       options,
       correctOption
     };
   });
 }
-function completedLessonCount() {
-  return progressStore.getCompletedLessonCount(state.activeDay, state.day?.topics?.length || 5);
+
+function isTopicExamUnlocked() {
+  return Boolean(currentTopic()) && areCodingQuestionsComplete();
 }
-function areAllLessonsComplete() {
-  return progressStore.areLessonsCompleted(state.activeDay, state.day?.topics?.length || 5);
+
+function buildCodingFeedback(result) {
+  const actual = result.actual;
+  const rows = actual.values.slice(0, 8).map(row =>
+    '<tr>' + row.map(value => '<td>' + escapeHTML(value === null ? 'NULL' : value) + '</td>').join('') + '</tr>'
+  ).join('');
+  const table = actual.columns.length
+    ? '<div class="table-scroll coding-result-table"><table class="data-table"><thead><tr>' +
+      actual.columns.map(column => '<th>' + escapeHTML(column) + '</th>').join('') +
+      '</tr></thead><tbody>' + rows + '</tbody></table></div>'
+    : '<p class="coding-result-empty">The query executed but returned no tabular result.</p>';
+  return '<div class="coding-result-meta">' + actual.totalRows + ' row(s) · ' + actual.elapsed + ' ms' +
+    (actual.truncated ? ' · first 8 rows shown' : '') + '</div>' + table;
+}
+
+async function runTopicCodingQuestion() {
+  const challenge = currentCodingQuestion();
+  const editor = $('#codingSqlEditor');
+  if (!challenge || !editor) return;
+  const query = editor.value.trim();
+  if (!query) {
+    toast('Write a SQL query before checking your answer.', 'warning');
+    return;
+  }
+
+  const key = codingDraftKey();
+  state.codingDrafts[key] = editor.value;
+  try {
+    localStorage.setItem('ahk_academy_coding_drafts_v1', JSON.stringify(state.codingDrafts));
+  } catch { /* The active editor remains available if storage is blocked. */ }
+
+  const button = $('[data-action="run-coding-question"]');
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Checking SQL…';
+  }
+  const status = $('#codingEngineStatus');
+  if (status) status.textContent = 'Running your SQL against the learning dataset…';
+
+  try {
+    const engine = await ensureSQLEngine();
+    const result = await engine.validate(query, challenge.expected_sql, {
+      orderSensitive: /\bORDER\s+BY\b/i.test(challenge.expected_sql)
+    });
+    state.codingFeedback[key] = {
+      passed: result.passed,
+      message: result.passed
+        ? 'Your SQL matches the expected result. This coding question is complete.'
+        : !result.columnsMatch
+          ? 'The query ran, but the output columns or their order do not match the requirement.'
+          : 'The query ran, but the returned records do not match the expected result. Review your filters, joins, calculations or grouping.',
+      html: buildCodingFeedback(result)
+    };
+
+    if (result.passed) {
+      const completion = progressStore.completeCodingQuestion(
+        state.activeDay, state.activeTopic, state.activeCodingQuestion, codingQuestionCount()
+      );
+      if (completion.ok && completion.allCompleted) {
+        state.view = 'exam';
+        state.examQuestionIndex = 0;
+        toast('All five coding questions passed. The topic exam is unlocked.', 'success');
+      } else {
+        state.activeCodingQuestion = Math.min(
+          completedCodingQuestionCount(),
+          codingQuestionCount() - 1
+        );
+        toast('Correct. Coding question ' + (state.activeCodingQuestion) + ' of 5 is complete.', 'success');
+      }
+    } else {
+      toast('The SQL ran, but the result needs correction.', 'warning');
+    }
+    render();
+  } catch (error) {
+    state.codingFeedback[key] = {
+      passed: false,
+      message: error.message || 'The SQL could not be executed.',
+      html: ''
+    };
+    if (status) status.textContent = 'SQL needs attention';
+    render();
+  } finally {
+    const retryButton = $('[data-action="run-coding-question"]');
+    if (retryButton) retryButton.disabled = false;
+  }
+}
+
+function currentQuestion() {
+  return state.day?.topics?.[state.activeTopic]?.questions?.[state.activeQuestion] || null;
 }
 
 function isUnlocked(day) {
@@ -215,7 +344,7 @@ function updateHash(day) {
 async function loadDay(day, options = {}) {
   const target = Number(day);
   if (!isUnlocked(target)) {
-    toast('Complete the previous day exam to unlock this lesson.', 'warning');
+    toast('Pass the previous day’s topic exams to unlock this day.', 'warning');
     return;
   }
   const meta = dayMeta(target);
@@ -223,6 +352,7 @@ async function loadDay(day, options = {}) {
     toast('This curriculum resource is not available yet.', 'warning');
     return;
   }
+
   state.activeDay = target;
   state.activeQuestion = Number(options.question || 0);
   state.examQuestionIndex = 0;
@@ -230,15 +360,28 @@ async function loadDay(day, options = {}) {
   progressStore.setActiveDay(target);
   setBusy(true);
   appRoot.innerHTML = '<div class="academy-loading"><span class="loading-mark">AHK</span><strong>Preparing your learning workspace</strong><span>Loading Day ' + target + ' curriculum…</span></div>';
+
   try {
     state.day = await fetchJSON('curriculum/' + meta.file);
     const topicCount = state.day.topics?.length || 0;
-    const completed = progressStore.getCompletedLessonCount(target, topicCount);
-    state.activeTopic = Math.min(Number(options.topic ?? completed), Math.max(0, topicCount - 1));
-    if (state.activeTopic > completed) state.activeTopic = completed;
-    const questionCount = state.day.topics?.[state.activeTopic]?.questions?.length || 0;
-    state.activeQuestion = Math.min(state.activeQuestion, Math.max(0, questionCount - 1));
-    state.view = completed >= topicCount ? 'exam' : 'learn';
+    const passedTopics = progressStore.getCompletedTopicCount(target, topicCount);
+    const requestedTopic = Number(options.topic ?? Math.min(passedTopics, topicCount - 1));
+    state.activeTopic = Math.min(Math.max(0, requestedTopic), Math.max(0, topicCount - 1));
+    if (!progressStore.isTopicUnlocked(target, state.activeTopic, topicCount)) {
+      state.activeTopic = Math.min(passedTopics, Math.max(0, topicCount - 1));
+    }
+    const codingCount = progressStore.getCodingQuestionCount(target, state.activeTopic);
+    state.activeCodingQuestion = Math.min(codingCount, 4);
+    const examState = progressStore.getTopicExamState(target, state.activeTopic);
+    state.view = progressStore.areCodingQuestionsCompleted(target, state.activeTopic, 5)
+      ? 'exam'
+      : codingCount > 0 ? 'practice' : 'learn';
+    if (options.view && ['learn', 'practice', 'exam'].includes(options.view)) {
+      if (options.view !== 'exam' || progressStore.areCodingQuestionsCompleted(target, state.activeTopic, 5)) {
+        state.view = options.view;
+      }
+    }
+    if (examState.submitted && !examState.passed) state.view = 'exam';
     if (options.render !== false) render();
     if (options.updateUrl !== false) updateHash(target);
     window.scrollTo({ top: 0, behavior: 'auto' });
@@ -257,12 +400,13 @@ function renderFatal(error) {
 }
 
 function renderHeader() {
-  const learningMode = state.view === 'learn' || state.view === 'exam';
-  const examUnlocked = state.day ? areAllLessonsComplete() : false;
+  const learningMode = ['learn', 'practice', 'exam'].includes(state.view);
+  const examUnlocked = state.day ? isTopicExamUnlocked() : false;
   const items = learningMode
     ? [
-        { id: 'learn', label: 'Learn', detail: examUnlocked ? 'Lessons complete' : 'Five lessons', disabled: examUnlocked },
-        { id: 'exam', label: 'Exam', detail: examUnlocked ? 'Assessment unlocked' : 'Complete lessons', disabled: !examUnlocked }
+        { id: 'learn', label: 'Learn', detail: 'Understand the topic' },
+        { id: 'practice', label: 'Practice', detail: completedCodingQuestionCount() + '/5 coding passed' },
+        { id: 'exam', label: 'Exam', detail: examUnlocked ? 'MCQ unlocked' : 'Pass 5 coding tasks', disabled: !examUnlocked }
       ]
     : [
         { id: 'dashboard', label: 'Overview' },
@@ -274,10 +418,18 @@ function renderHeader() {
   return '<header class="academy-header"><div class="academy-header-inner">' +
     '<a class="academy-brand" href="./" aria-label="AHK Academy overview" data-view="dashboard"><span class="brand-mark">AHK</span><span class="brand-copy"><strong>AHK Academy</strong><small>Data Analyst Learning Hub</small></span></a>' +
     '<nav class="academy-nav ' + (learningMode ? 'academy-mode-nav' : '') + '" aria-label="Main navigation">' +
-    items.map(item => '<button type="button" class="nav-button ' + (state.view === item.id ? 'active' : '') + '" data-view="' + item.id + '" aria-label="' + item.label + '" ' + (item.disabled ? 'disabled aria-disabled="true"' : '') + '><span>' + item.label + '</span>' + (item.detail ? '<small>' + item.detail + '</small>' : '') + (item.id === 'exam' && !examUnlocked ? '<span class="nav-lock" aria-hidden="true">⌑</span>' : '') + '</button>').join('') +
+    items.map(item => '<button type="button" class="nav-button ' + (state.view === item.id ? 'active' : '') +
+      '" data-view="' + item.id + '" aria-label="' + item.label + '" ' +
+      (item.disabled ? 'disabled aria-disabled="true"' : '') + '><span>' + item.label + '</span>' +
+      (item.detail ? '<small>' + item.detail + '</small>' : '') +
+      (item.id === 'exam' && !examUnlocked ? '<span class="nav-lock" aria-hidden="true">⌑</span>' : '') +
+      '</button>').join('') +
     '</nav>' +
-    '<div class="academy-search-wrap"><label class="search-box"><span aria-hidden="true">⌕</span><input id="academySearch" type="search" value="' + escapeHTML(state.searchQuery) + '" placeholder="Search lessons, topics..." autocomplete="off" aria-label="Search lessons, topics and business requests"><kbd>Ctrl K</kbd></label><div id="academySearchResults" class="search-results" hidden></div></div>' +
-    '<button type="button" class="theme-toggle" data-action="toggle-theme" aria-label="Switch theme" aria-pressed="' + (state.theme === 'dark') + '"><span aria-hidden="true">' + (state.theme === 'dark' ? '☀' : '◐') + '</span><span class="theme-label">' + (state.theme === 'dark' ? 'Light' : 'Dark') + '</span></button>' +
+    '<div class="academy-search-wrap"><label class="search-box"><span aria-hidden="true">⌕</span><input id="academySearch" type="search" value="' +
+      escapeHTML(state.searchQuery) + '" placeholder="Search lessons, topics..." autocomplete="off" aria-label="Search lessons, topics and business requests"><kbd>Ctrl K</kbd></label><div id="academySearchResults" class="search-results" hidden></div></div>' +
+    '<button type="button" class="theme-toggle" data-action="toggle-theme" aria-label="Switch theme" aria-pressed="' +
+      (state.theme === 'dark') + '"><span aria-hidden="true">' + (state.theme === 'dark' ? '☀' : '◐') +
+      '</span><span class="theme-label">' + (state.theme === 'dark' ? 'Light' : 'Dark') + '</span></button>' +
     '<div class="learner-chip"><span class="learner-avatar">AHK</span><span><strong>My workspace</strong><small>Personal progress · saved locally</small></span></div>' +
     '</div></header>';
 }
@@ -361,72 +513,174 @@ function renderTopic(topic, index) {
     questions.map((question, questionIndex) => renderQuestionCard(question, index, questionIndex)).join('') + '</section></section>';
 }
 
+function renderTopicStepper(topics) {
+  const completed = completedTopicCount();
+  return topics.map((item, index) => {
+    const done = progressStore.isTopicCompleted(state.activeDay, index);
+    const active = index === state.activeTopic;
+    const locked = index > completed;
+    return '<button type="button" class="lesson-step ' + (active ? 'is-active ' : '') + (done ? 'is-complete ' : '') + (locked ? 'is-locked' : '') + '" data-topic-index="' + index + '" ' + (locked ? 'disabled' : '') + ' aria-current="' + (active ? 'step' : 'false') + '">' +
+      '<span class="lesson-step-number">' + (done ? '✓' : String(index + 1).padStart(2, '0')) + '</span>' +
+      '<span class="lesson-step-copy"><strong>' + escapeHTML(item.title) + '</strong><small>' + (done ? 'Exam passed' : active ? 'Current topic' : 'Locked') + '</small></span>' +
+      '<span class="lesson-step-state" aria-hidden="true">' + (done ? '✓' : locked ? '⌑' : active ? '●' : '○') + '</span></button>';
+  }).join('');
+}
+
+function renderLearningHeader(day, topic, modeLabel) {
+  return '<div class="learning-context"><div class="learning-breadcrumb"><span class="breadcrumb-track">' +
+    escapeHTML(day.track) + ' FOUNDATIONS</span><span>/</span><strong>DAY ' +
+    String(day.day).padStart(2, '0') + '</strong><span>/</span><strong>' +
+    escapeHTML(topic.title) + '</strong></div><span class="mode-label"><span>▣</span> ' +
+    modeLabel + '</span></div>';
+}
+
 function renderLesson() {
   const day = state.day;
   const topics = day?.topics || [];
-  if (!topics.length) return '<div class="empty-state">No lessons are available for this day.</div>';
-  const total = topics.length;
-  const completed = completedLessonCount();
-  if (completed >= total) {
-    state.view = 'exam';
-    return renderExam();
-  }
-  const topic = topics[state.activeTopic] || topics[completed];
-  const lessonIndex = topics.indexOf(topic);
+  if (!topics.length) return '<div class="empty-state">No topics are available for this day.</div>';
+  const topic = topics[state.activeTopic];
+  if (!topic) return '<div class="empty-state">This topic is not available.</div>';
+  const completed = completedTopicCount();
   const teaching = topic.teaching || {};
-  const lessonPosition = lessonIndex + 1;
-  const isCompleted = progressStore.isLessonCompleted(state.activeDay, lessonIndex);
-  const startedCount = Math.min(total, completed + 1);
-  const progressPercent = Math.round((startedCount / total) * 100);
-  const stepper = topics.map((item, index) => {
-    const done = progressStore.isLessonCompleted(state.activeDay, index);
-    const active = index === lessonIndex;
-    const locked = index > completed;
-    return '<button type="button" class="lesson-step ' + (active ? 'is-active ' : '') + (done ? 'is-complete ' : '') + (locked ? 'is-locked' : '') + '" data-lesson-index="' + index + '" ' + (locked ? 'disabled' : '') + ' aria-current="' + (active ? 'step' : 'false') + '">' +
-      '<span class="lesson-step-number">' + (done ? '✓' : String(index + 1).padStart(2, '0')) + '</span>' +
-      '<span class="lesson-step-copy"><strong>' + escapeHTML(item.title) + '</strong><small>' + (done ? 'Completed' : active ? 'In progress' : 'Locked') + '</small></span>' +
-      '<span class="lesson-step-state" aria-hidden="true">' + (done ? '✓' : locked ? '⌑' : active ? '●' : '○') + '</span></button>';
-  }).join('');
-  const businessTask = teaching.business_question || topic.questions?.[0]?.request || topic.business_skill || 'Apply the concept to a practical business request.';
-  const taskRequests = topic.questions || [];
-  const nextLabel = isCompleted
-    ? 'Continue to Lesson ' + String(Math.min(completed + 1, total)).padStart(2, '0')
-    : lessonIndex === total - 1
-      ? 'Complete lesson & unlock exam'
-      : 'Complete lesson & continue';
-  const nextHint = lessonIndex === total - 1
-    ? 'Complete this lesson to unlock your five-question assessment.'
-    : 'Complete this lesson to unlock ' + String(lessonIndex + 2).padStart(2, '0') + ': ' + (topics[lessonIndex + 1]?.title || 'the next lesson') + '.';
+  const codingDone = completedCodingQuestionCount();
+  const questionTotal = topic.coding_questions?.length || 5;
+  const progressPercent = Math.round((completed / topics.length) * 100);
+  const alreadyPassed = progressStore.isTopicCompleted(state.activeDay, state.activeTopic);
+  const nextTopic = topics[state.activeTopic + 1];
+  const stepper = renderTopicStepper(topics);
 
   return '<section class="lesson-experience">' +
-    '<div class="learning-context"><div class="learning-breadcrumb"><span class="breadcrumb-track">' + escapeHTML(day.track) + ' FOUNDATIONS</span><span>/</span><strong>DAY ' + String(day.day).padStart(2, '0') + '</strong></div><span class="mode-label"><span>▣</span> LESSON MODE</span></div>' +
-    '<header class="learning-day-heading"><div><span class="eyebrow">' + escapeHTML(day.track) + ' FOUNDATIONS <span>/</span> DAY ' + String(day.day).padStart(2, '0') + '</span><h1>' + escapeHTML(day.title.replace(/^.*?—\s*/, '')) + '</h1><p>' + escapeHTML(day.description || 'Build practical analytical capability through guided lessons and business examples.') + '</p></div><span class="day-status-pill">LEARNING IN PROGRESS</span></header>' +
-    '<nav class="lesson-stepper" aria-label="Five lessons for this day">' + stepper + '</nav>' +
-    '<div class="lesson-progress-bar"><span>Lesson progress</span><div class="lesson-progress-track"><i style="width:' + progressPercent + '%"></i></div><strong>' + completed + ' of ' + total + ' completed</strong></div>' +
-    '<div class="lesson-main-grid">' +
-      '<main class="lesson-content-card">' +
-        '<div class="lesson-content-heading"><div><span class="eyebrow">LESSON ' + String(lessonPosition).padStart(2, '0') + ' / ' + escapeHTML(day.track) + ' BASICS</span><h2 class="lesson-content-title">' + escapeHTML(topic.title) + '</h2><p>' + escapeHTML(topic.business_skill || 'Apply the concept to a practical business request.') + '</p></div><span class="lesson-content-status ' + (isCompleted ? 'is-done' : '') + '">' + (isCompleted ? '✓ COMPLETED' : 'IN PROGRESS') + '</span></div>' +
-        renderTeaching(topic) +
-        '<section class="lesson-business-task"><div class="business-task-icon">▣</div><div><span class="eyebrow">BUSINESS TASK</span><p>' + escapeHTML(businessTask) + '</p><span class="business-task-note">Use the worked example above to understand the expected approach.</span></div></section>' +
-        '<details class="lesson-extra-practice"><summary>Explore the ' + taskRequests.length + ' additional business practice requests</summary><div class="lesson-extra-practice-list">' + taskRequests.map((question, questionIndex) => renderQuestionCard(question, lessonIndex, questionIndex)).join('') + '</div></details>' +
-        '<footer class="lesson-completion-footer"><div class="completion-message"><span class="completion-icon">◎</span><div><strong>' + (isCompleted ? 'Lesson completed' : 'Ready to continue?') + '</strong><small>' + escapeHTML(nextHint) + '</small></div></div><div class="lesson-footer-actions"><button type="button" class="button lesson-save-button" data-action="save-progress">▣ Save progress</button><button type="button" class="button lesson-complete-button" data-action="complete-lesson">' + escapeHTML(nextLabel) + ' <span>→</span></button></div></footer>' +
-      '</main>' +
-      '<aside class="lesson-side-column">' +
-        '<section class="lesson-side-card"><h3><span>☷</span> LESSON OUTLINE</h3><ol class="lesson-outline"><li class="is-current"><span></span><p>Understand the concept</p></li><li><span></span><p>Study the worked example</p></li><li><span></span><p>Apply it to a business request</p></li></ol></section>' +
-        '<section class="lesson-side-card"><h3><span>◎</span> LEARNING TARGET</h3><p class="lesson-learning-target">' + escapeHTML(topic.business_skill || 'Use the concept to produce a clear analytical output.') + '</p></section>' +
-        '<section class="lesson-side-card lesson-progress-card"><h3><span>▥</span> YOUR PROGRESS</h3><div class="lesson-progress-caption"><strong>Lesson ' + lessonPosition + ' of ' + total + '</strong><b>' + progressPercent + '%</b></div><div class="lesson-progress-track"><i style="width:' + progressPercent + '%"></i></div><p>' + completed + ' completed · ' + (total - completed) + ' remaining</p></section>' +
-      '</aside>' +
-    '</div>' +
-    (state.view === 'practice' ? renderPractice() : '') +
+    renderLearningHeader(day, topic, 'LESSON MODE') +
+    '<header class="learning-day-heading"><div><span class="eyebrow">' +
+      escapeHTML(day.track) + ' FOUNDATIONS <span>/</span> TOPIC ' +
+      String(state.activeTopic + 1).padStart(2, '0') + ' OF ' + topics.length +
+      '</span><h1>' + escapeHTML(topic.title) + '</h1><p>' +
+      escapeHTML(topic.business_skill || day.description || 'Understand the concept, study the example, then apply it to business data.') +
+      '</p></div><span class="day-status-pill">' +
+      (alreadyPassed ? 'TOPIC COMPLETED' : 'LEARNING IN PROGRESS') + '</span></header>' +
+    '<nav class="lesson-stepper" aria-label="Topics in this learning day">' + stepper + '</nav>' +
+    '<div class="lesson-progress-bar"><span>Day progress</span><div class="lesson-progress-track"><i style="width:' +
+      progressPercent + '%"></i></div><strong>' + completed + ' of ' + topics.length + ' topics passed</strong></div>' +
+    '<div class="lesson-main-grid"><main class="lesson-content-card">' +
+      '<div class="lesson-content-heading"><div><span class="eyebrow">TOPIC ' +
+      String(state.activeTopic + 1).padStart(2, '0') + ' · LEARN THE CONCEPT</span><h2 class="lesson-content-title">' +
+      escapeHTML(topic.title) + '</h2><p>' + escapeHTML(topic.business_skill || 'Build the concept before solving the coding tasks.') +
+      '</p></div><span class="lesson-content-status ' + (alreadyPassed ? 'is-done' : '') + '">' +
+      (alreadyPassed ? '✓ EXAM PASSED' : 'READY TO LEARN') + '</span></div>' +
+      renderTeaching(topic) +
+      '<section class="lesson-business-task"><div class="business-task-icon">▣</div><div><span class="eyebrow">BUSINESS APPLICATION</span><p>' +
+      escapeHTML(teaching.business_question || topic.questions?.[0]?.request || topic.business_skill || 'Apply the concept to a realistic business requirement.') +
+      '</p><span class="business-task-note">Understand the requirement first. You will write and run SQL in the next stage.</span></div></section>' +
+      '<section class="lesson-start-practice"><div class="lesson-start-copy"><span class="eyebrow">NEXT STEP</span><strong>Five coding questions for this topic</strong><p>' +
+      codingDone + ' of ' + questionTotal + ' coding answers passed. Your SQL is checked against the actual learning dataset.</p></div>' +
+      '<button type="button" class="button lesson-complete-button" data-view="practice">Start coding practice <span>→</span></button></section>' +
+      '<details class="lesson-extra-practice"><summary>Review the original business requests</summary><div class="lesson-extra-practice-list">' +
+      (topic.questions || []).map((question, index) => renderQuestionCard(question, state.activeTopic, index)).join('') +
+      '</div></details>' +
+      (alreadyPassed ? '<footer class="lesson-completion-footer"><div class="completion-message"><span class="completion-icon">✓</span><div><strong>Topic exam passed</strong><small>' +
+        (nextTopic ? 'The next topic is unlocked: ' + escapeHTML(nextTopic.title) : 'All topics in this day are complete.') +
+      '</small></div></div><div class="lesson-footer-actions"><button type="button" class="button lesson-complete-button" data-action="continue-next-topic">' +
+        (nextTopic ? 'Continue to next topic' : 'Continue to next day') + ' <span>→</span></button></div></footer>' : '') +
+    '</main><aside class="lesson-side-column">' +
+      '<section class="lesson-side-card"><h3><span>☷</span> LEARNING PATH</h3><ol class="lesson-outline"><li class="is-current"><span></span><p>Learn the concept</p></li><li><span></span><p>Complete five coding questions</p></li><li><span></span><p>Pass the topic MCQ exam</p></li><li><span></span><p>Unlock the next topic</p></li></ol></section>' +
+      '<section class="lesson-side-card"><h3><span>◎</span> LEARNING TARGET</h3><p class="lesson-learning-target">' +
+      escapeHTML(topic.business_skill || 'Translate the business requirement into a correct SQL query.') +
+      '</p></section><section class="lesson-side-card lesson-progress-card"><h3><span>▥</span> TOPIC STATUS</h3>' +
+      '<div class="lesson-progress-caption"><strong>Coding practice</strong><b>' + codingDone + ' / ' + questionTotal + '</b></div>' +
+      '<div class="lesson-progress-track"><i style="width:' + Math.round((codingDone / questionTotal) * 100) + '%"></i></div>' +
+      '<p>' + (alreadyPassed ? 'Topic assessment passed.' : 'The exam unlocks after all five coding answers pass.') + '</p></section>' +
+    '</aside></div></section>';
+}
+
+function renderTopicPractice() {
+  const day = state.day;
+  const topic = currentTopic();
+  const questions = topic?.coding_questions || [];
+  if (questions.length !== 5) {
+    return '<section class="coding-practice-screen"><div class="exam-error"><h1>Coding practice unavailable</h1><p>This topic must contain exactly five coding questions.</p><button class="button button-secondary" data-view="learn">Return to lesson</button></div></section>';
+  }
+
+  const completedCount = completedCodingQuestionCount();
+  const questionIndex = Math.min(state.activeCodingQuestion, questions.length - 1);
+  const question = questions[questionIndex];
+  const key = codingDraftKey(questionIndex);
+  const draft = state.codingDrafts[key] || question.starter_sql || '';
+  const feedback = state.codingFeedback[key];
+  const allDone = completedCount >= questions.length;
+  const stepButtons = questions.map((item, index) => {
+    const done = progressStore.isCodingQuestionCompleted(state.activeDay, state.activeTopic, index);
+    const active = index === questionIndex;
+    const locked = index > completedCount;
+    return '<button type="button" class="coding-question-nav-item ' + (active ? 'is-current ' : '') +
+      (done ? 'is-complete ' : '') + (locked ? 'is-locked' : '') + '" data-coding-question="' + index + '" ' +
+      (locked ? 'disabled' : '') + ' aria-current="' + (active ? 'step' : 'false') + '">' +
+      '<span class="coding-nav-number">' + (done ? '✓' : 'Q' + (index + 1)) + '</span><span><strong>Question ' +
+      (index + 1) + '</strong><small>' + (done ? 'Passed' : active ? 'In progress' : 'Locked') +
+      '</small></span></button>';
+  }).join('');
+  const feedbackHtml = feedback
+    ? '<section class="coding-feedback ' + (feedback.passed ? 'is-correct' : 'needs-fix') + '">' +
+      '<div class="coding-feedback-heading"><strong>' + (feedback.passed ? '✓ Answer accepted' : 'Review your result') +
+      '</strong><span>' + (feedback.passed ? 'Passed' : 'Try again') + '</span></div><p>' +
+      escapeHTML(feedback.message) + '</p>' + feedback.html + '</section>'
+    : '<section class="coding-feedback coding-feedback-placeholder"><strong>Your result will appear here.</strong><p>Run your SQL to execute it against the academy dataset and check the returned columns and rows.</p></section>';
+
+  return '<section class="coding-practice-screen">' +
+    renderLearningHeader(day, topic, 'CODING PRACTICE') +
+    '<header class="coding-practice-heading"><div><span class="eyebrow">TOPIC ' +
+      String(state.activeTopic + 1).padStart(2, '0') + ' · HANDS-ON SQL</span><h1>' +
+      escapeHTML(topic.title) + ' — Coding Practice</h1><p>Five business coding questions. Write the query, run it, and pass the result check to complete each question.</p></div>' +
+      '<span class="coding-practice-count">' + completedCount + ' / 5 PASSED</span></header>' +
+    '<nav class="coding-question-nav" aria-label="Five coding questions">' + stepButtons + '</nav>' +
+    '<div class="coding-practice-progress"><strong>Question ' + (questionIndex + 1) + ' of 5</strong><div class="lesson-progress-track"><i style="width:' +
+      Math.round((completedCount / 5) * 100) + '%"></i></div><span>' + completedCount + ' completed</span></div>' +
+    '<div class="coding-practice-grid"><main class="coding-workspace-card">' +
+      '<div class="coding-task-header"><div><span class="eyebrow">CODING QUESTION ' + String(questionIndex + 1).padStart(2, '0') +
+      ' / 05</span><h2>' + escapeHTML(question.title) + '</h2></div><span class="coding-difficulty">' +
+      escapeHTML(question.difficulty || 'Business task') + '</span></div>' +
+      '<div class="coding-scenario"><span class="eyebrow">BUSINESS SCENARIO</span><p>' +
+      escapeHTML(question.scenario || question.prompt) + '</p></div>' +
+      '<div class="coding-task-prompt"><span class="eyebrow">YOUR TASK</span><p>' + escapeHTML(question.prompt) + '</p></div>' +
+      '<details class="coding-hint"><summary>Show hint</summary><p>' + escapeHTML(question.hint || 'Break the request into its selected columns, data source and business logic.') + '</p></details>' +
+      '<div class="coding-editor-heading"><label for="codingSqlEditor">Write your SQL solution</label><span>SQL · Read-only database</span></div>' +
+      '<textarea id="codingSqlEditor" class="coding-sql-editor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="SQL coding answer">' +
+      escapeHTML(draft) + '</textarea>' +
+      '<div class="coding-editor-actions"><button type="button" class="button button-primary coding-run-button" data-action="run-coding-question">▶ Run and check answer</button>' +
+      '<button type="button" class="button coding-secondary-button" data-action="format-coding-query">Format SQL</button>' +
+      '<button type="button" class="button coding-secondary-button" data-action="reset-coding-query">Reset</button>' +
+      '<span id="codingEngineStatus" role="status">SQL engine loads when you run your first answer.</span></div>' +
+      feedbackHtml +
+      '<footer class="coding-practice-footer"><button type="button" class="button lesson-save-button" data-view="learn">← Back to lesson</button>' +
+      '<button type="button" class="button lesson-complete-button" data-view="exam" ' + (!allDone ? 'disabled aria-disabled="true"' : '') +
+      '>Continue to topic exam <span>→</span></button></footer>' +
+    '</main><aside class="coding-practice-side">' +
+      '<section class="lesson-side-card"><h3><span>▤</span> PRACTICE CHECKLIST</h3><div class="coding-checklist">' +
+      questions.map((item, index) => '<div class="coding-checklist-item ' +
+        (progressStore.isCodingQuestionCompleted(state.activeDay, state.activeTopic, index) ? 'is-done' : '') + '">' +
+        '<span>' + (progressStore.isCodingQuestionCompleted(state.activeDay, state.activeTopic, index) ? '✓' : String(index + 1).padStart(2, '0')) +
+        '</span><div><strong>Question ' + (index + 1) + '</strong><small>' + escapeHTML(item.title) + '</small></div></div>').join('') +
+      '</div></section><section class="lesson-side-card"><h3><span>◎</span> HOW ANSWERS ARE CHECKED</h3><p class="lesson-learning-target">The academy executes your SQL and compares the output columns and returned records with the expected result. Queries are read-only: SELECT and WITH statements only.</p></section>' +
+      '<section class="lesson-side-card lesson-progress-card"><h3><span>▥</span> EXAM UNLOCK</h3><div class="lesson-progress-caption"><strong>Required</strong><b>5 / 5</b></div>' +
+      '<div class="lesson-progress-track"><i style="width:' + Math.round((completedCount / 5) * 100) + '%"></i></div><p>' +
+      (allDone ? 'All coding questions passed. Your topic exam is ready.' : (5 - completedCount) + ' coding questions remaining before the exam.') + '</p></section>' +
+    '</aside></div>' +
+    '<details class="coding-full-sql-workspace"><summary>Open the full SQL workspace</summary>' + renderPractice() + '</details>' +
+    (allDone ? '<section class="coding-unlock-banner"><div><strong>All five coding questions passed.</strong><p>Your topic-specific MCQ exam is now unlocked.</p></div><button type="button" class="button lesson-complete-button" data-view="exam">Open exam <span>→</span></button></section>' : '') +
   '</section>';
 }
 
 function renderExam() {
-  const day = state.day;
-  const questions = buildExamQuestions(day);
-  if (questions.length !== 5) return '<section class="exam-screen"><div class="exam-error"><h1>Assessment unavailable</h1><p>This day needs five complete lesson examples before an exam can be generated.</p><button class="button button-secondary" data-view="learn">Return to lessons</button></div></section>';
+  const topic = currentTopic();
+  const topics = state.day?.topics || [];
+  const questions = buildExamQuestions(topic);
+  if (!isTopicExamUnlocked()) {
+    return '<section class="exam-screen"><div class="exam-error"><h1>Topic exam is locked</h1><p>Pass all five SQL coding questions for this topic before starting the MCQ exam.</p><button class="button button-secondary" data-view="practice">Return to coding practice</button></div></section>';
+  }
+  if (questions.length !== 5) {
+    return '<section class="exam-screen"><div class="exam-error"><h1>Exam unavailable</h1><p>This topic needs five valid coding questions to create its exam.</p><button class="button button-secondary" data-view="learn">Return to lesson</button></div></section>';
+  }
 
-  const exam = progressStore.getExamState(state.activeDay);
+  const exam = progressStore.getTopicExamState(state.activeDay, state.activeTopic);
   const questionIndex = Math.min(state.examQuestionIndex, questions.length - 1);
   const question = questions[questionIndex];
   const answered = Object.keys(exam.answers).length;
@@ -434,46 +688,80 @@ function renderExam() {
   const progressPercent = Math.round((answered / questions.length) * 100);
   const isSubmitted = exam.submitted;
   const isPassed = exam.passed;
+  const allCodingPassed = completedCodingQuestionCount() === 5;
   const questionNav = questions.map((item, index) => {
     const hasAnswer = Object.prototype.hasOwnProperty.call(exam.answers, index);
     const active = index === questionIndex;
     const correct = isSubmitted && exam.answers[index] === item.correctOption;
-    return '<button type="button" class="exam-question-nav-item ' + (active ? 'is-current ' : '') + (hasAnswer ? 'is-answered ' : '') + (isSubmitted ? (correct ? 'is-correct ' : 'is-incorrect ') : '') + '" data-exam-question="' + index + '" aria-current="' + (active ? 'step' : 'false') + '">' +
-      '<span class="exam-nav-number">Q' + (index + 1) + '</span><span><strong>Question ' + (index + 1) + '</strong><small>' + (isSubmitted ? (correct ? 'Correct' : 'Review answer') : hasAnswer ? 'Answered' : active ? 'Current' : 'Not started') + '</small></span></button>';
+    return '<button type="button" class="exam-question-nav-item ' + (active ? 'is-current ' : '') +
+      (hasAnswer ? 'is-answered ' : '') + (isSubmitted ? (correct ? 'is-correct ' : 'is-incorrect ') : '') +
+      '" data-exam-question="' + index + '" aria-current="' + (active ? 'step' : 'false') + '">' +
+      '<span class="exam-nav-number">Q' + (index + 1) + '</span><span><strong>Question ' + (index + 1) +
+      '</strong><small>' + (isSubmitted ? (correct ? 'Correct' : 'Review answer') : hasAnswer ? 'Answered' :
+      active ? 'Current' : 'Not started') + '</small></span></button>';
   }).join('');
+
   const options = question.options.map((option, index) => {
     const selected = Number(exam.answers[questionIndex]) === index;
     const correct = isSubmitted && index === question.correctOption;
     const incorrect = isSubmitted && selected && !correct;
-    return '<button type="button" class="exam-option ' + (selected ? 'is-selected ' : '') + (correct ? 'is-correct ' : '') + (incorrect ? 'is-incorrect ' : '') + '" data-exam-option="' + index + '" ' + (isSubmitted ? 'disabled' : '') + ' aria-pressed="' + selected + '">' +
-      '<span class="exam-option-radio">' + (selected ? '●' : '') + '</span><strong class="exam-option-letter">' + String.fromCharCode(65 + index) + '.</strong><code>' + escapeHTML(option) + '</code>' +
-      (correct ? '<span class="exam-answer-mark">Correct</span>' : incorrect ? '<span class="exam-answer-mark">Your answer</span>' : '') + '</button>';
+    return '<button type="button" class="exam-option ' + (selected ? 'is-selected ' : '') +
+      (correct ? 'is-correct ' : '') + (incorrect ? 'is-incorrect ' : '') + '" data-exam-option="' + index + '" ' +
+      (isSubmitted ? 'disabled' : '') + ' aria-pressed="' + selected + '">' +
+      '<span class="exam-option-radio">' + (selected ? '●' : '') + '</span><strong class="exam-option-letter">' +
+      String.fromCharCode(65 + index) + '.</strong><code>' + escapeHTML(option) + '</code>' +
+      (correct ? '<span class="exam-answer-mark">Correct</span>' : incorrect ? '<span class="exam-answer-mark">Your answer</span>' : '') +
+      '</button>';
   }).join('');
+
   const resultBanner = isSubmitted
-    ? '<div class="exam-result-banner ' + (isPassed ? 'is-passed' : 'needs-review') + '"><span class="exam-result-icon">' + (isPassed ? '✓' : '!') + '</span><div><strong>' + (isPassed ? 'Assessment passed' : 'Assessment not passed yet') + '</strong><small>You scored ' + exam.score + ' out of 5. ' + (isPassed ? 'The next published day is now unlocked.' : 'You need 4 correct answers to pass. Review the lessons and retry.') + '</small></div></div>'
+    ? '<div class="exam-result-banner ' + (isPassed ? 'is-passed' : 'needs-review') + '"><span class="exam-result-icon">' +
+      (isPassed ? '✓' : '!') + '</span><div><strong>' + (isPassed ? 'Topic exam passed' : 'Keep practising') +
+      '</strong><small>You scored ' + exam.score + ' out of 5. ' +
+      (isPassed ? 'The next topic is now unlocked.' : 'You need 4 correct answers to pass this topic.') +
+      '</small></div></div>'
     : '';
+
+  const nextTopic = topics[state.activeTopic + 1];
+  const nextDayAvailable = state.activeDay < publishedThrough();
   const footerAction = isSubmitted
     ? (isPassed
-      ? '<button type="button" class="button exam-next-button" data-action="continue-next-day">Continue <span>→</span></button>'
+      ? '<button type="button" class="button exam-next-button" data-action="continue-next-topic">' +
+        (nextTopic ? 'Continue to next topic' : nextDayAvailable ? 'Continue to next day' : 'Finish learning day') + ' <span>→</span></button>'
       : '<button type="button" class="button exam-next-button" data-action="retry-exam">Retry exam <span>↻</span></button>')
     : (questionIndex < questions.length - 1
       ? '<button type="button" class="button exam-next-button" data-action="next-exam-question">Next question <span>→</span></button>'
-      : '<button type="button" class="button exam-next-button" data-action="submit-exam">Submit exam <span>✓</span></button>');
+      : '<button type="button" class="button exam-next-button" data-action="submit-exam">Submit topic exam <span>✓</span></button>');
 
   return '<section class="exam-screen">' +
-    '<div class="exam-breadcrumb"><span>' + escapeHTML(day.track) + ' FOUNDATIONS</span><span>/</span><strong>DAY ' + String(day.day).padStart(2, '0') + '</strong><span>/</span><b>FINAL CHECKPOINT</b></div>' +
-    '<header class="exam-heading"><div class="exam-trophy">♜</div><div><h1>Day ' + String(day.day).padStart(2, '0') + ' Knowledge Check</h1><p><span class="exam-unlocked-dot">✓</span> All five lessons completed. Your assessment is now unlocked.</p></div><span class="exam-completion-badge">✓ 5/5 LESSONS COMPLETE</span></header>' +
-    '<nav class="exam-question-nav" aria-label="Exam questions">' + questionNav + '</nav>' +
-    '<div class="exam-progress-row"><strong>Question ' + (questionIndex + 1) + ' of 5</strong><div class="exam-progress-track"><i style="width:' + progressPercent + '%"></i></div><span>' + answered + ' answered <b>|</b> ' + remaining + ' remaining</span></div>' +
+    '<div class="exam-breadcrumb"><span>' + escapeHTML(state.day.track) + ' FOUNDATIONS</span><span>/</span><strong>DAY ' +
+      String(state.activeDay).padStart(2, '0') + '</strong><span>/</span><b>TOPIC EXAM</b></div>' +
+    '<header class="exam-heading"><div class="exam-trophy">♜</div><div><h1>' +
+      escapeHTML(topic.title) + ' — Topic Exam</h1><p><span class="exam-unlocked-dot">✓</span> All five coding questions passed. This exam checks the same topic.</p></div>' +
+      '<span class="exam-completion-badge">✓ 5/5 CODING PASSED</span></header>' +
+    '<nav class="exam-question-nav" aria-label="Topic exam questions">' + questionNav + '</nav>' +
+    '<div class="exam-progress-row"><strong>Question ' + (questionIndex + 1) + ' of 5</strong><div class="exam-progress-track"><i style="width:' +
+      progressPercent + '%"></i></div><span>' + answered + ' answered <b>|</b> ' + remaining + ' remaining</span></div>' +
     '<div class="exam-main-grid"><main class="exam-question-card">' + resultBanner +
-      '<div class="exam-question-meta"><span>QUESTION ' + String(questionIndex + 1).padStart(2, '0') + '</span><span>' + escapeHTML(question.title) + '</span><span>● MULTIPLE CHOICE</span></div>' +
-      '<h2>Which SQL statement best fulfils this business requirement?</h2><p class="exam-business-prompt">' + escapeHTML(question.prompt) + '</p>' +
+      '<div class="exam-question-meta"><span>QUESTION ' + String(questionIndex + 1).padStart(2, '0') +
+      '</span><span>' + escapeHTML(question.title) + '</span><span>● MULTIPLE CHOICE</span></div>' +
+      '<h2>Which SQL statement correctly fulfils this coding requirement?</h2><p class="exam-business-prompt">' +
+      escapeHTML(question.prompt) + '</p>' +
       '<div class="exam-options" role="group" aria-label="Answer options for question ' + (questionIndex + 1) + '">' + options + '</div>' +
-      '<footer class="exam-question-footer"><button type="button" class="button exam-save-button" data-action="save-exit">↪ Save & exit</button>' + footerAction + '</footer>' +
-    '</main><aside class="exam-summary-card"><h2><span>▥</span> EXAM SUMMARY</h2><div class="exam-summary-row"><span>Total questions</span><strong>5</strong></div><div class="exam-summary-row"><span>Answered</span><strong>' + answered + '</strong></div><div class="exam-summary-row"><span>Remaining</span><strong>' + remaining + '</strong></div><div class="exam-summary-progress"><div><span>Progress</span><strong>' + progressPercent + '%</strong></div><div class="exam-progress-track"><i style="width:' + progressPercent + '%"></i></div></div>' +
-      (isSubmitted && isPassed ? '<div class="exam-guidance exam-success-guidance"><strong>Day completed</strong><p>You passed the knowledge check. Your next published day is ready.</p></div>' : '<div class="exam-guidance"><strong>One question at a time.</strong><p>Your selected answers are saved automatically. Answer all five questions before submitting.</p></div>') +
-      '<div class="exam-pass-rule">PASS MARK <strong>4 / 5</strong><span>80% required to unlock the next day</span></div></aside></div>' +
-  '</section>';
+      '<footer class="exam-question-footer"><button type="button" class="button exam-save-button" data-view="practice">↶ Review coding practice</button>' +
+      footerAction + '</footer></main>' +
+      '<aside class="exam-summary-card"><h2><span>▥</span> TOPIC EXAM SUMMARY</h2>' +
+      '<div class="exam-summary-row"><span>Coding questions passed</span><strong>' + (allCodingPassed ? '5 / 5' : completedCodingQuestionCount() + ' / 5') + '</strong></div>' +
+      '<div class="exam-summary-row"><span>MCQ questions</span><strong>5</strong></div>' +
+      '<div class="exam-summary-row"><span>Answered</span><strong>' + answered + '</strong></div>' +
+      '<div class="exam-summary-row"><span>Remaining</span><strong>' + remaining + '</strong></div>' +
+      '<div class="exam-summary-progress"><div><span>Exam progress</span><strong>' + progressPercent + '%</strong></div>' +
+      '<div class="exam-progress-track"><i style="width:' + progressPercent + '%"></i></div></div>' +
+      (isSubmitted && isPassed
+        ? '<div class="exam-guidance exam-success-guidance"><strong>Next topic unlocked</strong><p>You passed this topic. Continue to the next topic in the learning path.</p></div>'
+        : '<div class="exam-guidance"><strong>One question at a time.</strong><p>Your selected answers are saved automatically. Answer all five MCQs before submitting.</p></div>') +
+      '<div class="exam-pass-rule">PASS MARK <strong>4 / 5</strong><span>80% required to unlock the next topic</span></div>' +
+      '</aside></div></section>';
 }
 
 function renderRightRail(question) {
@@ -639,7 +927,9 @@ function render() {
         ? renderProgress()
         : activeView === 'exam'
           ? renderExam()
-          : renderLesson();
+          : activeView === 'practice'
+            ? renderTopicPractice()
+            : renderLesson();
   appRoot.innerHTML = '<div class="academy-shell">' + renderHeader() +
     '<main id="main" class="academy-main"><div class="view-panel" data-view-panel="' + activeView + '">' + viewContent + '</div></main>' +
     '<div id="academyToast" class="academy-toast" role="status" aria-live="polite"></div></div>';
@@ -832,6 +1122,13 @@ function updateSearchResults(results) {
 }
 
 function handleInput(event) {
+  if (event.target.id === 'codingSqlEditor') {
+    state.codingDrafts[codingDraftKey()] = event.target.value;
+    try {
+      localStorage.setItem('ahk_academy_coding_drafts_v1', JSON.stringify(state.codingDrafts));
+    } catch { /* Keep the current edit in memory if local storage is unavailable. */ }
+    return;
+  }
   if (event.target.id !== 'academySearch') return;
   state.searchQuery = event.target.value;
   window.clearTimeout(state.searchTimer);
@@ -839,7 +1136,7 @@ function handleInput(event) {
     try {
       const results = await searchContent(state.searchQuery);
       updateSearchResults(results);
-    } catch (error) {
+    } catch {
       updateSearchResults([]);
       toast('Search could not load curriculum content.', 'warning');
     }
@@ -858,25 +1155,32 @@ async function handleClick(event) {
   if (viewButton) {
     event.preventDefault();
     const target = viewButton.dataset.view;
-    if (target === 'exam' && !areAllLessonsComplete()) {
-      toast('Complete all five lessons before opening the exam.', 'warning');
+
+    if (target === 'exam' && !isTopicExamUnlocked()) {
+      toast('Pass all five coding questions for this topic before opening the exam.', 'warning');
       return;
     }
-    if (target === 'learn' && areAllLessonsComplete()) {
-      state.view = 'exam';
-    } else if (target === 'practice') {
-      state.view = 'practice';
-      history.replaceState(null, '', '#practice');
-      render();
-      window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    if (target === 'practice' && !currentTopic()?.coding_questions?.length) {
+      toast('Coding questions are not available for this topic.', 'warning');
       return;
+    }
+    if (target === 'dashboard') {
+      state.view = 'dashboard';
+      state.projectSelection = null;
+      history.replaceState(null, '', '#overview');
+    } else if (['learn', 'practice', 'exam'].includes(target)) {
+      state.view = target;
+      state.projectSelection = null;
+      if (target === 'practice') {
+        state.activeCodingQuestion = Math.min(completedCodingQuestionCount(), codingQuestionCount() - 1);
+      }
+      if (target === 'exam') state.examQuestionIndex = 0;
+      updateHash(state.activeDay);
     } else {
       state.view = target;
+      state.projectSelection = null;
+      history.replaceState(null, '', '#' + target);
     }
-    state.projectSelection = null;
-    if (target === 'dashboard') history.replaceState(null, '', '#overview');
-    else if (target === 'learn' || target === 'exam') updateHash(state.activeDay);
-    else history.replaceState(null, '', '#' + target);
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     return;
@@ -900,16 +1204,38 @@ async function handleClick(event) {
     return;
   }
 
-  const lessonButton = event.target.closest('[data-lesson-index]');
-  if (lessonButton) {
-    const lessonIndex = Number(lessonButton.dataset.lessonIndex);
-    if (lessonIndex > completedLessonCount()) {
-      toast('Complete the lessons in order to unlock this lesson.', 'warning');
+  const topicButton = event.target.closest('[data-topic-index]');
+  if (topicButton) {
+    const topicIndex = Number(topicButton.dataset.topicIndex);
+    if (!progressStore.isTopicUnlocked(state.activeDay, topicIndex, state.day?.topics?.length || 5)) {
+      toast('Pass the previous topic exam to unlock this topic.', 'warning');
       return;
     }
-    state.activeTopic = lessonIndex;
+    state.activeTopic = topicIndex;
+    state.activeCodingQuestion = Math.min(progressStore.getCodingQuestionCount(state.activeDay, topicIndex), 4);
+    state.examQuestionIndex = 0;
+    const exam = progressStore.getTopicExamState(state.activeDay, topicIndex);
+    state.view = exam.submitted && !exam.passed
+      ? 'exam'
+      : progressStore.areCodingQuestionsCompleted(state.activeDay, topicIndex, 5)
+        ? 'exam'
+        : progressStore.getCodingQuestionCount(state.activeDay, topicIndex) > 0
+          ? 'practice'
+          : 'learn';
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  const codingQuestionButton = event.target.closest('[data-coding-question]');
+  if (codingQuestionButton) {
+    const questionIndex = Number(codingQuestionButton.dataset.codingQuestion);
+    if (questionIndex > completedCodingQuestionCount()) {
+      toast('Complete coding questions in order before opening this question.', 'warning');
+      return;
+    }
+    state.activeCodingQuestion = questionIndex;
+    render();
     return;
   }
 
@@ -922,24 +1248,14 @@ async function handleClick(event) {
 
   const examOptionButton = event.target.closest('[data-exam-option]');
   if (examOptionButton && state.view === 'exam') {
-    const examState = progressStore.getExamState(state.activeDay);
-    if (examState.submitted) return;
-    progressStore.setExamAnswer(state.activeDay, state.examQuestionIndex, Number(examOptionButton.dataset.examOption));
-    render();
-    return;
-  }
-
-  const topicButton = event.target.closest('[data-topic]:not([data-task-action])');
-  if (topicButton) {
-    state.activeTopic = Number(topicButton.dataset.topic);
-    state.activeQuestion = 0;
-    render();
-    return;
-  }
-
-  const questionButton = event.target.closest('[data-question]');
-  if (questionButton && !questionButton.dataset.taskAction) {
-    state.activeQuestion = Number(questionButton.dataset.question);
+    const exam = progressStore.getTopicExamState(state.activeDay, state.activeTopic);
+    if (exam.submitted) return;
+    progressStore.setTopicExamAnswer(
+      state.activeDay,
+      state.activeTopic,
+      state.examQuestionIndex,
+      Number(examOptionButton.dataset.examOption)
+    );
     render();
     return;
   }
@@ -978,10 +1294,10 @@ async function handleClick(event) {
     } else if (taskAction.dataset.taskAction === 'practice') {
       state.activeTopic = topicIndex;
       state.activeQuestion = questionIndex;
-      state.practiceTab = 'query';
+      state.activeCodingQuestion = Math.min(completedCodingQuestionCount(), 4);
       state.view = 'practice';
       render();
-      window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     return;
   }
@@ -996,6 +1312,7 @@ async function handleClick(event) {
 
   const action = event.target.closest('[data-action]')?.dataset.action;
   if (!action) return;
+
   if (action === 'toggle-theme') {
     state.theme = state.theme === 'dark' ? 'light' : 'dark';
     localStorage.setItem('ahk_academy_theme', state.theme);
@@ -1005,27 +1322,26 @@ async function handleClick(event) {
     boot();
   } else if (action === 'save-progress') {
     progressStore.setActiveDay(state.activeDay);
-    toast('Lesson progress saved on this device.', 'success');
-  } else if (action === 'complete-lesson') {
-    const total = state.day?.topics?.length || 5;
-    const result = progressStore.completeLesson(state.activeDay, state.activeTopic, total);
-    if (!result.ok) {
-      toast(result.reason, 'warning');
-      return;
+    toast('Your learning progress is saved on this device.', 'success');
+  } else if (action === 'run-coding-question') {
+    await runTopicCodingQuestion();
+  } else if (action === 'format-coding-query') {
+    const editor = $('#codingSqlEditor');
+    if (editor) {
+      editor.value = formatSQL(editor.value);
+      state.codingDrafts[codingDraftKey()] = editor.value;
+      try { localStorage.setItem('ahk_academy_coding_drafts_v1', JSON.stringify(state.codingDrafts)); } catch {}
     }
-    if (result.allCompleted) {
-      state.view = 'exam';
-      state.examQuestionIndex = 0;
-      toast('All five lessons completed. Your exam is now unlocked.', 'success');
-    } else {
-      state.activeTopic = result.completedCount;
-      state.view = 'learn';
-      toast('Lesson completed. Lesson ' + String(state.activeTopic + 1).padStart(2, '0') + ' is now unlocked.', 'success');
-    }
+  } else if (action === 'reset-coding-query') {
+    const editor = $('#codingSqlEditor');
+    const starter = currentCodingQuestion()?.starter_sql || '';
+    if (editor) editor.value = starter;
+    state.codingDrafts[codingDraftKey()] = starter;
+    delete state.codingFeedback[codingDraftKey()];
+    try { localStorage.setItem('ahk_academy_coding_drafts_v1', JSON.stringify(state.codingDrafts)); } catch {}
     render();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   } else if (action === 'next-exam-question') {
-    const exam = progressStore.getExamState(state.activeDay);
+    const exam = progressStore.getTopicExamState(state.activeDay, state.activeTopic);
     if (!Object.prototype.hasOwnProperty.call(exam.answers, state.examQuestionIndex)) {
       toast('Choose an answer before moving to the next question.', 'warning');
       return;
@@ -1033,41 +1349,54 @@ async function handleClick(event) {
     state.examQuestionIndex = Math.min(4, state.examQuestionIndex + 1);
     render();
   } else if (action === 'submit-exam') {
-    const questions = buildExamQuestions(state.day);
-    const result = progressStore.submitExam(state.activeDay, questions.map(question => question.correctOption), 4);
+    const questions = buildExamQuestions(currentTopic());
+    const result = progressStore.submitTopicExam(
+      state.activeDay,
+      state.activeTopic,
+      questions.map(question => question.correctOption),
+      4,
+      state.day?.topics?.length || 5
+    );
     if (!result.ok) {
       toast(result.reason, 'warning');
       return;
     }
     state.examQuestionIndex = 0;
     render();
-    toast(result.passed ? 'Exam passed. The next published day is unlocked.' : 'Exam submitted. Review your answers and retry.', result.passed ? 'success' : 'warning');
+    toast(result.passed ? 'Topic exam passed. The next topic is unlocked.' : 'Exam submitted. Review your answers and retry.', result.passed ? 'success' : 'warning');
   } else if (action === 'retry-exam') {
-    if (progressStore.retryExam(state.activeDay)) {
+    if (progressStore.retryTopicExam(state.activeDay, state.activeTopic)) {
       state.examQuestionIndex = 0;
       render();
-      toast('New exam attempt started. Your previous score remains in your learning record.', 'info');
+      toast('New attempt started. Your previous attempt count is retained.', 'info');
     }
-  } else if (action === 'continue-next-day') {
-    const nextDay = state.activeDay + 1;
-    if (nextDay <= publishedThrough() && isUnlocked(nextDay)) {
-      await loadDay(nextDay);
-    } else {
-      state.view = 'dashboard';
-      history.replaceState(null, '', location.pathname + location.search);
+  } else if (action === 'continue-next-topic') {
+    const nextTopic = state.activeTopic + 1;
+    if (nextTopic < (state.day?.topics?.length || 5)) {
+      if (!progressStore.isTopicUnlocked(state.activeDay, nextTopic, state.day.topics.length)) {
+        toast('Pass this topic exam to unlock the next topic.', 'warning');
+        return;
+      }
+      state.activeTopic = nextTopic;
+      state.activeCodingQuestion = 0;
+      state.examQuestionIndex = 0;
+      state.view = 'learn';
       render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      const nextDay = state.activeDay + 1;
+      if (nextDay <= publishedThrough() && isUnlocked(nextDay)) {
+        await loadDay(nextDay);
+      } else {
+        state.view = 'dashboard';
+        history.replaceState(null, '', '#overview');
+        render();
+      }
     }
   } else if (action === 'save-exit') {
     progressStore.setActiveDay(state.activeDay);
     state.view = 'dashboard';
-    history.replaceState(null, '', location.pathname + location.search);
-    render();
-  } else if (action === 'complete-day') {
-    const result = progressStore.completeDay(state.activeDay, dayQuestions(state.day));
-    if (!result.ok) {
-      toast(result.reason, 'warning');
-      return;
-    }
+    history.replaceState(null, '', '#overview');
     render();
   } else if (action === 'run-query') {
     runQuery();
@@ -1150,16 +1479,17 @@ async function boot() {
 
     const published = publishedThrough();
     const hash = location.hash.match(/day-(\d+)/);
-    const route = ['overview', 'projects', 'progress', 'practice'].includes(location.hash.slice(1)) ? location.hash.slice(1) : '';
+    const route = ['overview', 'projects', 'progress'].includes(location.hash.slice(1)) ? location.hash.slice(1) : '';
     const requestedDay = hash ? Number(hash[1]) : progressStore.getState().activeDay;
     const firstUnlocked = Array.from({ length: published }, (_, index) => index + 1).find(day => isUnlocked(day)) || 1;
     const target = isUnlocked(requestedDay) ? requestedDay : firstUnlocked;
-    state.activeDay = target;
-    const hasLessonLink = Boolean(hash);
-    await loadDay(target, { updateUrl: hasLessonLink, render: false });
-    if (!hasLessonLink) state.view = route === 'overview' ? 'dashboard' : route || (areAllLessonsComplete() ? 'exam' : 'learn');
+    await loadDay(target, { updateUrl: Boolean(hash), render: false });
+
+    if (!hash) {
+      if (route === 'overview') state.view = 'dashboard';
+      else if (route === 'projects' || route === 'progress') state.view = route;
+    }
     render();
-    if (route === 'practice') window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'auto', block: 'start' }), 50);
   } catch (error) {
     renderFatal(error);
   }
