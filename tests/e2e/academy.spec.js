@@ -144,8 +144,8 @@ test('all 275 published coding reference queries execute against the registered 
     }
     return { checked, problems };
   });
+  expect(result.problems, JSON.stringify(result.problems, null, 2)).toEqual([]);
   expect(result.checked).toBe(275);
-  expect(result.problems, JSON.stringify(result.problems.slice(0, 20), null, 2)).toEqual([]);
 });
 
 test('the existing general SQL workspace remains available from topic practice', async ({ page }) => {
@@ -165,9 +165,13 @@ test('lesson, coding, exam and full workspace fit mobile and desktop viewports',
       await expect(page.locator(view === 'learn' ? '.lesson-content-title' : '#codingSqlEditor')).toBeVisible();
       const dimensions = await page.evaluate(() => ({
         viewport: document.documentElement.clientWidth,
-        document: document.documentElement.scrollWidth
+        document: document.documentElement.scrollWidth,
+        offenders: [...document.querySelectorAll('body *')].map(element => {
+          const rect = element.getBoundingClientRect();
+          return { tag: element.tagName, className: String(element.className || ''), right: Math.round(rect.right), width: Math.round(rect.width) };
+        }).filter(item => item.right > document.documentElement.clientWidth + 1).sort((a, b) => b.right - a.right).slice(0, 8)
       }));
-      expect(dimensions.document, view + ' horizontal overflow at ' + width + 'px').toBeLessThanOrEqual(dimensions.viewport + 1);
+      expect(dimensions.document, view + ' horizontal overflow at ' + width + 'px: ' + JSON.stringify(dimensions.offenders)).toBeLessThanOrEqual(dimensions.viewport + 1);
     }
   }
 });
