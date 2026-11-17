@@ -1,781 +1,783 @@
+import { CurriculumService } from './core/curriculum-service.js';
+import { createProgressStore } from './core/progress-store.js';
 import { SQLEngine } from '../../engines/sql-engine.js';
-import { progressStore } from './core/storage.js';
 
-const appRoot = document.querySelector('#app');
+const root = document.querySelector('#app');
+const curriculum = new CurriculumService();
+const progress = createProgressStore();
+const sql = new SQLEngine();
+let globalKeyboardHandlerBound = false;
+
 const state = {
-  manifest: null,
-  index: null,
   day: null,
   activeDay: 1,
   activeTopic: 0,
   activeQuestion: 0,
-  view: 'learn',
   teachingMode: 'teacher',
-  practiceTab: 'query',
-  selectedDataset: 'orders',
-  dataRegistry: null,
-  sqlEngine: null,
+  activeDataset: 'orders',
   searchIndex: null,
-  searchQuery: '',
-  searchResults: [],
   searchTimer: null,
-  projectSelection: null
+  engineReady: false,
+  lastQuery: '',
+  queryResult: null,
+  queryError: '',
+  sqlDraft: '',
+  notice: '',
+  theme: localStorage.getItem('ahk_academy_theme') === 'dark' ? 'dark' : 'light'
 };
 
-const $ = (selector, root = document) => root.querySelector(selector);
-const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, char => ({
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;'
+const $ = (selector, parent = document) => parent.querySelector(selector);
+const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector)];
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[char]));
-
-const TEACHING_MODES = [
-  { id: 'teacher', label: 'Teacher', description: 'Instructor-led lesson' },
-  { id: 'explain', label: 'Explain', description: 'Concept in plain language' },
-  { id: 'detailedlearning', label: 'Deep learning', description: 'Detailed reasoning and application' },
-  { id: 'expose', label: 'Analyst mindset', description: 'How analysts think at work' }
+const formatNumber = value => new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(value);
+const groups = [
+  { name: 'SQL', start: 1, end: 25 },
+  { name: 'Excel', start: 26, end: 50 },
+  { name: 'Power BI & DAX', start: 51, end: 75 },
+  { name: 'Python & Pandas', start: 76, end: 100 }
 ];
-
-const PROJECTS = [
-  {
-    id: 'retail-performance',
-    track: 'SQL · Excel',
-    level: 'Intermediate',
-    title: 'Retail Sales & Profitability Review',
-    brief: 'Prepare an auditable sales and margin review for a commercial director. Identify weak categories, regional differences, discount exposure and the products that require follow-up.',
-    deliverables: ['Clean transaction extract', 'Category and region KPI summary', 'Profitability exceptions', 'Management recommendations'],
-    outcome: 'A decision-ready trading review with traceable calculations.'
-  },
-  {
-    id: 'customer-value',
-    track: 'SQL · Python',
-    level: 'Advanced',
-    title: 'Customer Value & Retention Analysis',
-    brief: 'Build a customer-level view from transaction data. Segment customers by revenue contribution, purchase frequency and recency, then identify retention opportunities.',
-    deliverables: ['Customer-level analytical table', 'Segment definitions', 'High-value customer profile', 'Retention action plan'],
-    outcome: 'A customer segmentation analysis that supports targeted commercial action.'
-  },
-  {
-    id: 'executive-bi',
-    track: 'Power BI · DAX',
-    level: 'Advanced',
-    title: 'Executive Performance Dashboard',
-    brief: 'Design a management report that connects revenue, profit, orders and margin trends. Include clear metric definitions, time comparisons and drill-down paths.',
-    deliverables: ['KPI dictionary', 'Star-schema model', 'DAX measures', 'Executive report pages'],
-    outcome: 'A governed dashboard with consistent KPI definitions.'
-  },
-  {
-    id: 'operations-review',
-    track: 'Excel · Power BI',
-    level: 'Intermediate',
-    title: 'Operations & Service-Level Review',
-    brief: 'Investigate delivery performance and operational exceptions. Compare shipping modes, highlight unusual delays and prepare an action-focused summary.',
-    deliverables: ['Validated date fields', 'Service-level calculations', 'Exception analysis', 'Operations action log'],
-    outcome: 'A practical review that helps operations teams prioritize process issues.'
-  }
-];
-
-function appVersion() {
-  return state.manifest?.version || 'local';
-}
-
-async function fetchJSON(path) {
-  const url = './' + path + '?v=' + encodeURIComponent(appVersion());
-  const response = await fetch(url, { cache: 'no-cache' });
-  if (!response.ok) throw new Error(path + ' returned HTTP ' + response.status);
-  return response.json();
-}
-
-async function fetchText(path) {
-  const url = './' + path + '?v=' + encodeURIComponent(appVersion());
-  const response = await fetch(url, { cache: 'no-cache' });
-  if (!response.ok) throw new Error(path + ' returned HTTP ' + response.status);
-  return response.text();
-}
+const modeLabels = {
+  teacher: 'Teacher',
+  explain: 'Explain',
+  detailedlearning: 'Deep learning',
+  expose: 'Analyst mindset'
+};
 
 function publishedThrough() {
-  return Number(state.manifest?.release_control?.published_through_day || state.index?.published_through_day || 0);
+  return curriculum.getPublishedThrough();
 }
 
-function dayMeta(day) {
-  return state.index?.days?.find(item => Number(item.day) === Number(day));
+function totalQuestions(day = state.day) {
+  return (day?.topics || []).reduce((sum, topic) => sum + (topic.questions?.length || 0), 0);
 }
 
-function dayQuestions(day) {
-  return (day?.topics || []).reduce((total, topic) => total + (topic.questions?.length || 0), 0);
+function getTopic() {
+  return state.day?.topics?.[state.activeTopic] || null;
 }
 
-function currentQuestion() {
-  return state.day?.topics?.[state.activeTopic]?.questions?.[state.activeQuestion] || null;
+function getQuestion() {
+  return getTopic()?.questions?.[state.activeQuestion] || null;
 }
 
-function isUnlocked(day) {
-  return progressStore.isDayUnlocked(day, publishedThrough());
+function selectedTaskStatus(question = getQuestion()) {
+  if (!question || !state.day) return 'not_started';
+  return progress.getTaskStatus(state.activeDay, state.activeTopic, state.activeQuestion);
 }
 
-function toast(message, tone = 'info') {
-  const element = $('#academyToast');
-  if (!element) return;
-  element.textContent = message;
-  element.dataset.tone = tone;
-  element.classList.add('visible');
-  window.clearTimeout(toast.timer);
-  toast.timer = window.setTimeout(() => element.classList.remove('visible'), 2800);
+function unlockedDay() {
+  for (let day = publishedThrough(); day >= 1; day -= 1) {
+    if (progress.canOpenDay(day, publishedThrough())) return day;
+  }
+  return 1;
 }
 
-function setBusy(value) {
-  appRoot.setAttribute('aria-busy', value ? 'true' : 'false');
+function showNotice(message, type = 'info') {
+  state.notice = message;
+  const live = $('#globalNotice');
+  if (live) {
+    live.textContent = message;
+    live.dataset.type = type;
+    live.hidden = false;
+  }
 }
 
-function updateHash(day) {
-  history.replaceState(null, '', '#day-' + String(day).padStart(2, '0'));
+function clearNotice() {
+  state.notice = '';
+  const live = $('#globalNotice');
+  if (live) live.hidden = true;
+}
+
+function updateUrl() {
+  const url = new URL(window.location.href);
+  url.hash = `day-${String(state.activeDay).padStart(2, '0')}`;
+  history.replaceState(null, '', url);
 }
 
 async function loadDay(day, options = {}) {
-  const target = Number(day);
-  if (!isUnlocked(target)) {
-    toast('Complete the previous published day to unlock this lesson.', 'warning');
+  const n = Number(day);
+  if (!progress.canOpenDay(n, publishedThrough())) {
+    showNotice(n > publishedThrough()
+      ? `Day ${n} has not been published yet.`
+      : `Complete Day ${n - 1} to unlock Day ${n}.`, 'warning');
     return;
   }
-
-  const meta = dayMeta(target);
-  if (!meta?.file) {
-    toast('This curriculum resource is not available yet.', 'warning');
-    return;
-  }
-
-  state.activeDay = target;
-  state.activeTopic = Number(options.topic || 0);
-  state.activeQuestion = Number(options.question || 0);
+  clearNotice();
+  state.activeDay = n;
+  state.activeTopic = 0;
+  state.activeQuestion = 0;
   state.teachingMode = 'teacher';
-  state.view = 'learn';
-  progressStore.setActiveDay(target);
-  setBusy(true);
-  appRoot.innerHTML = '<div class="academy-loading"><span class="loading-mark">AHK</span><strong>Preparing your learning workspace</strong><span>Loading Day ' + target + ' curriculum…</span></div>';
-
+  state.queryResult = null;
+  state.queryError = '';
+  state.sqlDraft = '';
+  progress.setActiveDay(n);
   try {
-    state.day = await fetchJSON('curriculum/' + meta.file);
-    const topicCount = state.day.topics?.length || 0;
-    state.activeTopic = Math.min(state.activeTopic, Math.max(0, topicCount - 1));
-    const questionCount = state.day.topics?.[state.activeTopic]?.questions?.length || 0;
-    state.activeQuestion = Math.min(state.activeQuestion, Math.max(0, questionCount - 1));
-    render();
-    updateHash(target);
-    window.scrollTo({ top: 0, behavior: 'auto' });
+    state.day = await curriculum.getDay(n);
+    renderApp({ preserveScroll: options.preserveScroll === true });
+    updateUrl();
+    if (options.focus !== false) {
+      const heading = $('#lessonTitle');
+      heading?.focus({ preventScroll: true });
+    }
   } catch (error) {
     renderFatal(error);
-  } finally {
-    setBusy(false);
   }
 }
 
 function renderFatal(error) {
-  appRoot.innerHTML = '<main class="academy-fatal"><div class="fatal-card"><span class="eyebrow">AHK Academy · Runtime</span><h1>The learning workspace could not load.</h1><p>' +
-    escapeHTML(error?.message || 'An unexpected error occurred.') +
-    '</p><button type="button" class="button button-primary" data-action="retry">Retry loading</button></div></main>';
-  setBusy(false);
+  root.innerHTML = `
+    <main class="fatal-screen" role="main">
+      <section class="fatal-card">
+        <div class="brand-mark">AHK</div>
+        <p class="eyebrow">AHK Academy · Runtime</p>
+        <h1>We could not load your learning workspace.</h1>
+        <p class="muted">${escapeHtml(error?.message || 'An unexpected error occurred.')}</p>
+        <button class="button button-primary" id="retryBoot" type="button">Try again</button>
+      </section>
+    </main>`;
+  $('#retryBoot')?.addEventListener('click', boot);
 }
 
 function renderHeader() {
-  const items = [
-    ['learn', 'Learn'],
-    ['practice', 'Practice'],
-    ['projects', 'Projects'],
-    ['progress', 'Progress']
-  ];
-  return '<header class="academy-header"><div class="academy-header-inner">' +
-    '<a class="academy-brand" href="./" aria-label="AHK Academy Data Analyst Learning Hub home" data-view="learn"><span class="brand-mark">AHK</span><span class="brand-copy"><strong>AHK Academy</strong><small>Data Analyst Learning Hub</small></span></a>' +
-    '<nav class="academy-nav" aria-label="Main navigation">' +
-    items.map(([id, label]) => '<button type="button" class="nav-button ' + (state.view === id ? 'active' : '') + '" data-view="' + id + '">' + label + '</button>').join('') +
-    '</nav>' +
-    '<div class="academy-search-wrap"><label class="search-box"><span aria-hidden="true">⌕</span><input id="academySearch" type="search" value="' + escapeHTML(state.searchQuery) + '" placeholder="Search lessons and tasks" autocomplete="off" aria-label="Search lessons, topics and business requests"><kbd>Ctrl K</kbd></label><div id="academySearchResults" class="search-results" hidden></div></div>' +
-    '<div class="learner-chip"><span class="learner-avatar">AK</span><span><strong>Learner workspace</strong><small>Progress saved on this device</small></span></div>' +
-    '</div></header>';
+  return `
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#top" aria-label="AHK Academy home">
+          <span class="brand-mark">AHK</span>
+          <span class="brand-copy"><strong>AHK Academy</strong><small>Data Analyst Learning Hub</small></span>
+        </a>
+        <button class="mobile-menu-button" id="mobileMenuButton" type="button" aria-expanded="false" aria-controls="primaryNav" aria-label="Open navigation">☰</button>
+        <nav class="primary-nav" id="primaryNav" aria-label="Main navigation">
+          <a href="#lesson" data-nav="lesson" class="nav-link active">Learn</a>
+          <a href="#practice" data-nav="practice" class="nav-link">Practice</a>
+          <a href="#projects" data-nav="projects" class="nav-link">Projects</a>
+          <a href="#progress" data-nav="progress" class="nav-link">Progress</a>
+        </nav>
+        <div class="header-tools">
+          <div class="search-wrap">
+            <label class="sr-only" for="globalSearch">Search lessons and business requests</label>
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="globalSearch" type="search" placeholder="Search lessons, topics…" autocomplete="off">
+            <kbd>Ctrl K</kbd>
+            <div class="search-results" id="searchResults" role="listbox" aria-label="Search results" hidden></div>
+          </div>
+          <button class="icon-button theme-toggle" id="themeToggle" type="button" aria-label="${state.theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}" title="Switch theme">◐</button>
+        </div>
+      </div>
+    </header>`;
 }
 
-function renderSidebar() {
-  const groups = [
-    { title: 'SQL', start: 1, end: 25 },
-    { title: 'Excel', start: 26, end: 50 },
-    { title: 'Power BI & DAX', start: 51, end: 75 },
-    { title: 'Python & Pandas', start: 76, end: 100 }
-  ];
-  const published = publishedThrough();
-  const stateData = progressStore.getState();
-  const completed = stateData.completedDays.filter(day => day <= published).length;
-  let html = '<aside class="left-rail"><section class="panel roadmap-panel"><div class="panel-heading"><div><span class="eyebrow">YOUR LEARNING PATH</span><h2>100-Day Journey</h2><p>Business-first analyst training</p></div><span class="roadmap-count">' + published + '/100</span></div>' +
-    '<div class="release-summary"><div class="summary-line"><span>Published lessons</span><strong>' + published + ' / 100</strong></div><div class="mini-progress"><span style="width:' + Math.round(published) + '%"></span></div><div class="summary-line muted"><span>Completed days</span><strong>' + completed + '</strong></div></div><div class="roadmap-groups">';
+function renderHero() {
+  const stateData = progress.getState();
+  const completed = stateData.completedDays.length;
+  const pct = Math.round((completed / 100) * 100);
+  return `
+    <section class="hero" id="top" aria-labelledby="heroTitle">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="eyebrow-dot"></span> BUSINESS-FIRST · 100-DAY PROGRAM</p>
+        <h1 id="heroTitle">Become the analyst<br><span>businesses rely on.</span></h1>
+        <p class="hero-description">A structured, hands-on journey through SQL, Excel, Power BI and Python. Learn the concept, solve real stakeholder requests and build practical analytical judgment.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#lesson">Continue learning <span aria-hidden="true">→</span></a>
+          <a class="text-link" href="#projects">Explore projects</a>
+        </div>
+        <div class="hero-trust"><span class="trust-check">✓</span> Practical business scenarios <span class="trust-separator">·</span> Local progress <span class="trust-separator">·</span> GitHub-published lessons</div>
+      </div>
+      <div class="hero-panel">
+        <div class="hero-panel-top"><span class="panel-label">YOUR LEARNING PATH</span><span class="live-indicator">${publishedThrough()} DAYS LIVE</span></div>
+        <div class="hero-number-row"><strong>${String(state.activeDay).padStart(2, '0')}</strong><span> / 100<br><small>current day</small></span></div>
+        <div class="hero-progress-track"><span style="width:${pct}%"></span></div>
+        <div class="hero-panel-foot"><span>${completed} days completed</span><strong>${pct}%</strong></div>
+        <div class="track-mini-list">${groups.map(group => `<div class="track-mini"><span>${escapeHtml(group.name)}</span><span>${group.start}–${group.end}</span><i class="${state.activeDay >= group.start && state.activeDay <= group.end ? 'is-current' : ''}"></i></div>`).join('')}</div>
+      </div>
+    </section>
+    <section class="metric-strip" aria-label="Program overview">
+      <div class="metric"><strong>100</strong><span>learning days</span></div>
+      <div class="metric"><strong>4</strong><span>core analyst tools</span></div>
+      <div class="metric"><strong>5</strong><span>topics per day</span></div>
+      <div class="metric"><strong>15</strong><span>business tasks per day</span></div>
+      <div class="metric"><strong>${publishedThrough()}</strong><span>days published</span></div>
+    </section>`;
+}
 
-  for (const group of groups) {
-    html += '<section class="roadmap-group"><h3>' + escapeHTML(group.title) + '</h3><div class="day-list">';
-    for (let day = group.start; day <= group.end; day += 1) {
-      const meta = dayMeta(day);
-      const publishedDay = day <= published && !!meta;
-      const unlocked = publishedDay && isUnlocked(day);
-      const isCurrent = day === state.activeDay;
-      const isComplete = progressStore.isDayCompleted(day);
-      const title = meta?.title?.replace(/^.*?—\s*/, '') || 'Content not published';
-      html += '<button type="button" class="day-button ' + (isCurrent ? 'current ' : '') + (isComplete ? 'completed ' : '') + (!unlocked ? 'locked' : '') + '" data-day="' + day + '" ' + (!unlocked ? 'disabled' : '') + ' aria-current="' + (isCurrent ? 'page' : 'false') + '" title="' + escapeHTML(title) + '">' +
-        '<span class="day-topline"><span>DAY ' + String(day).padStart(2, '0') + '</span><span class="day-state">' + (isComplete ? 'DONE' : unlocked ? 'OPEN' : publishedDay ? 'LOCKED' : 'SOON') + '</span></span>' +
-        '<span class="day-name">' + escapeHTML(title) + '</span></button>';
-    }
-    html += '</div></section>';
+function renderDayList() {
+  return `
+    <aside class="curriculum-rail panel" aria-label="100-day curriculum">
+      <div class="rail-heading">
+        <div><p class="eyebrow">CURRICULUM</p><h2>100-Day Journey</h2></div>
+        <span class="published-count">${publishedThrough()}/100</span>
+      </div>
+      <div class="rail-progress"><span style="width:${progress.getState().completedDays.length}%"></span></div>
+      <p class="rail-caption">Complete each day to unlock the next lesson.</p>
+      <div class="day-groups">
+        ${groups.map(group => `
+          <section class="day-group" aria-label="${escapeHtml(group.name)} track">
+            <div class="track-heading"><span>${escapeHtml(group.name)}</span><span>${group.start}–${group.end}</span></div>
+            ${Array.from({ length: group.end - group.start + 1 }, (_, index) => group.start + index).map(day => {
+              const meta = curriculum.getDayMeta(day);
+              const isPublished = day <= publishedThrough() && !!meta;
+              const isUnlocked = isPublished && progress.canOpenDay(day, publishedThrough());
+              const isComplete = progress.isDayCompleted(day);
+              const isActive = day === state.activeDay;
+              const title = meta?.title?.replace(/^.*?—\s*/, '') || 'Content not published';
+              const label = `Day ${String(day).padStart(2, '0')}: ${title}`;
+              return `<button class="day-button ${isActive ? 'active' : ''} ${isComplete ? 'completed' : ''} ${!isUnlocked ? 'locked' : ''}" type="button" data-day="${day}" ${!isUnlocked ? 'disabled' : ''} aria-current="${isActive ? 'page' : 'false'}" aria-label="${escapeHtml(label)}">
+                <span class="day-button-main"><span class="day-number">${String(day).padStart(2, '0')}</span><span class="day-copy"><strong>Day ${String(day).padStart(2, '0')}</strong><small>${escapeHtml(title)}</small></span></span>
+                <span class="day-status" title="${isComplete ? 'Completed' : isUnlocked ? 'Available' : isPublished ? `Complete Day ${day - 1} to unlock` : 'Not published'}">${isComplete ? '✓' : isUnlocked ? 'OPEN' : isPublished ? 'LOCKED' : 'SOON'}</span>
+              </button>`;
+            }).join('')}
+          </section>`).join('')}
+      </div>
+    </aside>`;
+}
+
+function getModeContent(topic, mode) {
+  const teaching = topic?.teaching || {};
+  const aliases = {
+    teacher: ['teacher', 'teaching'],
+    explain: ['explain', 'explanation'],
+    detailedlearning: ['detailedlearning', 'detailed_learning', 'deep_learning'],
+    expose: ['expose', 'analyst_mindset', 'mindset']
+  };
+  for (const key of aliases[mode] || []) {
+    if (teaching[key]) return teaching[key];
   }
-  html += '</div></section></aside>';
-  return html;
+  return 'This lesson mode has not been written for this topic yet.';
+}
+
+function getExample(topic) {
+  const teaching = topic?.teaching || {};
+  return teaching.example || teaching.example_sql || teaching.syntax || teaching.expected_sql || '';
+}
+
+function renderTopicTabs() {
+  return `<div class="topic-tabs" role="tablist" aria-label="Daily topics">
+    ${(state.day?.topics || []).map((topic, index) => `<button class="topic-tab ${index === state.activeTopic ? 'active' : ''}" type="button" role="tab" aria-selected="${index === state.activeTopic}" data-topic="${index}" id="topicTab${index}">
+      <span>0${index + 1}</span><strong>${escapeHtml(topic.title)}</strong>
+    </button>`).join('')}
+  </div>`;
+}
+
+function renderSafeMarkdown(source) {
+  const escaped = escapeHtml(source || '');
+  const lines = escaped.split(/\r?\n/);
+  const output = [];
+  let paragraph = [];
+  let list = [];
+  const inline = text => text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+  const flushParagraph = () => { if (paragraph.length) { output.push(`<p>${inline(paragraph.join(' '))}</p>`); paragraph = []; } };
+  const flushList = () => { if (list.length) { output.push(`<ul>${list.map(item => `<li>${inline(item)}</li>`).join('')}</ul>`); list = []; } };
+  for (const line of lines) {
+    const heading = line.match(/^(#{1,4})\s+(.+)$/);
+    const bullet = line.match(/^\s*[-*]\s+(.+)$/);
+    if (heading) { flushParagraph(); flushList(); const level = Math.min(4, heading[1].length + 1); output.push(`<h${level}>${inline(heading[2])}</h${level}>`); }
+    else if (bullet) { flushParagraph(); list.push(bullet[1]); }
+    else if (!line.trim()) { flushParagraph(); flushList(); }
+    else { flushList(); paragraph.push(line.trim()); }
+  }
+  flushParagraph(); flushList();
+  return output.join('');
 }
 
 function renderTeaching(topic) {
-  const teaching = topic?.teaching || {};
-  const mode = TEACHING_MODES.find(item => item.id === state.teachingMode) || TEACHING_MODES[0];
-  const content = teaching[mode.id] || teaching.explain || topic?.business_skill || 'This lesson content will be added in a future curriculum revision.';
-  const example = teaching.example || teaching.example_sql || teaching.syntax || teaching.expected_sql || '';
-  const tabs = TEACHING_MODES.map(item => {
-    const selected = item.id === state.teachingMode;
-    return '<button type="button" role="tab" id="teaching-tab-' + escapeHTML(item.id) + '" aria-controls="teaching-panel" aria-selected="' + selected + '" tabindex="' + (selected ? '0' : '-1') + '" class="mode-tab ' + (selected ? 'active' : '') + '" data-mode="' + escapeHTML(item.id) + '"><strong>' + escapeHTML(item.label) + '</strong><small>' + escapeHTML(item.description) + '</small></button>';
-  }).join('');
-
-  return '<section class="teaching-panel" id="examples"><div class="section-heading"><div><span class="eyebrow">LEARN THE CONCEPT</span><h3>Teaching workspace</h3></div><span class="content-tag">Guided lesson</span></div>' +
-    '<div class="mode-tabs" role="tablist" aria-label="Teaching modes">' + tabs + '</div>' +
-    '<div class="teaching-copy" id="teaching-panel" role="tabpanel" aria-labelledby="teaching-tab-' + escapeHTML(mode.id) + '"><div class="teaching-mode-label">' + escapeHTML(mode.label) + '</div><div class="teaching-text">' + escapeHTML(content) + '</div></div>' +
-    (example ? '<div class="example-card"><div class="example-card-head"><div><span class="eyebrow">WORKED EXAMPLE</span><strong>Apply the concept</strong></div><button type="button" class="button button-quiet button-small" data-action="copy-example">Copy example</button></div><pre><code>' + escapeHTML(example) + '</code></pre></div>' : '') +
-    '</section>';
+  const mode = state.teachingMode;
+  const content = getModeContent(topic, mode);
+  const example = getExample(topic);
+  return `
+    <section class="teaching-card" aria-labelledby="teachingHeading">
+      <div class="section-heading"><div><p class="eyebrow">LEARN THE CONCEPT</p><h3 id="teachingHeading">${escapeHtml(modeLabels[mode])}</h3></div><span class="section-counter">0${state.activeTopic + 1} / 05</span></div>
+      <div class="mode-switcher" role="tablist" aria-label="Teaching mode">
+        ${Object.entries(modeLabels).map(([key, label]) => `<button type="button" role="tab" aria-selected="${key === mode}" class="mode-tab ${key === mode ? 'active' : ''}" data-mode="${key}">${escapeHtml(label)}</button>`).join('')}
+      </div>
+      <div class="teaching-content markdown-content" role="tabpanel" aria-label="${escapeHtml(modeLabels[mode])}">${renderSafeMarkdown(content)}</div>
+      ${example ? `<div class="worked-example"><div class="example-header"><div><p class="eyebrow">WORKED EXAMPLE</p><strong>Apply the concept</strong></div><button type="button" class="button button-quiet copy-example" data-copy="${escapeHtml(example)}">Copy example</button></div><pre><code>${escapeHtml(example)}</code></pre></div>` : ''}
+    </section>`;
 }
 
-function renderQuestionCard(question, topicIndex, questionIndex) {
-  const solved = progressStore.isSolved(state.activeDay, topicIndex, questionIndex);
-  const status = solved ? 'Reviewed' : 'Not reviewed';
-  const output = Array.isArray(question.output) ? question.output.join(' · ') : (question.required_output || 'Business-ready analytical result');
-  const hint = question.validation || question.success_criteria || question.request || 'Identify the required fields, filters and calculations before writing your solution.';
-  return '<article class="question-card ' + (solved ? 'solved' : '') + '" data-task="' + topicIndex + ':' + questionIndex + '">' +
-    '<div class="question-card-head"><div class="question-label"><span class="question-number">Q' + (questionIndex + 1) + '</span><span class="stakeholder">' + escapeHTML(question.role || 'Business stakeholder') + '</span></div><span class="difficulty">' + escapeHTML(question.difficulty || 'Business task') + '</span></div>' +
-    '<p class="scenario-text">' + escapeHTML(question.scenario || '') + '</p><p class="request-text"><strong>Request</strong>' + escapeHTML(question.request || question.question || '') + '</p>' +
-    '<div class="deliverable"><span>Expected output</span><p>' + escapeHTML(output) + '</p></div>' +
-    '<div class="question-actions"><button type="button" class="button button-quiet button-small" data-task-action="hint" data-hint="' + escapeHTML(hint) + '">Show hint</button><button type="button" class="button button-secondary button-small" data-task-action="practice" data-topic="' + topicIndex + '" data-question="' + questionIndex + '">Practice this</button><button type="button" class="button button-complete button-small ' + (solved ? 'is-done' : '') + '" data-task-action="toggle" data-topic="' + topicIndex + '" data-question="' + questionIndex + '">' + (solved ? '✓ ' + status : 'Mark reviewed') + '</button></div>' +
-    '<div class="hint-panel" hidden></div></article>';
-}
-
-function renderTopic(topic, index) {
-  if (!topic) return '<div class="empty-state">No topic is available for this day.</div>';
-  const questions = topic.questions || [];
-  const solved = questions.filter((question, questionIndex) => progressStore.isSolved(state.activeDay, index, questionIndex)).length;
-  return '<section class="topic-section"><div class="topic-title-row"><div><span class="eyebrow">TOPIC ' + String(index + 1).padStart(2, '0') + '</span><h2>' + escapeHTML(topic.title) + '</h2><p>' + escapeHTML(topic.business_skill || 'Apply this skill to a practical business request.') + '</p></div><span class="topic-counter">' + solved + '/' + questions.length + ' reviewed</span></div>' +
-    renderTeaching(topic) +
-    '<section class="business-requests"><div class="section-heading"><div><span class="eyebrow">PRACTICAL APPLICATION</span><h3>Business requests</h3></div><span class="content-tag">' + questions.length + ' tasks</span></div>' +
-    questions.map((question, questionIndex) => renderQuestionCard(question, index, questionIndex)).join('') + '</section></section>';
+function renderTaskCard(question, index) {
+  const status = progress.getTaskStatus(state.activeDay, state.activeTopic, index);
+  const isActive = index === state.activeQuestion;
+  const canSelfComplete = status === 'attempted' || status === 'completed';
+  return `
+    <article class="task-card ${isActive ? 'selected' : ''} ${status === 'completed' ? 'is-complete' : ''}" data-task-card="${index}">
+      <button class="task-card-select" type="button" data-question="${index}" aria-pressed="${isActive}">
+        <span class="task-index">Q${index + 1}</span>
+        <span class="task-summary"><span class="task-meta">${escapeHtml(question.role || 'Stakeholder')} · ${escapeHtml(question.difficulty || 'Business task')}</span><strong>${escapeHtml(question.request || question.question || 'Business analysis task')}</strong></span>
+        <span class="task-state">${status === 'completed' ? '✓ Done' : status === 'attempted' ? 'Attempted' : 'Start →'}</span>
+      </button>
+      <div class="task-details ${isActive ? 'expanded' : ''}">
+        <p>${escapeHtml(question.scenario || '')}</p>
+        <div class="deliverable"><strong>Expected output</strong><span>${escapeHtml(Array.isArray(question.output) ? question.output.join(' · ') : question.required_output || 'A business-ready analytical result')}</span></div>
+        <div class="task-actions">
+          <button type="button" class="button button-quiet" data-hint="${index}">Show hint</button>
+          <button type="button" class="button button-primary" data-solve="${index}">Open in practice</button>
+          <button type="button" class="button ${status === 'completed' ? 'button-success' : 'button-outline'}" data-complete-task="${index}" ${!canSelfComplete ? 'disabled title="Run a successful SQL query for this task first."' : ''}>${status === 'completed' ? 'Completed ✓' : 'Self-assess complete'}</button>
+        </div>
+        ${!canSelfComplete && status !== 'completed' ? '<small class="task-note">Run a successful query in the practice workspace before self-assessing this task.</small>' : ''}
+      </div>
+    </article>`;
 }
 
 function renderLesson() {
-  const day = state.day;
-  const topics = day?.topics || [];
-  const solved = progressStore.getSolvedCount(state.activeDay);
-  const total = dayQuestions(day);
-  const completed = progressStore.isDayCompleted(state.activeDay);
-  const question = currentQuestion();
-  const topic = topics[state.activeTopic];
-  return '<div class="page-grid">' + renderSidebar() + '<section class="lesson-column">' +
-    '<div class="lesson-breadcrumb"><span>Learning path</span><span>/</span><strong>' + escapeHTML(day.track) + '</strong><span>/</span><strong>Day ' + String(day.day).padStart(2, '0') + '</strong></div>' +
-    '<section class="lesson-hero"><div class="hero-topline"><span class="eyebrow">' + escapeHTML(day.track) + ' · DAY ' + String(day.day).padStart(2, '0') + '</span><span class="release-pill">Published lesson</span></div><h1>' + escapeHTML(day.title) + '</h1><p>' + escapeHTML(day.description || day.learning_objectives?.[0] || 'Build practical analytical capability through guided business learning.') + '</p>' +
-    '<div class="hero-metrics"><div><strong>' + topics.length + '</strong><span>Topics</span></div><div><strong>' + total + '</strong><span>Business requests</span></div><div><strong>' + (day.estimated_time_minutes || 45) + ' min</strong><span>Estimated time</span></div><div><strong>' + solved + '/' + total + '</strong><span>Reviewed</span></div></div></section>' +
-    '<section class="topic-navigator panel"><div class="section-heading"><div><span class="eyebrow">LESSON PLAN</span><h2>Today’s topics</h2></div><span class="content-tag">Follow in sequence</span></div><div class="topic-nav-list">' +
-    topics.map((item, index) => {
-      const topicSolved = (item.questions || []).filter((question, qi) => progressStore.isSolved(state.activeDay, index, qi)).length;
-      return '<button type="button" class="topic-nav-button ' + (index === state.activeTopic ? 'active' : '') + '" data-topic="' + index + '" aria-current="' + (index === state.activeTopic ? 'step' : 'false') + '"><span class="topic-nav-number">' + String(index + 1).padStart(2, '0') + '</span><span class="topic-nav-copy"><strong>' + escapeHTML(item.title) + '</strong><small>' + topicSolved + '/' + (item.questions?.length || 0) + ' tasks reviewed</small></span><span class="topic-nav-arrow">›</span></button>';
-    }).join('') +
-    '</div></section>' +
-    renderTopic(topic, state.activeTopic) +
-    '<section class="day-checkpoint panel"><div><span class="eyebrow">DAILY CHECKPOINT</span><h3>' + (completed ? 'Day completed' : 'Finish this learning day') + '</h3><p>' + solved + ' of ' + total + ' business requests reviewed. Progress is stored locally on this device.</p></div><button type="button" class="button button-primary" data-action="complete-day" ' + (completed || solved < total ? 'disabled' : '') + '>' + (completed ? 'Completed ✓' : 'Complete day') + '</button></section>' +
-    '</section>' + renderRightRail(question) + '</div>';
-}
-
-function renderRightRail(question) {
-  const questions = state.day?.topics?.[state.activeTopic]?.questions || [];
-  const title = question?.title || 'Stakeholder request';
-  return '<aside class="right-rail"><section class="panel request-panel" id="businessCase"><div class="section-heading"><div><span class="eyebrow">REAL-WORLD SCENARIO</span><h2>Business request</h2></div><span class="question-position">Q' + (state.activeQuestion + 1) + ' / ' + questions.length + '</span></div>' +
-    '<div class="request-switcher">' + questions.map((item, index) => '<button type="button" class="request-chip ' + (index === state.activeQuestion ? 'active' : '') + '" data-question="' + index + '" aria-pressed="' + (index === state.activeQuestion) + '">Q' + (index + 1) + '</button>').join('') + '</div>' +
-    '<span class="request-stakeholder">' + escapeHTML(question?.role || 'Stakeholder') + '</span><h3 class="request-title">' + escapeHTML(title) + '</h4><p class="request-scenario">' + escapeHTML(question?.scenario || 'Select a business request to see its scenario.') + '</p>' +
-    '<div class="request-task"><span>What you need to deliver</span><strong>' + escapeHTML(question?.request || question?.question || 'Translate the request into a reproducible analytical output.') + '</strong></div>' +
-    '<div class="request-output"><span>Expected output</span><p>' + escapeHTML(Array.isArray(question?.output) ? question.output.join(' · ') : (question?.required_output || 'A clear, auditable analytical result')) + '</p></div>' +
-    '</section>' + renderPractice() + '</aside>';
+  const topic = getTopic();
+  const questionCount = totalQuestions();
+  const completed = progress.countCompletedTasks(state.activeDay);
+  const title = state.day?.title || `Day ${state.activeDay}`;
+  return `
+    <section class="lesson-column" id="lesson" aria-labelledby="lessonTitle">
+      <div class="lesson-intro">
+        <div class="breadcrumb"><span>Learning path</span><span aria-hidden="true">/</span><span>${escapeHtml(state.day?.track || '')}</span><span aria-hidden="true">/</span><strong>Day ${String(state.activeDay).padStart(2, '0')}</strong></div>
+        <p class="eyebrow">${escapeHtml(state.day?.track || '')} · DAY ${String(state.activeDay).padStart(2, '0')}</p>
+        <h2 id="lessonTitle" tabindex="-1">${escapeHtml(title)}</h2>
+        <p class="lesson-description">${escapeHtml(state.day?.description || state.day?.learning_objectives?.[0] || 'Build practical analytical capability through business-first lessons.')}</p>
+        <div class="lesson-meta"><span>5 topics</span><span>15 business requests</span><span>${state.day?.estimated_time_minutes || 45} min estimated</span><span>${completed}/${questionCount} completed</span></div>
+      </div>
+      <div class="daily-progress-card">
+        <div class="progress-title"><div><strong>Today's progress</strong><small>${completed} of ${questionCount} tasks self-assessed complete</small></div><b>${Math.round(completed / Math.max(questionCount, 1) * 100)}%</b></div>
+        <div class="progress-track"><span style="width:${completed / Math.max(questionCount, 1) * 100}%"></span></div>
+      </div>
+      ${renderTopicTabs()}
+      ${topic ? `<div class="topic-heading-block"><div><p class="eyebrow">TOPIC ${String(state.activeTopic + 1).padStart(2, '0')}</p><h3>${escapeHtml(topic.title)}</h3></div><span class="topic-skill">${escapeHtml(topic.business_skill || 'Apply the concept to a stakeholder request.')}</span></div>${renderTeaching(topic)}<section class="tasks-section"><div class="section-heading"><div><p class="eyebrow">APPLY YOUR KNOWLEDGE</p><h3>Business requests</h3><p class="muted">Work through each request as the analyst responsible for the deliverable.</p></div><span class="section-counter">3 tasks</span></div><div class="task-list">${(topic.questions || []).map(renderTaskCard).join('')}</div></section>` : '<p class="empty-state">This topic has no content yet.</p>'}
+      <div class="day-completion-panel"><div><p class="eyebrow">DAILY CHECKPOINT</p><strong>${completed === questionCount ? 'All tasks completed' : `${questionCount - completed} tasks remaining`}</strong><p>${completed === questionCount ? 'You have completed the self-assessment for every task in this day.' : 'Complete all 15 business requests to unlock the next published day.'}</p></div><button id="completeDayButton" type="button" class="button button-primary" ${completed < questionCount ? 'disabled' : ''}>Complete Day ${state.activeDay} <span aria-hidden="true">→</span></button></div>
+    </section>`;
 }
 
 function renderDatasetOptions() {
-  const datasets = state.dataRegistry?.datasets || [];
-  return datasets.filter(dataset => dataset.status !== 'disabled').map(dataset =>
-    '<option value="' + escapeHTML(dataset.id) + '" ' + (dataset.id === state.selectedDataset ? 'selected' : '') + '>' + escapeHTML(dataset.name) + ' · ' + Number(dataset.row_count || 0) + ' rows</option>'
+  return (curriculum.datasets?.datasets || []).filter(dataset => !dataset.status || dataset.status === 'active').map(dataset =>
+    `<option value="${escapeHtml(dataset.id)}" ${dataset.id === state.activeDataset ? 'selected' : ''}>${escapeHtml(dataset.name)} · ${dataset.row_count || ''} rows</option>`
   ).join('');
 }
 
-function renderPractice() {
-  const tabs = [
-    { id: 'query', label: 'SQL editor' },
-    { id: 'schema', label: 'Dataset schema' },
-    { id: 'task', label: 'Current task' }
-  ];
-  const tabsHTML = tabs.map(item => {
-    const selected = state.practiceTab === item.id;
-    return '<button type="button" role="tab" id="practice-tab-' + item.id + '" aria-controls="practice-pane-' + item.id + '" aria-selected="' + selected + '" tabindex="' + (selected ? '0' : '-1') + '" class="practice-tab ' + (selected ? 'active' : '') + '" data-practice-tab="' + item.id + '">' + item.label + '</button>';
-  }).join('');
-  const queryPane = '<label class="editor-label" for="sqlEditor">Write your query</label><textarea id="sqlEditor" class="sql-editor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="SQL query editor" placeholder="SELECT category, SUM(sales) AS total_sales&#10;FROM orders&#10;GROUP BY category;"></textarea><div class="editor-actions"><button type="button" class="button button-primary" data-action="run-query">▶ Run query</button><button type="button" class="button button-secondary" data-action="format-query">Format</button><button type="button" class="button button-quiet" data-action="clear-query">Clear</button><span id="engineStatus" class="engine-status" role="status">Engine ready to initialize</span></div><div id="queryResults" class="query-results" aria-live="polite"><div class="results-placeholder"><strong>Your query results will appear here.</strong><span>Start with a SELECT statement. The database is read-only.</span></div></div>';
-  const schemaPane = '<div id="datasetDetails" class="dataset-details"><button type="button" class="button button-secondary" data-action="load-preview">Load schema and sample rows</button></div>';
-  const taskPane = '<div class="active-task"><span class="eyebrow">ACTIVE BUSINESS REQUEST</span><strong>' + escapeHTML(currentQuestion()?.request || 'Choose a question from the lesson.') + '</strong><p>Use the stakeholder request as the specification for your analysis. Review the result before marking the task complete.</p></div>';
-  const pane = (id, content) => '<div id="practice-pane-' + id + '" role="tabpanel" aria-labelledby="practice-tab-' + id + '" class="practice-pane" data-pane="' + id + '" ' + (state.practiceTab !== id ? 'hidden' : '') + '>' + content + '</div>';
+function renderSelectedRequest() {
+  const question = getQuestion();
+  const status = selectedTaskStatus(question);
+  return `
+    <section class="request-panel panel" aria-labelledby="requestHeading">
+      <div class="panel-topline"><p class="eyebrow">YOUR BUSINESS BRIEF</p><span class="status-chip ${status === 'completed' ? 'success' : status === 'attempted' ? 'warning' : ''}">${status === 'completed' ? 'COMPLETED' : status === 'attempted' ? 'ATTEMPTED' : 'IN PROGRESS'}</span></div>
+      <h3 id="requestHeading">${escapeHtml(question?.role || 'Stakeholder request')}</h3>
+      <p class="request-scenario">${escapeHtml(question?.scenario || '')}</p>
+      <div class="request-callout"><small>WHAT YOU NEED TO DELIVER</small><strong>${escapeHtml(question?.request || question?.question || '')}</strong></div>
+      <div class="request-selector" aria-label="Select business request">${(getTopic()?.questions || []).map((item, index) => `<button type="button" class="request-chip ${index === state.activeQuestion ? 'active' : ''}" data-question="${index}" aria-pressed="${index === state.activeQuestion}">Q${index + 1}</button>`).join('')}</div>
+      <details class="hint-details"><summary>Need a hint?</summary><p>${escapeHtml(question?.validation || 'Identify the required columns, grain, filters and calculations before writing your query.')}</p></details>
+    </section>`;
+}
 
-  return '<section class="panel practice-panel" id="practice"><div class="section-heading practice-heading"><div><span class="eyebrow">HANDS-ON WORKSPACE</span><h2>SQL practice</h2><p>Run read-only SQL against the registered learning datasets.</p></div><span class="engine-badge"><i></i> Browser SQL</span></div>' +
-    '<div class="dataset-row"><label for="datasetSelect">Preview dataset</label><select id="datasetSelect" class="dataset-select">' + renderDatasetOptions() + '</select></div>' +
-    '<div class="practice-tabs" role="tablist" aria-label="Practice workspace">' + tabsHTML + '</div>' +
-    pane('query', queryPane) +
-    pane('schema', schemaPane) +
-    pane('task', taskPane) +
-    '<p class="practice-footnote">All registered datasets are loaded into the local SQL session when you run your first query. Table names use their dataset IDs with hyphens replaced by underscores.</p></section>';
+function renderResults() {
+  if (state.queryError) return `<div class="query-feedback error" role="alert"><strong>Query needs attention</strong><span>${escapeHtml(state.queryError)}</span></div>`;
+  if (!state.queryResult) return '<div class="results-empty">Your query results will appear here. Start with a SELECT statement.</div>';
+  const result = state.queryResult;
+  if (!result.rows.length) return '<div class="query-feedback success"><strong>Query executed successfully</strong><span>No rows matched the query conditions.</span></div>';
+  return `<div class="results-toolbar"><span>${result.totalRows} row(s) returned${result.truncated ? ` · showing first ${result.rows.length}` : ''}</span><span>${result.elapsed} ms</span></div><div class="results-table-wrap"><table class="results-table"><thead><tr>${result.columns.map(column => `<th scope="col">${escapeHtml(column)}</th>`).join('')}</tr></thead><tbody>${result.rows.map(row => `<tr>${result.columns.map(column => `<td>${escapeHtml(row[column])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+
+function renderPractice() {
+  const dataset = (curriculum.datasets?.datasets || []).find(item => item.id === state.activeDataset);
+  const sqlReadyText = state.engineReady ? 'SQL engine ready' : 'SQL engine loads when you run your first query';
+  const attempted = selectedTaskStatus() === 'attempted' || selectedTaskStatus() === 'completed';
+  return `
+    <section class="practice-panel panel" id="practice" aria-labelledby="practiceHeading">
+      <div class="practice-header"><div><p class="eyebrow">HANDS-ON WORKSPACE</p><h3 id="practiceHeading">Practice SQL</h3><p class="muted">Write and run your own query against the learning datasets.</p></div><span class="engine-badge ${state.engineReady ? 'ready' : ''}"><i></i>${sqlReadyText}</span></div>
+      <label class="field-label" for="datasetSelect">Active dataset</label>
+      <select id="datasetSelect" class="dataset-select">${renderDatasetOptions()}</select>
+      <div class="dataset-info"><span>${escapeHtml(dataset?.name || state.activeDataset)}</span><span>${dataset?.row_count || 0} rows registered</span></div>
+      <div class="practice-toolbar"><span class="editor-label">SQL EDITOR</span><div><button type="button" class="mini-button" id="formatSql">Format</button><button type="button" class="mini-button" id="clearSql">Clear</button></div></div>
+      <label class="sr-only" for="sqlEditor">SQL query editor</label>
+      <textarea id="sqlEditor" class="sql-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="SELECT region, SUM(sales) AS total_sales\nFROM orders\nGROUP BY region\nORDER BY total_sales DESC;">${escapeHtml(state.sqlDraft)}</textarea>
+      <div class="editor-footer"><span>Ctrl/⌘ + Enter to run</span><button type="button" class="button button-primary run-query" id="runSql">▶ Run query</button></div>
+      <div class="schema-preview" id="schemaPreview"><span>Dataset columns</span><div class="schema-pills">Select a dataset to inspect its columns.</div></div>
+      <div class="query-results" id="queryResults" aria-live="polite" aria-label="SQL query results">${renderResults()}</div>
+      <div class="self-assessment"><div><strong>Task self-assessment</strong><small>${attempted ? 'A successful query has been run for this task.' : 'Run a successful query for the selected task to enable completion.'}</small></div><button type="button" class="button ${selectedTaskStatus() === 'completed' ? 'button-success' : 'button-outline'}" id="completeSelectedTask" ${!attempted ? 'disabled' : ''}>${selectedTaskStatus() === 'completed' ? 'Completed ✓' : 'Mark task complete'}</button></div>
+      <p class="disclaimer">Completion is learner self-assessed after a successful query. Automated answer grading is not yet available for every question.</p>
+    </section>`;
 }
 
 function renderProjects() {
-  const selected = PROJECTS.find(project => project.id === state.projectSelection);
-  if (selected) {
-    return '<section class="content-view projects-view"><div class="view-heading"><div><span class="eyebrow">PORTFOLIO WORKSPACE</span><h1>Project brief</h1><p>Translate the learning path into a business-facing analytical deliverable.</p></div><button type="button" class="button button-secondary" data-action="back-projects">← All projects</button></div><article class="project-detail panel"><span class="project-track">' + escapeHTML(selected.track) + ' · ' + escapeHTML(selected.level) + '</span><h2>' + escapeHTML(selected.title) + '</h2><p>' + escapeHTML(selected.brief) + '</p><h3>Required deliverables</h3><ol>' + selected.deliverables.map(item => '<li>' + escapeHTML(item) + '</li>').join('') + '</ol><div class="project-outcome"><strong>Business outcome</strong><p>' + escapeHTML(selected.outcome) + '</p></div><p class="project-note">Project briefs are planning resources. Add your completed workbook, SQL script, dashboard or notebook to your portfolio when you finish the work.</p></article></section>';
-  }
-  return '<section class="content-view projects-view"><div class="view-heading"><div><span class="eyebrow">BUILD PROOF OF SKILL</span><h1>Analytical project library</h1><p>Practical project briefs designed around real business decisions, not isolated tool exercises.</p></div><span class="content-tag">4 project briefs</span></div><div class="project-grid">' +
-    PROJECTS.map(project => '<article class="project-card panel"><span class="project-track">' + escapeHTML(project.track) + '</span><h2>' + escapeHTML(project.title) + '</h2><p>' + escapeHTML(project.brief) + '</p><div class="project-meta"><span>' + escapeHTML(project.level) + '</span><span>' + project.deliverables.length + ' deliverables</span></div><button type="button" class="button button-secondary" data-project="' + project.id + '">Open project brief →</button></article>').join('') +
-    '</div></section>';
+  const projects = [
+    { name: 'Retail Performance & Profitability', level: 'FOUNDATION', tools: 'SQL · Excel · Power BI', outcome: 'Analyze revenue, margin, regional performance and product profitability.', dataset: 'orders', tag: 'Sales analytics' },
+    { name: 'Customer Segmentation & Retention', level: 'INTERMEDIATE', tools: 'SQL · Python · Power BI', outcome: 'Identify valuable customer groups, repeat behavior and retention signals.', dataset: 'customers + orders', tag: 'Customer analytics' },
+    { name: 'Product Portfolio Optimization', level: 'INTERMEDIATE', tools: 'SQL · Excel', outcome: 'Compare product performance, margin bands and portfolio concentration.', dataset: 'product-catalog + orders', tag: 'Product analytics' },
+    { name: 'Executive KPI Reporting Pack', level: 'ADVANCED', tools: 'Excel · DAX · Power BI', outcome: 'Design a management-ready KPI layer with definitions and decision commentary.', dataset: 'orders', tag: 'Business intelligence' }
+  ];
+  return `
+    <section class="content-section projects-section" id="projects" aria-labelledby="projectsHeading">
+      <div class="content-section-heading"><div><p class="eyebrow">BUILD A PORTFOLIO</p><h2 id="projectsHeading">Turn learning into evidence.</h2><p class="muted">Practice with realistic business problems and create work you can explain in an interview.</p></div><span class="section-counter">PROJECT LAB</span></div>
+      <div class="project-grid">${projects.map((project, index) => `
+        <article class="project-card">
+          <div class="project-card-top"><span class="project-number">0${index + 1}</span><span class="project-tag">${escapeHtml(project.tag)}</span></div>
+          <p class="eyebrow">${escapeHtml(project.level)}</p><h3>${escapeHtml(project.name)}</h3>
+          <p>${escapeHtml(project.outcome)}</p>
+          <div class="project-meta"><span>${escapeHtml(project.tools)}</span><small>Dataset: ${escapeHtml(project.dataset)}</small></div>
+          <a href="#lesson" class="project-link" data-project-start="${index}">Explore related lessons <span aria-hidden="true">→</span></a>
+        </article>`).join('')}</div>
+      <p class="section-footnote">Project briefs are learning pathways. Downloadable project files and formal project submission are planned for a future release.</p>
+    </section>`;
 }
 
 function renderProgress() {
-  const stats = progressStore.getStats(publishedThrough());
-  const stateData = progressStore.getState();
-  const publishedDays = state.index?.days || [];
-  const completedList = stateData.completedDays;
-  return '<section class="content-view progress-view"><div class="view-heading"><div><span class="eyebrow">LEARNING ANALYTICS</span><h1>Your progress</h1><p>Track completed work separately from the amount of curriculum currently published.</p></div><span class="content-tag">Saved on this device</span></div>' +
-    '<div class="progress-metric-grid"><article class="metric-card panel"><span>Questions reviewed</span><strong>' + stats.solvedQuestions + '</strong><small>Of ' + stats.publishedQuestions + ' published questions</small></article><article class="metric-card panel"><span>Days completed</span><strong>' + stats.completedDays + '</strong><small>Of 100 total days</small></article><article class="metric-card panel"><span>Published curriculum</span><strong>' + stats.publishedDays + '%</strong><small>' + stats.publishedDays + ' days available in the repository</small></article><article class="metric-card panel"><span>Published question review</span><strong>' + stats.courseCompletion + '%</strong><small>Based on currently published questions</small></article></div>' +
-    '<section class="panel progress-breakdown"><div class="section-heading"><div><span class="eyebrow">DAY-BY-DAY</span><h2>Published learning days</h2></div><span class="content-tag">' + publishedDays.length + ' available resources</span></div>' +
-    publishedDays.map(meta => {
-      const day = Number(meta.day);
-      const solved = progressStore.getSolvedCount(day);
-      const total = Number(meta.business_questions || 15);
-      const done = progressStore.isDayCompleted(day);
-      const unlocked = isUnlocked(day);
-      return '<div class="day-progress-row"><div class="day-progress-title"><strong>Day ' + String(day).padStart(2, '0') + '</strong><span>' + escapeHTML(meta.title.replace(/^.*?—\s*/, '')) + '</span></div><div class="day-progress-track"><span style="width:' + Math.min(100, (solved / Math.max(1, total)) * 100) + '%"></span></div><span class="day-progress-count">' + solved + '/' + total + '</span><span class="day-progress-status ' + (done ? 'done' : unlocked ? 'available' : 'locked') + '">' + (done ? 'Completed' : unlocked ? 'Available' : 'Locked') + '</span><button type="button" class="button button-quiet button-small" data-open-day="' + day + '" ' + (!unlocked ? 'disabled' : '') + '>Open</button></div>';
-    }).join('') +
-    '</section><div class="progress-note"><strong>How progress is calculated</strong><p>Question review counts only tasks you explicitly mark as reviewed. A day becomes complete only when all questions in that day are reviewed and you select Complete day. The next published day then unlocks.</p></div>' +
-    (completedList.length ? '<button type="button" class="button button-quiet" data-action="export-progress">Export my progress (JSON)</button>' : '') +
-    '</section>';
+  const saved = progress.getState();
+  const completedDays = saved.completedDays.length;
+  const published = publishedThrough();
+  const completedTasks = Object.entries(saved.tasks).filter(([, status]) => status === 'completed').length;
+  const attemptedTasks = Object.entries(saved.tasks).filter(([, status]) => status === 'attempted' || status === 'completed').length;
+  const pct = Math.round(completedDays / 100 * 100);
+  const currentCompleted = progress.countCompletedTasks(state.activeDay);
+  return `
+    <section class="content-section progress-section" id="progress" aria-labelledby="progressHeading">
+      <div class="content-section-heading"><div><p class="eyebrow">YOUR LEARNING RECORD</p><h2 id="progressHeading">Progress you can measure.</h2><p class="muted">Your progress is saved in this browser. It is not uploaded to GitHub.</p></div><span class="section-counter">LOCAL PROFILE</span></div>
+      <div class="progress-overview">
+        <article class="progress-primary-card"><div class="progress-primary-copy"><p class="eyebrow">COURSE COMPLETION</p><strong>${pct}%</strong><span>${completedDays} of 100 days completed</span></div><div class="large-progress-track"><span style="width:${pct}%"></span></div><small>${published} days currently published · ${Math.max(0, published - completedDays)} published days remaining</small></article>
+        <div class="progress-stat-grid"><article class="progress-stat"><span>Tasks completed</span><strong>${completedTasks}</strong><small>Self-assessed</small></article><article class="progress-stat"><span>Tasks attempted</span><strong>${attemptedTasks}</strong><small>Successful query run</small></article><article class="progress-stat"><span>Current day</span><strong>${state.activeDay}</strong><small>${currentCompleted}/15 tasks complete</small></article></div>
+      </div>
+      <div class="progress-bottom-grid"><section class="progress-detail-card"><div class="section-heading"><div><p class="eyebrow">TRACK BREAKDOWN</p><h3>Learning tracks</h3></div></div>${groups.map(group => {
+        const total = group.end - group.start + 1;
+        const count = saved.completedDays.filter(day => day >= group.start && day <= group.end).length;
+        return `<div class="track-progress-row"><div><strong>${escapeHtml(group.name)}</strong><span>${count}/${total} days</span></div><div class="progress-track"><span style="width:${count / total * 100}%"></span></div></div>`;
+      }).join('')}</section>
+        <section class="progress-detail-card backup-card"><div class="section-heading"><div><p class="eyebrow">YOUR DATA</p><h3>Progress backup</h3></div></div><p>Export your learning record before changing browsers or clearing site data. You can import the backup on another device.</p><div class="backup-actions"><button type="button" class="button button-outline" id="exportProgress">Export backup</button><label class="button button-quiet file-button" for="importProgress">Import backup</label><input class="sr-only" id="importProgress" type="file" accept="application/json,.json"></div><button type="button" class="text-button danger-text" id="resetProgress">Reset local progress</button><p class="disclaimer">Resetting cannot be undone unless you have exported a backup.</p></section></div>
+    </section>`;
 }
 
-function render() {
-  const activeView = state.view === 'practice' ? 'learn' : state.view;
-  const viewContent = activeView === 'projects'
-    ? renderProjects()
-    : activeView === 'progress'
-      ? renderProgress()
-      : renderLesson();
-
-  appRoot.innerHTML = '<div class="academy-shell">' + renderHeader() +
-    '<main id="main" class="academy-main"><div class="view-panel" data-view-panel="' + activeView + '">' + viewContent + '</div></main>' +
-    '<div id="academyToast" class="academy-toast" role="status" aria-live="polite"></div></div>';
-  setBusy(false);
+function renderFooter() {
+  return `<footer class="site-footer"><div class="footer-brand"><span class="brand-mark">AHK</span><span><strong>AHK Academy</strong><small>Learn the tools. Understand the business.</small></span></div><div class="footer-meta"><span>Content release v${escapeHtml(curriculum.manifest?.version || '1.0')}</span><span>Progress stored locally</span><a href="https://github.com/AbuHumzaKhan/100day-of-learning-DA" target="_blank" rel="noreferrer">Repository ↗</a></div></footer>`;
 }
 
-function parseCSVPreview(source) {
-  const rows = [];
-  let row = [];
-  let field = '';
-  let quoted = false;
-  const input = String(source || '').replace(/^\uFEFF/, '');
-  for (let index = 0; index < input.length; index += 1) {
-    const char = input[index];
-    if (char === '"') {
-      if (quoted && input[index + 1] === '"') {
-        field += '"';
-        index += 1;
-      } else quoted = !quoted;
-    } else if (char === ',' && !quoted) {
-      row.push(field);
-      field = '';
-    } else if ((char === '\n' || char === '\r') && !quoted) {
-      if (char === '\r' && input[index + 1] === '\n') index += 1;
-      row.push(field);
-      if (row.some(value => value !== '')) rows.push(row);
-      row = [];
-      field = '';
-    } else field += char;
+function renderApp(options = {}) {
+  const oldScroll = window.scrollY;
+  root.innerHTML = `${renderHeader()}<main class="app-main"><div class="container">${renderHero()}<div class="global-notice" id="globalNotice" role="status" aria-live="polite" hidden></div><section class="learning-workspace" aria-label="Daily learning workspace">${renderDayList()}<div class="lesson-area">${renderLesson()}</div><aside class="right-column">${renderSelectedRequest()}${renderPractice()}</aside></section>${renderProjects()}${renderProgress()}${renderFooter()}</div></main>`;
+  document.documentElement.dataset.theme = state.theme;
+  bindEvents();
+  refreshSchemaPreview();
+  if (options.preserveScroll) window.scrollTo({ top: oldScroll, behavior: 'instant' });
+}
+
+function renderResultsOnly() {
+  const resultContainer = $('#queryResults');
+  if (resultContainer) resultContainer.innerHTML = renderResults();
+  const engineBadge = $('.engine-badge');
+  if (engineBadge) {
+    engineBadge.classList.toggle('ready', state.engineReady);
+    engineBadge.innerHTML = `<i></i>${state.engineReady ? 'SQL engine ready' : 'SQL engine idle'}`;
   }
-  if (field !== '' || row.length) {
-    row.push(field);
-    if (row.some(value => value !== '')) rows.push(row);
-  }
-  return { headers: rows.shift() || [], rows };
-}
-
-async function renderDatasetPreview() {
-  const container = $('#datasetDetails');
-  const meta = state.dataRegistry?.datasets?.find(dataset => dataset.id === state.selectedDataset);
-  if (!container || !meta) return;
-  container.innerHTML = '<div class="results-placeholder">Loading dataset metadata…</div>';
-  try {
-    const [schema, csv] = await Promise.all([fetchJSON(meta.schema), fetchText(meta.data)]);
-    const parsed = parseCSVPreview(csv);
-    container.innerHTML = '<div class="dataset-schema-grid">' + (schema.columns || []).map(column => {
-      const name = Array.isArray(column) ? column[0] : column.name;
-      const type = Array.isArray(column) ? column[1] : column.type;
-      return '<div class="schema-item"><strong>' + escapeHTML(name) + '</strong><span>' + escapeHTML(type) + '</span></div>';
-    }).join('') + '</div><div class="sample-data-heading"><strong>' + escapeHTML(meta.name) + '</strong><span>' + parsed.rows.length + ' rows · sample of 8</span></div><div class="table-scroll"><table class="data-table"><thead><tr>' + parsed.headers.map(header => '<th>' + escapeHTML(header) + '</th>').join('') + '</tr></thead><tbody>' + parsed.rows.slice(0, 8).map(row => '<tr>' + row.map(value => '<td>' + escapeHTML(value) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
-  } catch (error) {
-    container.innerHTML = '<div class="results-placeholder error-state">' + escapeHTML(error.message) + '</div>';
+  const selfAssessment = $('.self-assessment');
+  if (selfAssessment) {
+    const status = selectedTaskStatus();
+    const attempted = status === 'attempted' || status === 'completed';
+    selfAssessment.querySelector('small').textContent = attempted ? 'A successful query has been run for this task.' : 'Run a successful query for the selected task to enable completion.';
+    const button = $('#completeSelectedTask');
+    button.disabled = !attempted;
+    button.textContent = status === 'completed' ? 'Completed ✓' : 'Mark task complete';
+    button.className = `button ${status === 'completed' ? 'button-success' : 'button-outline'}`;
   }
 }
 
-async function ensureSQLEngine() {
-  if (state.sqlEngine?.ready) return state.sqlEngine;
-  if (!state.sqlEngine) state.sqlEngine = new SQLEngine();
-  const status = $('#engineStatus');
-  if (status) status.textContent = 'Loading SQL.js and registered datasets…';
-  await state.sqlEngine.init();
-  if (status) status.textContent = 'Ready · ' + state.sqlEngine.getDatasets().length + ' tables loaded';
-  return state.sqlEngine;
-}
-
-function renderQueryResults(result) {
-  const container = $('#queryResults');
-  if (!container) return;
-  if (!result.columns.length) {
-    container.innerHTML = '<div class="results-placeholder">Query executed successfully. No tabular result was returned.</div>';
+function renderSearchResults(results, query) {
+  const panel = $('#searchResults');
+  if (!panel) return;
+  if (!query) { panel.hidden = true; panel.innerHTML = ''; return; }
+  if (!results.length) {
+    panel.innerHTML = '<p class="search-empty">No lessons or business requests matched your search.</p>';
+    panel.hidden = false;
     return;
   }
-  container.innerHTML = '<div class="results-meta">' + result.totalRows + ' row(s) returned · ' + result.elapsed + ' ms' + (result.truncated ? ' · showing first ' + result.values.length : '') + '</div><div class="table-scroll"><table class="data-table"><thead><tr>' +
-    result.columns.map(column => '<th>' + escapeHTML(column) + '</th>').join('') + '</tr></thead><tbody>' +
-    result.rows.map(row => '<tr>' + result.columns.map(column => '<td>' + escapeHTML(row[column] === null ? 'NULL' : row[column]) + '</td>').join('') + '</tr>').join('') +
-    '</tbody></table></div>';
+  panel.innerHTML = results.slice(0, 12).map((item, index) => {
+    const available = progress.canOpenDay(item.day, publishedThrough());
+    return `<button type="button" role="option" class="search-result" data-result-index="${index}" ${!available ? 'disabled' : ''}><span class="search-result-type">DAY ${String(item.day).padStart(2, '0')} · ${escapeHtml(item.type)}</span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.detail || '')}${available ? '' : ' · Complete earlier days to unlock'}</small></button>`;
+  }).join('');
+  panel.hidden = false;
+  $$('.search-result', panel).forEach((button, index) => button.addEventListener('click', async () => {
+    const item = results[index];
+    await loadDay(item.day);
+    if (item.topicIndex !== null && item.topicIndex !== undefined && state.day) {
+      state.activeTopic = item.topicIndex;
+      state.activeQuestion = item.questionIndex ?? 0;
+      renderApp({ preserveScroll: false });
+    }
+    $('#searchResults').hidden = true;
+    $('#globalSearch').value = '';
+  }));
+}
+
+async function searchContent(query) {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) return renderSearchResults([], '');
+  const input = $('#globalSearch');
+  if (input) input.setAttribute('aria-busy', 'true');
+  try {
+    if (!state.searchIndex) state.searchIndex = await curriculum.getSearchIndex();
+    const results = state.searchIndex.filter(item => `${item.searchText || ''} ${item.title} ${item.detail} ${item.type} ${item.day}`.toLowerCase().includes(normalized));
+    renderSearchResults(results, normalized);
+  } catch (error) {
+    renderSearchResults([], normalized);
+    showNotice(`Search could not be completed: ${error.message}`, 'warning');
+  } finally {
+    if (input) input.removeAttribute('aria-busy');
+  }
+}
+
+async function refreshSchemaPreview() {
+  const container = $('#schemaPreview');
+  if (!container) return;
+  const dataset = (curriculum.datasets?.datasets || []).find(item => item.id === state.activeDataset);
+  if (!dataset) {
+    container.innerHTML = '<span>Dataset columns</span><div class="schema-pills">No dataset selected.</div>';
+    return;
+  }
+  try {
+    let schema;
+    if (state.engineReady) schema = sql.getSchema(state.activeDataset);
+    else schema = await curriculum.fetchJson(dataset.schema, curriculum.manifest?.version || 'current');
+    const columns = schema.columns || [];
+    container.innerHTML = `<span>${escapeHtml(dataset.name)} · ${dataset.row_count || schema.rowCount || 0} rows</span><div class="schema-pills">${columns.map(column => {
+      const name = Array.isArray(column) ? column[0] : column.name;
+      const type = Array.isArray(column) ? column[1] : column.type;
+      return `<span title="${escapeHtml(type || '')}">${escapeHtml(name)}</span>`;
+    }).join('')}</div>`;
+  } catch (error) {
+    container.innerHTML = `<span>Dataset columns</span><div class="schema-pills">${escapeHtml(error.message)}</div>`;
+  }
 }
 
 async function runQuery() {
   const editor = $('#sqlEditor');
-  const output = $('#queryResults');
-  const status = $('#engineStatus');
-  if (!editor || !output) return;
+  if (!editor) return;
   const query = editor.value.trim();
+  state.sqlDraft = editor.value;
   if (!query) {
-    output.innerHTML = '<div class="results-placeholder">Write a SQL query before running it.</div>';
+    state.queryError = 'Write a SQL query before running the practice engine.';
+    state.queryResult = null;
+    renderResultsOnly();
     return;
   }
-  status.textContent = 'Executing query…';
-  output.innerHTML = '<div class="results-placeholder">Running against your local learning datasets…</div>';
+  state.queryError = '';
+  state.queryResult = null;
+  const runButton = $('#runSql');
+  runButton.disabled = true;
+  runButton.textContent = 'Running…';
   try {
-    const engine = await ensureSQLEngine();
-    const result = await engine.run(query);
-    renderQueryResults(result);
-    status.textContent = result.elapsed + ' ms · ' + result.totalRows + ' rows';
+    if (!state.engineReady) {
+      await sql.init();
+      state.engineReady = true;
+    }
+    const result = sql.run(query);
+    state.queryResult = result;
+    state.lastQuery = query;
+    progress.markAttempted(state.activeDay, state.activeTopic, state.activeQuestion);
   } catch (error) {
-    status.textContent = 'Query needs attention';
-    output.innerHTML = '<div class="results-placeholder error-state">' + escapeHTML(error.message) + '</div>';
+    state.queryError = error?.message || 'The query could not be executed.';
+  } finally {
+    if ($('#runSql')) {
+      $('#runSql').disabled = false;
+      $('#runSql').textContent = '▶ Run query';
+    }
+    renderApp({ preserveScroll: true });
+    renderResultsOnly();
+    refreshSchemaPreview();
   }
 }
 
-function formatSQL(query) {
-  return String(query || '')
+function formatSql(query) {
+  return String(query || '').trim()
     .replace(/\s+/g, ' ')
     .replace(/\s+(FROM|WHERE|GROUP BY|ORDER BY|HAVING|LIMIT|JOIN|LEFT JOIN|INNER JOIN|ON)\s+/gi, '\n$1 ')
     .replace(/,\s*/g, ', ')
-    .trim();
+    .replace(/\s+(AND|OR)\s+/gi, '\n  $1 ');
 }
 
-async function ensureSearchIndex() {
-  if (state.searchIndex) return state.searchIndex;
-  const metas = state.index?.days || [];
-  const days = await Promise.all(metas.map(async meta => {
+function downloadProgress() {
+  const blob = new Blob([progress.exportJson()], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `ahk-academy-progress-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+  showNotice('Your progress backup has been exported.', 'success');
+}
+
+async function importProgress(file) {
+  if (!file) return;
+  try {
+    progress.importJson(await file.text());
+    const nextDay = unlockedDay();
+    await loadDay(Math.min(nextDay, publishedThrough()), { focus: false });
+    showNotice('Progress backup imported successfully.', 'success');
+  } catch (error) {
+    showNotice(`Backup import failed: ${error.message}`, 'warning');
+  }
+}
+
+function bindEvents() {
+  $$('.day-button').forEach(button => button.addEventListener('click', () => loadDay(Number(button.dataset.day))));
+  $$('.topic-tab').forEach(button => button.addEventListener('click', () => {
+    state.activeTopic = Number(button.dataset.topic);
+    state.activeQuestion = 0;
+    state.sqlDraft = '';
+    state.teachingMode = 'teacher';
+      state.queryResult = null;
+    state.queryError = '';
+    renderApp({ preserveScroll: true });
+  }));
+  $$('.mode-tab').forEach(button => button.addEventListener('click', () => {
+    state.teachingMode = button.dataset.mode;
+    renderApp({ preserveScroll: true });
+  }));
+  $$('.task-card-select, .request-chip').forEach(button => button.addEventListener('click', () => {
+    state.activeQuestion = Number(button.dataset.question);
+    state.sqlDraft = '';
+      state.queryResult = null;
+    state.queryError = '';
+    renderApp({ preserveScroll: true });
+  }));
+  $$('[data-solve]').forEach(button => button.addEventListener('click', () => {
+    state.activeQuestion = Number(button.dataset.solve);
+    state.sqlDraft = '';
+    renderApp({ preserveScroll: true });
+    $('#sqlEditor')?.focus({ preventScroll: true });
+    $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+  $$('[data-hint]').forEach(button => button.addEventListener('click', () => {
+    const question = getTopic()?.questions?.[Number(button.dataset.hint)];
+    showNotice(question?.validation || 'Start by identifying the required output columns, row grain, filters and calculations.', 'info');
+  }));
+  $$('[data-complete-task]').forEach(button => button.addEventListener('click', () => {
+    const index = Number(button.dataset.completeTask);
+    const status = progress.getTaskStatus(state.activeDay, state.activeTopic, index);
+    if (status !== 'attempted' && status !== 'completed') return;
+    progress.setTaskCompleted(state.activeDay, state.activeTopic, index, status !== 'completed');
+    renderApp({ preserveScroll: true });
+  }));
+  $('#completeSelectedTask')?.addEventListener('click', () => {
+    const status = selectedTaskStatus();
+    if (status !== 'attempted' && status !== 'completed') return;
+    progress.setTaskCompleted(state.activeDay, state.activeTopic, state.activeQuestion, status !== 'completed');
+    renderApp({ preserveScroll: true });
+  });
+  $('#completeDayButton')?.addEventListener('click', async () => {
     try {
-      return await fetchJSON('curriculum/' + meta.file);
+      const completedDay = state.activeDay;
+      progress.completeDay(completedDay, totalQuestions());
+      const next = completedDay + 1;
+      if (next <= publishedThrough()) await loadDay(next, { focus: false });
+      else { progress.setActiveDay(completedDay); renderApp({ preserveScroll: true }); }
+      showNotice(`Day ${completedDay} completion saved.`, 'success');
+    } catch (error) {
+      showNotice(error.message, 'warning');
+    }
+  });
+  $('#datasetSelect')?.addEventListener('change', event => {
+    state.activeDataset = event.target.value;
+    renderApp({ preserveScroll: true });
+    const dataset = (curriculum.datasets?.datasets || []).find(item => item.id === state.activeDataset);
+    const tableName = String(dataset?.table || dataset?.id || '').replace(/[^a-zA-Z0-9_]/g, '_');
+    showNotice(`Dataset explorer switched to ${dataset?.name || state.activeDataset}. Query the table as ${tableName}. All registered tables remain available to SQL.`, 'success');
+  });
+  $('#runSql')?.addEventListener('click', runQuery);
+  $('#clearSql')?.addEventListener('click', () => {
+    $('#sqlEditor').value = '';
+    state.sqlDraft = '';
+    state.queryResult = null;
+    state.queryError = '';
+    renderResultsOnly();
+  });
+  $('#formatSql')?.addEventListener('click', () => {
+    $('#sqlEditor').value = formatSql($('#sqlEditor').value);
+    state.sqlDraft = $('#sqlEditor').value;
+  });
+  $('#sqlEditor')?.addEventListener('input', event => { state.sqlDraft = event.currentTarget.value; });
+  $('#sqlEditor')?.addEventListener('keydown', event => {
+    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); runQuery(); }
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      const input = event.currentTarget;
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      input.setRangeText('  ', start, end, 'end');
+    }
+  });
+  $$('.copy-example').forEach(button => button.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(button.dataset.copy || '');
+      button.textContent = 'Copied';
+      setTimeout(() => { button.textContent = 'Copy example'; }, 1200);
     } catch {
-      return null;
+      showNotice('Clipboard access is unavailable in this browser context.', 'warning');
     }
   }));
-  const entries = [];
-  for (const day of days.filter(Boolean)) {
-    entries.push({
-      type: 'Day',
-      day: day.day,
-      topic: 0,
-      question: 0,
-      title: day.title,
-      text: [day.track, day.description].join(' ')
-    });
-    (day.topics || []).forEach((topic, topicIndex) => {
-      entries.push({
-        type: 'Topic',
-        day: day.day,
-        topic: topicIndex,
-        question: 0,
-        title: topic.title,
-        text: [day.track, topic.business_skill, topic.teaching?.explain, topic.teaching?.teacher].join(' ')
-      });
-      (topic.questions || []).forEach((question, questionIndex) => {
-        entries.push({
-          type: 'Business request',
-          day: day.day,
-          topic: topicIndex,
-          question: questionIndex,
-          title: question.role || 'Business request',
-          text: [question.scenario, question.request, question.validation, question.output].join(' ')
-        });
-      });
-    });
-  }
-  state.searchIndex = entries;
-  return entries;
-}
+  $('#exportProgress')?.addEventListener('click', downloadProgress);
+  $('#importProgress')?.addEventListener('change', event => importProgress(event.target.files?.[0]));
+  $('#resetProgress')?.addEventListener('click', async () => {
+    if (!window.confirm('Reset all locally saved AHK Academy progress? Export a backup first if you may need it later.')) return;
+    progress.reset();
+    await loadDay(1, { focus: false });
+    showNotice('Local progress has been reset.', 'success');
+  });
+  $('#themeToggle')?.addEventListener('click', () => {
+    state.theme = state.theme === 'light' ? 'dark' : 'light';
+    localStorage.setItem('ahk_academy_theme', state.theme);
+    document.documentElement.dataset.theme = state.theme;
+    $('#themeToggle').setAttribute('aria-label', state.theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+  });
+  $('#mobileMenuButton')?.addEventListener('click', event => {
+    const nav = $('#primaryNav');
+    const isOpen = nav.classList.toggle('open');
+    event.currentTarget.setAttribute('aria-expanded', String(isOpen));
+  });
+  $$('[data-nav]').forEach(link => link.addEventListener('click', () => {
+    $('#primaryNav')?.classList.remove('open');
+    $('#mobileMenuButton')?.setAttribute('aria-expanded', 'false');
+    $$('.nav-link').forEach(item => item.classList.toggle('active', item === link));
+  }));
+  $$('[data-project-start]').forEach(link => link.addEventListener('click', () => {
+    const projectIndex = Number(link.dataset.projectStart);
+    const targetDay = projectIndex === 1 ? 8 : projectIndex === 2 ? 11 : 1;
+    if (progress.canOpenDay(targetDay, publishedThrough())) loadDay(targetDay, { focus: false });
+    else showNotice(`Complete the earlier days to unlock the lessons for this project.`, 'warning');
+  }));
 
-async function searchContent(query) {
-  const text = query.toLowerCase().trim();
-  if (text.length < 2) return [];
-  const entries = await ensureSearchIndex();
-  return entries.filter(entry => (entry.title + ' ' + entry.text).toLowerCase().includes(text)).slice(0, 12);
-}
-
-function updateSearchResults(results) {
-  const container = $('#academySearchResults');
-  if (!container) return;
-  if (!state.searchQuery.trim()) {
-    container.hidden = true;
-    return;
-  }
-  container.hidden = false;
-  container.innerHTML = results.length
-    ? results.map((result, index) => '<button type="button" class="search-result" data-search-result="' + index + '"><span class="search-result-type">' + escapeHTML(result.type) + ' · Day ' + String(result.day).padStart(2, '0') + '</span><strong>' + escapeHTML(result.title) + '</strong><small>' + escapeHTML(result.text).slice(0, 130) + '</small></button>').join('')
-    : '<div class="search-empty">No matching published content. Try another keyword.</div>';
-  state.searchResults = results;
-}
-
-function handleInput(event) {
-  if (event.target.id !== 'academySearch') return;
-  state.searchQuery = event.target.value;
-  window.clearTimeout(state.searchTimer);
-  state.searchTimer = window.setTimeout(async () => {
-    try {
-      const results = await searchContent(state.searchQuery);
-      updateSearchResults(results);
-    } catch (error) {
-      updateSearchResults([]);
-      toast('Search could not load curriculum content.', 'warning');
-    }
-  }, 180);
-}
-
-function handleChange(event) {
-  if (event.target.id === 'datasetSelect') {
-    state.selectedDataset = event.target.value;
-    if (state.practiceTab === 'schema') renderDatasetPreview();
-  }
-}
-
-async function handleClick(event) {
-  const viewButton = event.target.closest('[data-view]');
-  if (viewButton) {
-    event.preventDefault();
-    const target = viewButton.dataset.view;
-    if (target === 'practice') {
-      state.view = 'practice';
-      render();
-      window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-    } else {
-      state.view = target;
-      state.projectSelection = null;
-      render();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    return;
-  }
-
-  const searchResult = event.target.closest('[data-search-result]');
-  if (searchResult) {
-    const result = state.searchResults[Number(searchResult.dataset.searchResult)];
-    if (!result || !isUnlocked(result.day)) {
-      toast('That lesson is still locked by the learning sequence.', 'warning');
-      return;
-    }
-    state.searchQuery = '';
-    await loadDay(result.day, { topic: result.topic, question: result.question });
-    return;
-  }
-
-  const dayButton = event.target.closest('[data-day], [data-open-day]');
-  if (dayButton) {
-    const day = Number(dayButton.dataset.day || dayButton.dataset.openDay);
-    await loadDay(day);
-    return;
-  }
-
-  const topicButton = event.target.closest('[data-topic]:not([data-task-action])');
-  if (topicButton) {
-    state.activeTopic = Number(topicButton.dataset.topic);
-    state.activeQuestion = 0;
-    render();
-    return;
-  }
-
-  const questionButton = event.target.closest('[data-question]');
-  if (questionButton && !questionButton.dataset.taskAction) {
-    state.activeQuestion = Number(questionButton.dataset.question);
-    render();
-    return;
-  }
-
-  const modeButton = event.target.closest('[data-mode]');
-  if (modeButton) {
-    state.teachingMode = modeButton.dataset.mode;
-    render();
-    return;
-  }
-
-  const practiceTab = event.target.closest('[data-practice-tab]');
-  if (practiceTab) {
-    state.practiceTab = practiceTab.dataset.practiceTab;
-    render();
-    if (state.practiceTab === 'schema') renderDatasetPreview();
-    return;
-  }
-
-  const taskAction = event.target.closest('[data-task-action]');
-  if (taskAction) {
-    const topicIndex = Number(taskAction.dataset.topic ?? state.activeTopic);
-    const questionIndex = Number(taskAction.dataset.question ?? state.activeQuestion);
-    if (taskAction.dataset.taskAction === 'toggle') {
-      const solved = !progressStore.isSolved(state.activeDay, topicIndex, questionIndex);
-      progressStore.setSolved(state.activeDay, topicIndex, questionIndex, solved);
-      render();
-      toast(solved ? 'Question marked as reviewed.' : 'Question review status removed.');
-    } else if (taskAction.dataset.taskAction === 'hint') {
-      const panel = taskAction.closest('.question-card')?.querySelector('.hint-panel');
-      if (panel) {
-        panel.hidden = !panel.hidden;
-        panel.textContent = taskAction.dataset.hint || 'Identify the required fields, filters and calculations before writing your solution.';
-        taskAction.textContent = panel.hidden ? 'Show hint' : 'Hide hint';
+  const search = $('#globalSearch');
+  search?.addEventListener('input', () => {
+    clearTimeout(state.searchTimer);
+    const query = search.value;
+    state.searchTimer = setTimeout(() => searchContent(query), 180);
+  });
+  search?.addEventListener('keydown', event => {
+    if (event.key === 'Escape') { $('#searchResults').hidden = true; search.value = ''; }
+  });
+  if (!globalKeyboardHandlerBound) {
+    document.addEventListener('keydown', event => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        $('#globalSearch')?.focus();
       }
-    } else if (taskAction.dataset.taskAction === 'practice') {
-      state.activeTopic = topicIndex;
-      state.activeQuestion = questionIndex;
-      state.practiceTab = 'query';
-      render();
-      window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-    }
-    return;
-  }
-
-  const projectButton = event.target.closest('[data-project]');
-  if (projectButton) {
-    state.projectSelection = projectButton.dataset.project;
-    render();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    return;
-  }
-
-  const action = event.target.closest('[data-action]')?.dataset.action;
-  if (!action) return;
-  if (action === 'retry') {
-    boot();
-  } else if (action === 'complete-day') {
-    const result = progressStore.completeDay(state.activeDay, dayQuestions(state.day));
-    if (!result.ok) {
-      toast(result.reason, 'warning');
-      return;
-    }
-    render();
-    const next = state.activeDay + 1;
-    toast(next <= publishedThrough() ? 'Day completed. Day ' + next + ' is now unlocked.' : 'Day completed. Your progress is saved.', 'success');
-  } else if (action === 'run-query') {
-    runQuery();
-  } else if (action === 'clear-query') {
-    if ($('#sqlEditor')) $('#sqlEditor').value = '';
-    if ($('#queryResults')) $('#queryResults').innerHTML = '<div class="results-placeholder">Editor cleared. Write a new query.</div>';
-  } else if (action === 'format-query') {
-    if ($('#sqlEditor')) $('#sqlEditor').value = formatSQL($('#sqlEditor').value);
-  } else if (action === 'load-preview') {
-    renderDatasetPreview();
-  } else if (action === 'copy-example') {
-    const code = $('.example-card code')?.textContent || '';
-    try {
-      await navigator.clipboard.writeText(code);
-      toast('Worked example copied.', 'success');
-    } catch {
-      toast('Clipboard access is unavailable in this browser.', 'warning');
-    }
-  } else if (action === 'back-projects') {
-    state.projectSelection = null;
-    render();
-  } else if (action === 'export-progress') {
-    const data = progressStore.getState();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'ahk-academy-progress.json';
-    link.click();
-    URL.revokeObjectURL(url);
-    toast('Progress export prepared.', 'success');
-  }
-}
-
-function handleTabKeydown(event, selector) {
-  const activeTab = event.target.closest(selector);
-  if (!activeTab || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return false;
-  const tabs = $$(selector);
-  const currentIndex = tabs.indexOf(activeTab);
-  if (currentIndex < 0 || !tabs.length) return false;
-  const nextIndex = event.key === 'Home'
-    ? 0
-    : event.key === 'End'
-      ? tabs.length - 1
-      : (currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
-  const nextTab = tabs[nextIndex];
-  const attributeName = activeTab.hasAttribute('data-mode') ? 'data-mode' : 'data-practice-tab';
-  const attributeValue = nextTab.getAttribute(attributeName);
-  event.preventDefault();
-  nextTab.click();
-  document.querySelector(selector + '[' + attributeName + '="' + attributeValue + '"]')?.focus();
-  return true;
-}
-
-function handleKeydown(event) {
-  if (handleTabKeydown(event, '[data-mode]')) return;
-  if (handleTabKeydown(event, '[data-practice-tab]')) return;
-  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
-    event.preventDefault();
-    $('#academySearch')?.focus();
-  }
-  if (event.key === 'Escape') {
-    const results = $('#academySearchResults');
-    if (results) results.hidden = true;
+    });
+    globalKeyboardHandlerBound = true;
   }
 }
 
 async function boot() {
-  setBusy(true);
+  root.setAttribute('aria-busy', 'true');
+  root.innerHTML = '<div class="boot-screen"><div class="boot-mark">AHK</div><p>Preparing your learning workspace…</p><span class="boot-loader"></span></div>';
   try {
-    const [manifest, index, registry] = await Promise.all([
-      fetchJSON('manifest.json'),
-      fetchJSON('curriculum/index.json'),
-      fetchJSON('datasets/index.json')
-    ]);
-    state.manifest = manifest;
-    state.index = index;
-    state.dataRegistry = registry;
-
-    const published = publishedThrough();
-    const hash = location.hash.match(/day-(\d+)/);
-    const requestedDay = hash ? Number(hash[1]) : progressStore.getState().activeDay;
-    const firstUnlocked = Array.from({ length: published }, (_, index) => index + 1).find(day => isUnlocked(day)) || 1;
-    const target = isUnlocked(requestedDay) ? requestedDay : firstUnlocked;
-    state.activeDay = target;
-    await loadDay(target);
+    await curriculum.init();
+    const requestedHash = window.location.hash.match(/day-(\d+)/);
+    const saved = progress.getState();
+    const requestedDay = requestedHash ? Number(requestedHash[1]) : saved.activeDay;
+    const initialDay = progress.canOpenDay(requestedDay, publishedThrough()) ? requestedDay : unlockedDay();
+    await loadDay(initialDay, { focus: false });
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+      navigator.serviceWorker.register(new URL('./sw.js', window.location.href)).catch(error => console.warn('Service worker registration skipped.', error));
+    }
   } catch (error) {
     renderFatal(error);
+  } finally {
+    root.setAttribute('aria-busy', 'false');
   }
 }
-
-appRoot.addEventListener('click', handleClick);
-appRoot.addEventListener('input', handleInput);
-appRoot.addEventListener('change', handleChange);
-document.addEventListener('keydown', handleKeydown);
 
 boot();

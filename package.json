@@ -1,15 +1,15 @@
 {
   "name": "ahk-academy",
+  "version": "10.0.0",
   "private": true,
-  "version": "3.3.0",
   "type": "module",
+  "description": "AHK Academy — business-first 100-Day Data Analyst learning platform.",
   "scripts": {
-    "validate:content": "node scripts/validate-content.mjs",
-    "test:e2e": "playwright test",
-    "test": "npm run validate:content && npm run test:e2e"
+    "validate": "node tests/validate-repository.mjs",
+    "test": "node --test tests/unit/*.test.mjs",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
-    "@playwright/test": "1.65.1",
-    "ajv": "8.17.1"
+    "@playwright/test": "1.56.1"
   }
 }
