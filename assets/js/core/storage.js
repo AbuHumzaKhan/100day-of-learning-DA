@@ -20,12 +20,54 @@ function safeRead(key, fallback) {
 
 function createDefaultState() {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     activeDay: 1,
     completedDays: [],
+    completedLessons: {},
+    exams: {},
     tasks: {},
     updatedAt: new Date().toISOString()
   };
+}
+
+function normalizeCompletedLessons(value) {
+  const result = {};
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return result;
+  for (const [dayKey, lessonIndexes] of Object.entries(value)) {
+    const day = Number(dayKey);
+    if (!Number.isInteger(day) || day < 1 || day > 100 || !Array.isArray(lessonIndexes)) continue;
+    result[day] = [...new Set(lessonIndexes.map(Number).filter(index => Number.isInteger(index) && index >= 0 && index < 5))].sort((a, b) => a - b);
+  }
+  return result;
+}
+
+function normalizeExams(value) {
+  const result = {};
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return result;
+  for (const [dayKey, exam] of Object.entries(value)) {
+    const day = Number(dayKey);
+    if (!Number.isInteger(day) || day < 1 || day > 100 || !exam || typeof exam !== 'object') continue;
+    const answers = {};
+    if (exam.answers && typeof exam.answers === 'object' && !Array.isArray(exam.answers)) {
+      for (const [questionKey, optionValue] of Object.entries(exam.answers)) {
+        const question = Number(questionKey);
+        const option = Number(optionValue);
+        if (Number.isInteger(question) && question >= 0 && question < 5 && Number.isInteger(option) && option >= 0 && option < 4) {
+          answers[question] = option;
+        }
+      }
+    }
+    const score = Number(exam.score);
+    result[day] = {
+      answers,
+      submitted: exam.submitted === true,
+      score: Number.isInteger(score) && score >= 0 && score <= 5 ? score : null,
+      passed: exam.passed === true,
+      attempts: Number.isInteger(Number(exam.attempts)) ? Math.max(0, Number(exam.attempts)) : 0,
+      submittedAt: typeof exam.submittedAt === 'string' ? exam.submittedAt : null
+    };
+  }
+  return result;
 }
 
 function normalizeState(value) {
@@ -45,9 +87,11 @@ function normalizeState(value) {
   }
   const activeDay = Number(value.activeDay);
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     activeDay: Number.isInteger(activeDay) ? Math.min(100, Math.max(1, activeDay)) : 1,
     completedDays: [...new Set(completedDays)].sort((a, b) => a - b),
+    completedLessons: normalizeCompletedLessons(value.completedLessons),
+    exams: normalizeExams(value.exams),
     tasks: normalizedTasks,
     updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : new Date().toISOString()
   };
@@ -106,6 +150,17 @@ function taskKey(day, topicIndex, questionIndex) {
   return [Number(day), Number(topicIndex), Number(questionIndex)].join(':');
 }
 
+function examForDay(day) {
+  return state.exams[Number(day)] || {
+    answers: {},
+    submitted: false,
+    score: null,
+    passed: false,
+    attempts: 0,
+    submittedAt: null
+  };
+}
+
 export const progressStore = {
   getState() {
     return JSON.parse(JSON.stringify(state));
@@ -116,6 +171,92 @@ export const progressStore = {
       state.activeDay = value;
       persist();
     }
+  },
+  isLessonCompleted(day, lessonIndex) {
+    return (state.completedLessons[Number(day)] || []).includes(Number(lessonIndex));
+  },
+  getCompletedLessonCount(day, totalLessons = 5) {
+    return (state.completedLessons[Number(day)] || []).filter(index => index < Number(totalLessons)).length;
+  },
+  areLessonsCompleted(day, totalLessons = 5) {
+    return this.getCompletedLessonCount(day, totalLessons) >= Number(totalLessons);
+  },
+  completeLesson(day, lessonIndex, totalLessons = 5) {
+    const targetDay = Number(day);
+    const targetLesson = Number(lessonIndex);
+    const total = Number(totalLessons);
+    if (!Number.isInteger(targetDay) || targetDay < 1 || targetDay > 100 ||
+        !Number.isInteger(targetLesson) || targetLesson < 0 || targetLesson >= total) {
+      return { ok: false, reason: 'This lesson cannot be completed because its lesson data is invalid.' };
+    }
+    const completed = state.completedLessons[targetDay] || [];
+    if (completed.includes(targetLesson)) {
+      return { ok: true, completedCount: completed.length, allCompleted: completed.length >= total };
+    }
+    if (targetLesson > completed.length) {
+      return { ok: false, reason: 'Complete the lessons in sequence before continuing.' };
+    }
+    completed.push(targetLesson);
+    completed.sort((a, b) => a - b);
+    state.completedLessons[targetDay] = completed;
+    persist();
+    return { ok: true, completedCount: completed.length, allCompleted: completed.length >= total };
+  },
+  getExamState(day) {
+    return JSON.parse(JSON.stringify(examForDay(day)));
+  },
+  setExamAnswer(day, questionIndex, optionIndex) {
+    const targetDay = Number(day);
+    const question = Number(questionIndex);
+    const option = Number(optionIndex);
+    const exam = examForDay(targetDay);
+    if (exam.submitted || !Number.isInteger(question) || question < 0 || question >= 5 ||
+        !Number.isInteger(option) || option < 0 || option >= 4) return false;
+    exam.answers[question] = option;
+    state.exams[targetDay] = exam;
+    persist();
+    return true;
+  },
+  submitExam(day, correctOptions, passMark = 4) {
+    const targetDay = Number(day);
+    const exam = examForDay(targetDay);
+    const expected = Array.isArray(correctOptions) ? correctOptions : [];
+    if (exam.submitted) return { ok: false, reason: 'This attempt has already been submitted.' };
+    if (expected.length !== 5 || expected.some((option, index) => !Number.isInteger(Number(exam.answers[index])))) {
+      return { ok: false, reason: 'Answer all five questions before submitting the exam.' };
+    }
+    const score = expected.reduce((total, correct, index) => total + (Number(exam.answers[index]) === Number(correct) ? 1 : 0), 0);
+    const passed = score >= Number(passMark);
+    const updated = {
+      ...exam,
+      submitted: true,
+      score,
+      passed,
+      attempts: exam.attempts + 1,
+      submittedAt: new Date().toISOString()
+    };
+    state.exams[targetDay] = updated;
+    if (passed && !state.completedDays.includes(targetDay)) {
+      state.completedDays.push(targetDay);
+      state.completedDays.sort((a, b) => a - b);
+    }
+    persist();
+    return { ok: true, score, passed, attempts: updated.attempts };
+  },
+  retryExam(day) {
+    const targetDay = Number(day);
+    const exam = examForDay(targetDay);
+    if (!exam.submitted || exam.passed) return false;
+    state.exams[targetDay] = {
+      answers: {},
+      submitted: false,
+      score: null,
+      passed: false,
+      attempts: exam.attempts,
+      submittedAt: null
+    };
+    persist();
+    return true;
   },
   isSolved(day, topicIndex, questionIndex) {
     return state.tasks[taskKey(day, topicIndex, questionIndex)] === 'solved';
