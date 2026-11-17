@@ -858,20 +858,27 @@ async function handleClick(event) {
   if (viewButton) {
     event.preventDefault();
     const target = viewButton.dataset.view;
-    if (target === 'practice') {
+    if (target === 'exam' && !areAllLessonsComplete()) {
+      toast('Complete all five lessons before opening the exam.', 'warning');
+      return;
+    }
+    if (target === 'learn' && areAllLessonsComplete()) {
+      state.view = 'exam';
+    } else if (target === 'practice') {
       state.view = 'practice';
       history.replaceState(null, '', '#practice');
       render();
       window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+      return;
     } else {
       state.view = target;
-      state.projectSelection = null;
-      if (target === 'dashboard') history.replaceState(null, '', location.pathname + location.search);
-      else if (target === 'learn') updateHash(state.activeDay);
-      else history.replaceState(null, '', '#' + target);
-      render();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    state.projectSelection = null;
+    if (target === 'dashboard') history.replaceState(null, '', location.pathname + location.search);
+    else if (target === 'learn' || target === 'exam') updateHash(state.activeDay);
+    else history.replaceState(null, '', '#' + target);
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     return;
   }
 
@@ -889,8 +896,36 @@ async function handleClick(event) {
 
   const dayButton = event.target.closest('[data-day], [data-open-day]');
   if (dayButton) {
-    const day = Number(dayButton.dataset.day || dayButton.dataset.openDay);
-    await loadDay(day);
+    await loadDay(Number(dayButton.dataset.day || dayButton.dataset.openDay));
+    return;
+  }
+
+  const lessonButton = event.target.closest('[data-lesson-index]');
+  if (lessonButton) {
+    const lessonIndex = Number(lessonButton.dataset.lessonIndex);
+    if (lessonIndex > completedLessonCount()) {
+      toast('Complete the lessons in order to unlock this lesson.', 'warning');
+      return;
+    }
+    state.activeTopic = lessonIndex;
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  const examQuestionButton = event.target.closest('[data-exam-question]');
+  if (examQuestionButton && state.view === 'exam') {
+    state.examQuestionIndex = Number(examQuestionButton.dataset.examQuestion);
+    render();
+    return;
+  }
+
+  const examOptionButton = event.target.closest('[data-exam-option]');
+  if (examOptionButton && state.view === 'exam') {
+    const examState = progressStore.getExamState(state.activeDay);
+    if (examState.submitted) return;
+    progressStore.setExamAnswer(state.activeDay, state.examQuestionIndex, Number(examOptionButton.dataset.examOption));
+    render();
     return;
   }
 
@@ -944,6 +979,7 @@ async function handleClick(event) {
       state.activeTopic = topicIndex;
       state.activeQuestion = questionIndex;
       state.practiceTab = 'query';
+      state.view = 'practice';
       render();
       window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     }
@@ -967,6 +1003,65 @@ async function handleClick(event) {
     render();
   } else if (action === 'retry') {
     boot();
+  } else if (action === 'save-progress') {
+    progressStore.setActiveDay(state.activeDay);
+    toast('Lesson progress saved on this device.', 'success');
+  } else if (action === 'complete-lesson') {
+    const total = state.day?.topics?.length || 5;
+    const result = progressStore.completeLesson(state.activeDay, state.activeTopic, total);
+    if (!result.ok) {
+      toast(result.reason, 'warning');
+      return;
+    }
+    if (result.allCompleted) {
+      state.view = 'exam';
+      state.examQuestionIndex = 0;
+      toast('All five lessons completed. Your exam is now unlocked.', 'success');
+    } else {
+      state.activeTopic = result.completedCount;
+      state.view = 'learn';
+      toast('Lesson completed. Lesson ' + String(state.activeTopic + 1).padStart(2, '0') + ' is now unlocked.', 'success');
+    }
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (action === 'next-exam-question') {
+    const exam = progressStore.getExamState(state.activeDay);
+    if (!Object.prototype.hasOwnProperty.call(exam.answers, state.examQuestionIndex)) {
+      toast('Choose an answer before moving to the next question.', 'warning');
+      return;
+    }
+    state.examQuestionIndex = Math.min(4, state.examQuestionIndex + 1);
+    render();
+  } else if (action === 'submit-exam') {
+    const questions = buildExamQuestions(state.day);
+    const result = progressStore.submitExam(state.activeDay, questions.map(question => question.correctOption), 4);
+    if (!result.ok) {
+      toast(result.reason, 'warning');
+      return;
+    }
+    state.examQuestionIndex = 0;
+    render();
+    toast(result.passed ? 'Exam passed. The next published day is unlocked.' : 'Exam submitted. Review your answers and retry.', result.passed ? 'success' : 'warning');
+  } else if (action === 'retry-exam') {
+    if (progressStore.retryExam(state.activeDay)) {
+      state.examQuestionIndex = 0;
+      render();
+      toast('New exam attempt started. Your previous score remains in your learning record.', 'info');
+    }
+  } else if (action === 'continue-next-day') {
+    const nextDay = state.activeDay + 1;
+    if (nextDay <= publishedThrough() && isUnlocked(nextDay)) {
+      await loadDay(nextDay);
+    } else {
+      state.view = 'dashboard';
+      history.replaceState(null, '', location.pathname + location.search);
+      render();
+    }
+  } else if (action === 'save-exit') {
+    progressStore.setActiveDay(state.activeDay);
+    state.view = 'dashboard';
+    history.replaceState(null, '', location.pathname + location.search);
+    render();
   } else if (action === 'complete-day') {
     const result = progressStore.completeDay(state.activeDay, dayQuestions(state.day));
     if (!result.ok) {
@@ -974,8 +1069,6 @@ async function handleClick(event) {
       return;
     }
     render();
-    const next = state.activeDay + 1;
-    toast(next <= publishedThrough() ? 'Day completed. Day ' + next + ' is now unlocked.' : 'Day completed. Your progress is saved.', 'success');
   } else if (action === 'run-query') {
     runQuery();
   } else if (action === 'clear-query') {
@@ -1063,12 +1156,10 @@ async function boot() {
     const target = isUnlocked(requestedDay) ? requestedDay : firstUnlocked;
     state.activeDay = target;
     const hasLessonLink = Boolean(hash);
-    await loadDay(target, { updateUrl: hasLessonLink, render: hasLessonLink });
-    if (!hasLessonLink) {
-      state.view = route || 'dashboard';
-      render();
-      if (route === 'practice') window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'auto', block: 'start' }), 50);
-    }
+    await loadDay(target, { updateUrl: hasLessonLink, render: false });
+    if (!hasLessonLink) state.view = route || 'dashboard';
+    render();
+    if (route === 'practice') window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'auto', block: 'start' }), 50);
   } catch (error) {
     renderFatal(error);
   }
