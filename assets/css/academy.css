@@ -1909,3 +1909,100 @@ html[data-theme="dark"] .coding-checklist-item.is-done > span { border-color: #5
 html[data-theme="dark"] .coding-full-sql-workspace summary { color: #d1e8d7; }
 html[data-theme="dark"] .coding-unlock-banner strong { color: #c6f3cf; }
 html[data-theme="dark"] .coding-unlock-banner p { color: #b5d1bc; }
+
+
+/* Responsive overflow + accessible contrast corrections */
+html[data-theme="dark"] .lesson-start-copy .eyebrow {
+  color: #94e4a9;
+}
+html[data-theme="dark"] .lesson-start-copy strong {
+  color: #eff9f1;
+}
+html[data-theme="dark"] .lesson-start-copy p {
+  color: #c1d7c8;
+}
+html[data-theme="dark"] .lesson-start-practice {
+  border-color: #3f8152;
+  background: #13281b;
+}
+html[data-theme="dark"] .lesson-start-practice .lesson-complete-button {
+  color: #082114;
+}
+html[data-theme="dark"] .lesson-content-card .lesson-start-practice .eyebrow {
+  color: #9ce7b0;
+}
+@media (max-width: 760px) {
+  html, body, #app, .academy-shell, .academy-main, .view-panel,
+  .lesson-experience, .lesson-content-card, .coding-practice-screen,
+  .coding-workspace-card, .exam-screen, .exam-question-card {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .academy-main {
+    width: calc(100% - 20px);
+    overflow-x: clip;
+  }
+  .academy-header-inner { min-width: 0; }
+  .learning-context {
+    min-width: 0;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .learning-breadcrumb {
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+    overflow-wrap: anywhere;
+  }
+  .lesson-progress-bar {
+    min-width: 0;
+    grid-template-columns: minmax(0,1fr) auto;
+    gap: 8px 12px;
+    padding: 0 2px;
+  }
+  .lesson-progress-bar > span { min-width: 0; }
+  .lesson-progress-bar .lesson-progress-track {
+    grid-column: 1/-1;
+    grid-row: 2;
+    min-width: 0;
+  }
+  .lesson-stepper { min-width: 0; max-width: 100%; }
+  .lesson-step { flex: 0 0 185px; min-width: 185px; }
+  .lesson-content-heading,.lesson-completion-footer { min-width: 0; }
+  .lesson-content-title { overflow-wrap: anywhere; }
+  .lesson-start-practice { min-width: 0; align-items: stretch; }
+  .lesson-start-practice .lesson-complete-button { width: 100%; }
+  .coding-question-nav,.exam-question-nav { min-width: 0; max-width: 100%; }
+  .coding-question-nav-item,.exam-question-nav-item { flex: 0 0 170px; min-width: 170px; }
+  .coding-practice-progress,.exam-progress-row {
+    min-width: 0;
+    grid-template-columns: minmax(0,1fr) auto;
+  }
+  .coding-practice-progress > *, .exam-progress-row > * { min-width: 0; }
+  .coding-practice-progress .lesson-progress-track,
+  .exam-progress-row .exam-progress-track {
+    grid-column: 1/-1;
+    grid-row: 2;
+  }
+  .exam-progress-row > span { white-space: normal; text-align: right; }
+  .exam-heading { min-width: 0; }
+  .exam-completion-badge { white-space: normal; }
+  .exam-option code { overflow-wrap: anywhere; white-space: pre-wrap; }
+}
+@media (max-width: 420px) {
+  .academy-header-inner { width: 100%; }
+  .academy-brand { min-width: 0; }
+  .academy-mode-nav .nav-button { min-width: 0; }
+  .lesson-progress-caption { flex-wrap: wrap; }
+  .lesson-content-card .teaching-panel,
+  .lesson-content-card .teaching-copy,
+  .lesson-business-task,
+  .lesson-start-practice { min-width: 0; }
+  .coding-practice-heading,.coding-task-header,.coding-editor-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .exam-heading { gap: 10px; }
+  .exam-summary-card { min-width: 0; }
+}
