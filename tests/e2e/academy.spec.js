@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?test-reset=1');
   await page.evaluate(() => localStorage.clear());
-  await page.goto('/#day-01');
+  await page.goto('/?test-reset=2#day-01');
   await expect(page.locator('.lesson-content-title')).toBeVisible();
 });
 
