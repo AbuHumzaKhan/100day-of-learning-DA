@@ -5,7 +5,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await expect(page.locator('.dashboard-hero')).toBeVisible();
+  await expect(page.locator('.lesson-content-title')).toBeVisible();
 });
 
 test('homepage has no automatically detectable critical accessibility violations', async ({ page }) => {
@@ -30,7 +30,6 @@ test('teaching markdown is rendered as semantic content', async ({ page }) => {
 });
 
 test('lesson and exam screens have no automatically detectable critical accessibility violations', async ({ page }) => {
-  await page.getByRole('button', { name: 'Learn', exact: true }).click();
   let results = await new AxeBuilder({ page }).analyze();
   let serious = results.violations.filter(item => item.impact === 'critical' || item.impact === 'serious');
   expect(serious, serious.map(item => item.id + ': ' + item.help).join('\n')).toEqual([]);
