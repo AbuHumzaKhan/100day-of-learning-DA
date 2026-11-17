@@ -882,3 +882,11 @@ html[data-theme="dark"] .teaching-text { color: #c1cec4; }
 @media (prefers-reduced-motion: reduce) {
   .track-card { transition: none; }
 }
+
+@media (max-width: 760px) {
+  .academy-header-inner { display: grid; grid-template-columns: minmax(0,1fr) auto; }
+  .academy-brand { grid-column: 1; grid-row: 1; }
+  .theme-toggle { grid-column: 2; grid-row: 1; justify-self: end; }
+  .academy-nav { grid-column: 1 / -1; grid-row: 2; }
+  .academy-search-wrap { grid-column: 1 / -1; grid-row: 3; width: 100%; }
+}
