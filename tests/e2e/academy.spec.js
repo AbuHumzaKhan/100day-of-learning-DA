@@ -3,55 +3,107 @@ import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.clear());
   await page.goto('/#day-01');
-  await expect(page.locator('.lesson-hero h1')).toBeVisible();
+  await expect(page.locator('.lesson-content-title')).toBeVisible();
 });
 
+test('opens lesson mode with five sequential lessons and a locked exam', async ({ page }) => {
+  await expect(page.locator('.lesson-step')).toHaveCount(5);
+  await expect(page.locator('.lesson-step[data-lesson-index="0"]')).toBeEnabled();
+  await expect(page.locator('.lesson-step[data-lesson-index="1"]')).toBeDisabled();
+  await expect(page.locator('.academy-mode-nav [data-view="exam"]')).toBeDisabled();
+  await expect(page.locator('.lesson-content-title')).toContainText('SELECT');
+  await expect(page.locator('.lesson-business-task')).toBeVisible();
+  await expect(page.locator('.lesson-side-column')).toBeVisible();
+});
 
-test('clean visits open a professional overview with a transparent curriculum roadmap', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.locator('.dashboard-hero')).toBeVisible();
-  await expect(page.getByRole('heading', { name: /Learn the craft\. Lead with insight\./ })).toBeVisible();
-  await expect(page.locator('.track-card')).toHaveCount(4);
-  await expect(page.locator('.dashboard-metrics')).toContainText('165');
-  await expect(page.locator('.dashboard-hero')).not.toContainText('Content not published');
-  await page.getByRole('button', { name: 'Learn', exact: true }).click();
-  await expect(page.locator('.lesson-hero h1')).toBeVisible();
+test('lessons unlock in order and the fifth completion replaces the lesson screen with the exam', async ({ page }) => {
+  for (let lesson = 0; lesson < 5; lesson += 1) {
+    await expect(page.locator('.lesson-content-title')).toBeVisible();
+    await expect(page.locator('.lesson-step[data-lesson-index="' + lesson + '"]')).toHaveClass(/is-active/);
+    await page.locator('[data-action="complete-lesson"]').click();
+    if (lesson < 4) {
+      await expect(page.locator('.lesson-content-title')).toBeVisible();
+      await expect(page.locator('.lesson-step[data-lesson-index="' + (lesson + 1) + '"]')).toBeEnabled();
+    }
+  }
+
+  await expect(page.locator('.exam-screen')).toBeVisible();
+  await expect(page.locator('.lesson-experience')).toHaveCount(0);
+  await expect(page.locator('.exam-question-nav-item')).toHaveCount(5);
+  await expect(page.locator('.exam-question-nav-item[data-exam-question="0"]')).toHaveClass(/is-current/);
+  await expect(page.locator('.exam-question-card')).toHaveCount(1);
+  await expect(page.locator('.academy-mode-nav [data-view="exam"]')).toBeEnabled();
+  await expect(page.locator('.academy-mode-nav [data-view="learn"]')).toBeDisabled();
+});
+
+test('exam navigator shows one question at a time and autosaves selected answers', async ({ page }) => {
+  for (let lesson = 0; lesson < 5; lesson += 1) {
+    await page.locator('[data-action="complete-lesson"]').click();
+  }
+
+  await expect(page.locator('.exam-question-card')).toContainText('Question 1');
+  await page.locator('.exam-option').nth(1).click();
+  await expect(page.locator('.exam-question-nav-item[data-exam-question="0"]')).toHaveClass(/is-answered/);
+  await page.locator('.exam-question-nav-item[data-exam-question="1"]').click();
+  await expect(page.locator('.exam-question-card')).toContainText('Question 2');
+  await page.locator('.exam-option').nth(2).click();
   await page.reload();
-  await expect(page.locator('.lesson-hero h1')).toBeVisible();
-  await page.getByRole('button', { name: 'Overview', exact: true }).click();
-  await page.reload();
-  await expect(page.locator('.dashboard-hero')).toBeVisible();
-  await page.getByRole('button', { name: 'Learn', exact: true }).click();
-  await expect(page.locator('.day-button')).toHaveCount(11);
-  await expect(page.locator('.day-button[data-day="12"]')).toHaveCount(0);
+  await expect(page.locator('.exam-screen')).toBeVisible();
+  await expect(page.locator('.exam-question-nav-item[data-exam-question="0"]')).toHaveClass(/is-answered/);
+  await expect(page.locator('.exam-question-nav-item[data-exam-question="1"]')).toHaveClass(/is-answered/);
+  await expect(page.locator('.exam-option.is-selected')).toHaveCount(1);
 });
 
-test('loads the published lesson and enforces sequential unlocking', async ({ page }) => {
-  await expect(page.locator('.day-button[data-day="1"]')).toBeEnabled();
-  await expect(page.locator('.day-button[data-day="2"]')).toBeDisabled();
-  await expect(page.locator('.day-button[data-day="12"]')).toHaveCount(0);
-  await expect(page.locator('.lesson-hero h1')).toContainText('Day 1');
+test('exam requires all five answers and allows a failed attempt to be retried', async ({ page }) => {
+  for (let lesson = 0; lesson < 5; lesson += 1) {
+    await page.locator('[data-action="complete-lesson"]').click();
+  }
+
+  for (let question = 0; question < 5; question += 1) {
+    await page.locator('.exam-question-nav-item[data-exam-question="' + question + '"]').click();
+    await page.locator('.exam-option').first().click();
+  }
+  await page.locator('.exam-question-nav-item[data-exam-question="4"]').click();
+  await page.locator('[data-action="submit-exam"]').click();
+  await expect(page.locator('.exam-result-banner')).toContainText('Assessment not passed yet');
+  await expect(page.locator('.exam-result-banner')).toContainText('0 out of 5');
+  await page.locator('[data-action="retry-exam"]').click();
+  await expect(page.locator('.exam-question-nav-item.is-answered')).toHaveCount(0);
+  await expect(page.locator('.exam-result-banner')).toHaveCount(0);
 });
 
-test('does not unlock days when earlier days in the sequence are incomplete', async ({ page }) => {
-  await page.evaluate(() => {
-    localStorage.setItem('ahk_academy_state_v1', JSON.stringify({
-      schemaVersion: 1,
-      activeDay: 4,
-      completedDays: [3],
-      tasks: {},
-      updatedAt: new Date().toISOString()
-    }));
+test('passing the exam unlocks the next published day', async ({ page }) => {
+  for (let lesson = 0; lesson < 5; lesson += 1) {
+    await page.locator('[data-action="complete-lesson"]').click();
+  }
+
+  const correctStatements = await page.evaluate(async () => {
+    const response = await fetch('./curriculum/day-001.json');
+    const day = await response.json();
+    return day.topics.map(topic => topic.teaching.expected_sql);
   });
-  await page.reload();
-  await expect(page.locator('.day-button[data-day="2"]')).toBeDisabled();
-  await expect(page.locator('.day-button[data-day="4"]')).toBeDisabled();
-  await expect(page.locator('.lesson-hero h1')).toContainText('Day 1');
+
+  for (let question = 0; question < 5; question += 1) {
+    await page.locator('.exam-question-nav-item[data-exam-question="' + question + '"]').click();
+    const answer = page.locator('.exam-option').filter({ hasText: correctStatements[question] });
+    await expect(answer).toHaveCount(1);
+    await answer.click();
+  }
+
+  await page.locator('[data-action="submit-exam"]').click();
+  await expect(page.locator('.exam-result-banner')).toContainText('Assessment passed');
+  await expect(page.locator('.exam-result-banner')).toContainText('5 out of 5');
+  await page.locator('[data-action="continue-next-day"]').click();
+  await expect(page.locator('.lesson-content-title')).toContainText('DISTINCT');
+  await expect(page.locator('.lesson-step')).toHaveCount(5);
 });
 
 test('teaching and practice tabs expose valid accessible tab relationships', async ({ page }) => {
   await expect(page.locator('.mode-tabs [role="tab"]')).toHaveCount(4);
   await expect(page.locator('#teaching-panel')).toHaveAttribute('aria-labelledby', 'teaching-tab-teacher');
+
+  await page.locator('[data-view="dashboard"]').click();
+  await page.getByRole('button', { name: 'Practice', exact: true }).click();
   await expect(page.locator('.practice-tabs [role="tab"]')).toHaveCount(3);
   await expect(page.locator('#practice-pane-query')).toHaveAttribute('aria-labelledby', 'practice-tab-query');
 });
@@ -62,14 +114,16 @@ test('teaching and practice tabs support keyboard navigation without losing focu
   await expect(page.locator('[data-mode="explain"]')).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('[data-mode="explain"]')).toBeFocused();
 
+  await page.locator('[data-view="dashboard"]').click();
+  await page.getByRole('button', { name: 'Practice', exact: true }).click();
   await page.locator('[data-practice-tab="query"]').focus();
   await page.keyboard.press('ArrowRight');
   await expect(page.locator('[data-practice-tab="schema"]')).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('[data-practice-tab="schema"]')).toBeFocused();
 });
 
-test('renders all teaching modes and five topic navigation items', async ({ page }) => {
-  await expect(page.locator('.topic-nav-button')).toHaveCount(5);
+test('all teaching modes and five lesson steps are available', async ({ page }) => {
+  await expect(page.locator('.lesson-step')).toHaveCount(5);
   await page.getByRole('tab', { name: /Explain/ }).click();
   await expect(page.locator('.teaching-mode-label')).toHaveText('Explain');
   await page.getByRole('tab', { name: /Deep learning/ }).click();
@@ -80,27 +134,15 @@ test('renders all teaching modes and five topic navigation items', async ({ page
   await expect(page.locator('.teaching-mode-label')).toHaveText('Teacher');
 });
 
-test('reviews all 15 tasks before completing a day and unlocking the next day', async ({ page }) => {
-  for (let topic = 0; topic < 5; topic += 1) {
-    await page.locator('.topic-nav-button[data-topic="' + topic + '"]').click();
-    for (let question = 0; question < 3; question += 1) {
-      await page.locator('.question-card').nth(question).locator('[data-task-action="toggle"]').click();
-    }
-  }
+test('overview, practice, projects and progress remain accessible', async ({ page }) => {
+  await page.locator('[data-view="dashboard"]').click();
+  await expect(page.locator('.dashboard-hero')).toBeVisible();
 
-  await expect(page.locator('.day-checkpoint')).toContainText('15 of 15');
-  await page.locator('[data-action="complete-day"]').click();
-  await expect(page.locator('.day-button[data-day="2"]')).toBeEnabled();
-
-  await page.locator('.day-button[data-day="2"]').click();
-  await expect(page.locator('.lesson-hero h1')).toContainText('Day 2');
-});
-
-test('Practice navigation is the active destination and Projects and Progress open', async ({ page }) => {
   await page.getByRole('button', { name: 'Practice', exact: true }).click();
   await expect(page.locator('.nav-button[data-view="practice"]')).toHaveClass(/active/);
-  await expect(page.locator('.nav-button[data-view="learn"]')).not.toHaveClass(/active/);
+  await expect(page.locator('#sqlEditor')).toBeVisible();
 
+  await page.locator('[data-view="dashboard"]').click();
   await page.getByRole('button', { name: 'Projects', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Analytical project library' })).toBeVisible();
   await expect(page.locator('.project-card')).toHaveCount(4);
@@ -117,8 +159,10 @@ test('global search finds curriculum topics and business requests', async ({ pag
   await expect(page.locator('#academySearchResults')).toContainText('Day 02');
 });
 
-test('SQL workspace executes a read-only query against the registered orders dataset', async ({ page }) => {
+test('SQL workspace executes read-only queries against the registered orders dataset', async ({ page }) => {
   test.setTimeout(60_000);
+  await page.locator('[data-view="dashboard"]').click();
+  await page.getByRole('button', { name: 'Practice', exact: true }).click();
   await page.locator('#sqlEditor').fill('SELECT COUNT(*) AS total_orders FROM orders;');
   await page.locator('[data-action="run-query"]').click();
   await expect(page.locator('#queryResults')).toContainText('150', { timeout: 45_000 });
@@ -137,17 +181,27 @@ test('responsive layouts fit mobile, tablet, laptop and desktop viewports', asyn
     }));
     expect(dimensions.document, 'horizontal overflow at ' + width + 'px').toBeLessThanOrEqual(dimensions.viewport + 1);
   }
-  await expect(page.locator('.lesson-hero h1')).toBeVisible();
+  await expect(page.locator('.lesson-content-title')).toBeVisible();
 });
 
-test('mobile layout fits a 390px viewport without horizontal page overflow', async ({ page }) => {
+test('mobile lesson and exam navigators remain usable without page overflow', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
-  const dimensions = await page.evaluate(() => ({
+  let dimensions = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
     document: document.documentElement.scrollWidth
   }));
   expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport + 1);
-  await expect(page.locator('.academy-nav')).toBeVisible();
-  await expect(page.locator('.lesson-hero h1')).toBeVisible();
+  await expect(page.locator('.academy-mode-nav')).toBeVisible();
+  await expect(page.locator('.lesson-content-title')).toBeVisible();
+
+  for (let lesson = 0; lesson < 5; lesson += 1) {
+    await page.locator('[data-action="complete-lesson"]').click();
+  }
+  await expect(page.locator('.exam-question-nav-item')).toHaveCount(5);
+  dimensions = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    document: document.documentElement.scrollWidth
+  }));
+  expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport + 1);
 });
