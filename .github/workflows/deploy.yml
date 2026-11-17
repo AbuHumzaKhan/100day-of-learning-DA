@@ -13,17 +13,17 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: academy-quality-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -31,16 +31,23 @@ jobs:
       - name: Install test dependencies
         run: npm install --no-package-lock
 
-      - name: Check JavaScript syntax
+      - name: Validate JavaScript syntax
         run: |
           node --check assets/js/app.js
-          node --check assets/js/core/storage.js
+          node --check assets/js/core/progress-store.js
+          node --check assets/js/core/curriculum-service.js
           node --check engines/sql-engine.js
-          node --check scripts/validate-content.mjs
-          node --check playwright.config.mjs
+          node --check sw.js
+          node --check tests/server.cjs
+          node --check tests/validate-repository.mjs
+          node --check tests/unit/progress-store.test.mjs
+          node --check tests/e2e/app.spec.cjs
 
-      - name: Validate curriculum, datasets and release contract
-        run: npm run validate:content
+      - name: Validate repository content, curriculum and datasets
+        run: npm run validate
+
+      - name: Run progress and state unit tests
+        run: npm test
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
@@ -48,8 +55,19 @@ jobs:
       - name: Run frontend browser tests
         run: npm run test:e2e
 
-      - name: Run mobile Lighthouse audit
+      - name: Run mobile Lighthouse quality gate
         run: npx --yes @lhci/cli@0.16.0 autorun
+
+      - name: Upload Playwright diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload Lighthouse reports
         if: always()
@@ -58,13 +76,15 @@ jobs:
           name: lighthouse-mobile-report
           path: lighthouse-results/
           if-no-files-found: ignore
+          retention-days: 7
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: validate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

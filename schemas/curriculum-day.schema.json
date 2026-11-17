@@ -2,16 +2,16 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://abuhumzakhan.github.io/100day-of-learning-DA/schemas/curriculum-day.schema.json",
   "title": "AHK Academy Curriculum Day",
-  "description": "Contract for one day of the 100-Day Data Analyst Business Trainer.",
+  "description": "Validated contract for one daily lesson in the 100-day Data Analyst learning programme.",
   "type": "object",
   "required": ["day", "track", "title", "topics"],
   "properties": {
     "day": { "type": "integer", "minimum": 1, "maximum": 100 },
     "track": { "type": "string", "minLength": 1 },
-    "title": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 3 },
     "description": { "type": "string" },
+    "estimated_time_minutes": { "type": "integer", "minimum": 1 },
     "dataset_refs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
-    "estimated_time_minutes": { "type": "number", "minimum": 1 },
     "topics": {
       "type": "array",
       "minItems": 5,
@@ -22,19 +22,17 @@
         "properties": {
           "id": { "type": "string" },
           "sequence": { "type": "integer", "minimum": 1, "maximum": 5 },
-          "title": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 2 },
           "business_skill": { "type": "string" },
           "teaching": {
             "type": "object",
             "properties": {
-              "teacher": { "type": ["string", "null"] },
-              "explain": { "type": ["string", "null"] },
-              "detailedlearning": { "type": ["string", "null"] },
-              "expose": { "type": ["string", "null"] },
-              "example": { "type": ["string", "null"] },
-              "example_sql": { "type": ["string", "null"] },
-              "syntax": { "type": ["string", "null"] },
-              "expected_sql": { "type": ["string", "null"] }
+              "teacher": { "type": "string" },
+              "explain": { "type": "string" },
+              "detailedlearning": { "type": "string" },
+              "expose": { "type": "string" },
+              "example": { "type": "string" },
+              "expected_sql": {"type": ["string", "null"]}
             },
             "additionalProperties": true
           },
@@ -44,20 +42,15 @@
             "maxItems": 3,
             "items": {
               "type": "object",
-              "required": ["role", "scenario", "request"],
+              "required": ["id", "role", "scenario", "request"],
               "properties": {
-                "id": { "type": "string" },
+                "id": { "type": "string", "minLength": 3 },
                 "difficulty": { "type": "string" },
-                "role": { "type": "string", "minLength": 1 },
-                "scenario": { "type": "string", "minLength": 1 },
-                "request": { "type": "string", "minLength": 1 },
-                "output": { "type": ["array", "string"] },
-                "required_output": { "type": "string" },
-                "validation": { "type": "string" },
-                "success_criteria": { "type": "string" },
-                "constraints": { "type": "array" },
-                "business_objective": { "type": "string" },
-                "decision_use": { "type": "string" }
+                "role": { "type": "string", "minLength": 2 },
+                "scenario": { "type": "string", "minLength": 5 },
+                "request": { "type": "string", "minLength": 5 },
+                "output": { "type": "array", "items": { "type": "string" } },
+                "validation": { "type": "string" }
               },
               "additionalProperties": true
             }
