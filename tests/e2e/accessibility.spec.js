@@ -18,7 +18,7 @@ async function completeCodingQuestions(page) {
     await page.locator('#codingSqlEditor').fill(questions[index].expected_sql);
     await page.locator('[data-action="run-coding-question"]').click();
     if (index < questions.length - 1) {
-      await expect(page.locator('.coding-feedback.is-correct')).toBeVisible();
+      await expect(page.locator('.coding-question-nav-item[data-coding-question="' + index + '"]')).toHaveClass(/is-complete/);
     }
   }
   await expect(page.locator('.exam-screen')).toBeVisible();
