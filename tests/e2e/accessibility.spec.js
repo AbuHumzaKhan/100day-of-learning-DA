@@ -5,7 +5,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await expect(page.locator('.lesson-hero h1')).toBeVisible();
+  await expect(page.locator('.dashboard-hero')).toBeVisible();
 });
 
 test('homepage has no automatically detectable critical accessibility violations', async ({ page }) => {
@@ -19,10 +19,13 @@ test('theme toggle persists and keeps the main learning workspace usable', async
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('.dashboard-hero')).toBeVisible();
+  await page.getByRole('button', { name: 'Learn', exact: true }).click();
   await expect(page.locator('.lesson-hero h1')).toBeVisible();
 });
 
 test('teaching markdown is rendered as semantic content', async ({ page }) => {
+  await page.getByRole('button', { name: 'Learn', exact: true }).click();
   await page.getByRole('tab', { name: /Teacher/ }).click();
   await expect(page.locator('.teaching-text h2, .teaching-text h3, .teaching-text h4').first()).toBeVisible();
 });

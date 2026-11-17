@@ -9,7 +9,7 @@ const state = {
   activeDay: 1,
   activeTopic: 0,
   activeQuestion: 0,
-  view: 'learn',
+  view: 'dashboard',
   teachingMode: 'teacher',
   practiceTab: 'query',
   selectedDataset: 'orders',
@@ -212,8 +212,8 @@ async function loadDay(day, options = {}) {
     state.activeTopic = Math.min(state.activeTopic, Math.max(0, topicCount - 1));
     const questionCount = state.day.topics?.[state.activeTopic]?.questions?.length || 0;
     state.activeQuestion = Math.min(state.activeQuestion, Math.max(0, questionCount - 1));
-    render();
-    updateHash(target);
+    if (options.render !== false) render();
+    if (options.updateUrl !== false) updateHash(target);
     window.scrollTo({ top: 0, behavior: 'auto' });
   } catch (error) {
     renderFatal(error);
@@ -231,52 +231,60 @@ function renderFatal(error) {
 
 function renderHeader() {
   const items = [
+    ['dashboard', 'Overview'],
     ['learn', 'Learn'],
     ['practice', 'Practice'],
     ['projects', 'Projects'],
     ['progress', 'Progress']
   ];
   return '<header class="academy-header"><div class="academy-header-inner">' +
-    '<a class="academy-brand" href="./" aria-label="AHK Academy Data Analyst Learning Hub home" data-view="learn"><span class="brand-mark">AHK</span><span class="brand-copy"><strong>AHK Academy</strong><small>Data Analyst Learning Hub</small></span></a>' +
+    '<a class="academy-brand" href="./" aria-label="AHK Academy overview" data-view="dashboard"><span class="brand-mark">AHK</span><span class="brand-copy"><strong>AHK Academy</strong><small>Data Analyst Learning Hub</small></span></a>' +
     '<button type="button" class="theme-toggle" data-action="toggle-theme" aria-label="Switch theme" aria-pressed="' + (state.theme === 'dark') + '"><span aria-hidden="true">' + (state.theme === 'dark' ? '☀' : '◐') + '</span><span class="theme-label">' + (state.theme === 'dark' ? 'Light' : 'Dark') + '</span></button>' +
     '<nav class="academy-nav" aria-label="Main navigation">' +
     items.map(([id, label]) => '<button type="button" class="nav-button ' + (state.view === id ? 'active' : '') + '" data-view="' + id + '">' + label + '</button>').join('') +
     '</nav>' +
     '<div class="academy-search-wrap"><label class="search-box"><span aria-hidden="true">⌕</span><input id="academySearch" type="search" value="' + escapeHTML(state.searchQuery) + '" placeholder="Search lessons and tasks" autocomplete="off" aria-label="Search lessons, topics and business requests"><kbd>Ctrl K</kbd></label><div id="academySearchResults" class="search-results" hidden></div></div>' +
-    '<div class="learner-chip"><span class="learner-avatar">AK</span><span><strong>Learner workspace</strong><small>Progress saved on this device</small></span></div>' +
+    '<div class="learner-chip"><span class="learner-avatar">AHK</span><span><strong>My workspace</strong><small>Personal progress · saved locally</small></span></div>' +
     '</div></header>';
 }
 
 function renderSidebar() {
   const groups = [
-    { title: 'SQL', start: 1, end: 25 },
-    { title: 'Excel', start: 26, end: 50 },
-    { title: 'Power BI & DAX', start: 51, end: 75 },
-    { title: 'Python & Pandas', start: 76, end: 100 }
+    { title: 'SQL & Data Foundations', short: 'SQL', start: 1, end: 25 },
+    { title: 'Excel & Business Reporting', short: 'XL', start: 26, end: 50 },
+    { title: 'Power BI & DAX', short: 'BI', start: 51, end: 75 },
+    { title: 'Python & Pandas', short: 'PY', start: 76, end: 100 }
   ];
   const published = publishedThrough();
-  const stateData = progressStore.getState();
-  const completed = stateData.completedDays.filter(day => day <= published).length;
-  let html = '<aside class="left-rail"><section class="panel roadmap-panel"><div class="panel-heading"><div><span class="eyebrow">YOUR LEARNING PATH</span><h2>100-Day Journey</h2><p>Business-first analyst training</p></div><span class="roadmap-count">' + published + '/100</span></div>' +
-    '<div class="release-summary"><div class="summary-line"><span>Published lessons</span><strong>' + published + ' / 100</strong></div><div class="mini-progress"><span style="width:' + Math.round(published) + '%"></span></div><div class="summary-line muted"><span>Completed days</span><strong>' + completed + '</strong></div></div><div class="roadmap-groups">';
+  const available = (state.index?.days || []).filter(item => Number(item.day) <= published);
+  const completed = progressStore.getState().completedDays.filter(day => day <= published).length;
+  const activeGroup = groups.find(group => state.activeDay >= group.start && state.activeDay <= group.end) || groups[0];
+  const groupDays = available.filter(item => Number(item.day) >= activeGroup.start && Number(item.day) <= activeGroup.end);
 
-  for (const group of groups) {
-    html += '<section class="roadmap-group"><h3>' + escapeHTML(group.title) + '</h3><div class="day-list">';
-    for (let day = group.start; day <= group.end; day += 1) {
-      const meta = dayMeta(day);
-      const publishedDay = day <= published && !!meta;
-      const unlocked = publishedDay && isUnlocked(day);
-      const isCurrent = day === state.activeDay;
-      const isComplete = progressStore.isDayCompleted(day);
-      const title = meta?.title?.replace(/^.*?—\s*/, '') || 'Content not published';
-      html += '<button type="button" class="day-button ' + (isCurrent ? 'current ' : '') + (isComplete ? 'completed ' : '') + (!unlocked ? 'locked' : '') + '" data-day="' + day + '" ' + (!unlocked ? 'disabled' : '') + ' aria-current="' + (isCurrent ? 'page' : 'false') + '" title="' + escapeHTML(title) + '">' +
-        '<span class="day-topline"><span>DAY ' + String(day).padStart(2, '0') + '</span><span class="day-state">' + (isComplete ? 'DONE' : unlocked ? 'OPEN' : publishedDay ? 'LOCKED' : 'SOON') + '</span></span>' +
-        '<span class="day-name">' + escapeHTML(title) + '</span></button>';
-    }
-    html += '</div></section>';
-  }
-  html += '</div></section></aside>';
-  return html;
+  return '<aside class="left-rail">' +
+    '<section class="panel roadmap-panel">' +
+      '<div class="roadmap-heading"><div><span class="eyebrow">COURSE NAVIGATION</span><h2>Your learning path</h2><p>100-day analyst development plan</p></div><span class="roadmap-count">' + String(published).padStart(2, '0') + '<small> / 100</small></span></div>' +
+      '<div class="roadmap-progress-card"><div class="roadmap-progress-copy"><span>Published curriculum</span><strong>' + published + '%</strong></div><div class="roadmap-progress-track"><span style="width:' + published + '%"></span></div><div class="roadmap-progress-foot"><span>' + available.length + ' lessons available</span><span>' + completed + ' completed</span></div></div>' +
+      '<div class="roadmap-track-heading"><span>YOUR CURRENT TRACK</span><span>' + escapeHTML(activeGroup.short) + '</span></div>' +
+      '<div class="roadmap-current-track"><div class="roadmap-track-mark">' + escapeHTML(activeGroup.short) + '</div><div><strong>' + escapeHTML(activeGroup.title) + '</strong><small>Days ' + String(activeGroup.start).padStart(2, '0') + '–' + activeGroup.end + ' · ' + groupDays.length + ' published</small></div></div>' +
+      '<div class="roadmap-group"><div class="roadmap-group-title"><span>AVAILABLE LESSONS</span><span>' + groupDays.length + '</span></div><div class="day-list">' +
+        groupDays.map(item => {
+          const day = Number(item.day);
+          const isCurrent = day === state.activeDay;
+          const isComplete = progressStore.isDayCompleted(day);
+          const unlocked = isUnlocked(day);
+          const title = item.title?.replace(/^.*?—\s*/, '') || 'Untitled lesson';
+          return '<button type="button" class="day-button ' + (isCurrent ? 'current ' : '') + (isComplete ? 'completed ' : '') + (!unlocked ? 'locked' : '') + '" data-day="' + day + '" ' + (!unlocked ? 'disabled' : '') + ' aria-current="' + (isCurrent ? 'page' : 'false') + '">' +
+            '<span class="day-index">' + String(day).padStart(2, '0') + '</span><span class="day-copy"><strong>' + escapeHTML(title) + '</strong><small>' + (isComplete ? 'Completed' : unlocked ? 'Available to learn' : 'Complete previous day to unlock') + '</small></span><span class="day-state">' + (isComplete ? '✓' : unlocked ? '›' : '•') + '</span></button>';
+        }).join('') +
+      '</div></div>' +
+      '<div class="roadmap-up-next"><span class="roadmap-up-next-icon">↗</span><div><strong>Progress unlocks the next lesson</strong><small>Review all business requests, complete the day, then continue in sequence.</small></div></div>' +
+      '<div class="roadmap-other-tracks">' + groups.filter(group => group.start !== activeGroup.start).map(group => {
+        const count = available.filter(item => Number(item.day) >= group.start && Number(item.day) <= group.end).length;
+        return '<div class="roadmap-other-track"><span class="other-track-mark">' + escapeHTML(group.short) + '</span><span><strong>' + escapeHTML(group.title) + '</strong><small>Days ' + String(group.start).padStart(2, '0') + '–' + group.end + '</small></span><em>' + (count ? count + ' live' : 'In roadmap') + '</em></div>';
+      }).join('') + '</div>' +
+    '</section>' +
+  '</aside>';
 }
 
 function renderTeaching(topic) {
@@ -384,6 +392,86 @@ function renderPractice() {
     '<p class="practice-footnote">All registered datasets are loaded into the local SQL session when you run your first query. Table names use their dataset IDs with hyphens replaced by underscores.</p></section>';
 }
 
+function renderDashboard() {
+  const published = publishedThrough();
+  const stats = progressStore.getStats(published);
+  const activeMeta = dayMeta(state.activeDay) || dayMeta(1);
+  const currentTitle = state.day?.title || activeMeta?.title || 'SQL Foundations';
+  const currentDescription = state.day?.description || 'Build practical capability through a guided lesson and realistic business requests.';
+  const reviewedPercent = stats.courseCompletion;
+  const tracks = [
+    { short: 'SQL', number: '01', title: 'SQL & Data Foundations', range: 'Days 01–25', description: 'Retrieve, join, transform and analyse business data with confidence.', start: 1, end: 25, tone: 'sql', skills: ['Querying', 'Joins', 'CTEs', 'Window functions'] },
+    { short: 'XL', number: '02', title: 'Excel & Business Reporting', range: 'Days 26–50', description: 'Clean operational data, build dependable models and produce clear reporting.', start: 26, end: 50, tone: 'excel', skills: ['Formulas', 'PivotTables', 'Power Query', 'Reporting'] },
+    { short: 'BI', number: '03', title: 'Power BI & DAX', range: 'Days 51–75', description: 'Model data, define measures and communicate performance through dashboards.', start: 51, end: 75, tone: 'powerbi', skills: ['Data model', 'DAX', 'Time intelligence', 'Dashboards'] },
+    { short: 'PY', number: '04', title: 'Python & Pandas', range: 'Days 76–100', description: 'Explore, clean and analyse datasets with a repeatable Python workflow.', start: 76, end: 100, tone: 'python', skills: ['Python', 'Pandas', 'Visualisation', 'Automation'] }
+  ];
+  const trackCards = tracks.map(track => {
+    const live = Math.max(0, Math.min(track.end, published) - track.start + 1);
+    const percentage = Math.round((live / (track.end - track.start + 1)) * 100);
+    const status = live ? 'CURRENTLY PUBLISHED' : track.start === 26 ? 'NEXT LEARNING TRACK' : 'PROGRAM ROADMAP';
+    const availability = live ? live + ' of 25 lessons published' : 'Scheduled for ' + track.range.toLowerCase();
+    return '<article class="track-card track-' + track.tone + '">' +
+      '<div class="track-card-top"><span class="track-number">' + track.number + '</span><span class="track-status">' + status + '</span></div>' +
+      '<div class="track-card-title"><span class="track-icon">' + track.short + '</span><div><span class="track-range">' + track.range + '</span><h3>' + track.title + '</h3></div></div>' +
+      '<p>' + track.description + '</p>' +
+      '<div class="track-skills">' + track.skills.map(skill => '<span>' + skill + '</span>').join('') + '</div>' +
+      '<div class="track-card-bottom"><div class="track-release"><div><span>' + availability + '</span><strong>' + percentage + '%</strong></div><div class="track-release-bar"><span style="width:' + percentage + '%"></span></div></div>' +
+      (live ? '<button type="button" class="track-open" data-view="learn" aria-label="Open SQL learning track">Open track <span>↗</span></button>' : '<span class="track-future">In sequence</span>') +
+      '</div></article>';
+  }).join('');
+  const resumeDay = isUnlocked(state.activeDay) ? state.activeDay : (isUnlocked(stats.nextDay) ? stats.nextDay : 1);
+  const resumeMeta = dayMeta(resumeDay) || activeMeta;
+  const cleanTitle = currentTitle.replace(/^.*?—\s*/, '');
+
+  return '<section class="dashboard-view">' +
+    '<section class="dashboard-hero">' +
+      '<div class="dashboard-hero-copy">' +
+        '<span class="dashboard-kicker"><span class="kicker-dot"></span> AHK ACADEMY <span class="kicker-divider">/</span> ANALYST DEVELOPMENT PROGRAM</span>' +
+        '<h1>Learn the craft.<br><em>Lead with insight.</em></h1>' +
+        '<p>A structured, business-first learning environment for building practical data analyst skills—from the first query to an executive-ready dashboard.</p>' +
+        '<div class="dashboard-actions"><button type="button" class="button dashboard-primary" data-view="learn">Continue learning <span>→</span></button><button type="button" class="dashboard-secondary" data-view="projects">Explore projects <span>↗</span></button></div>' +
+        '<div class="dashboard-proof"><span><b>100</b> learning days</span><i></i><span><b>4</b> core tools</span><i></i><span><b>Business-first</b> curriculum</span></div>' +
+      '</div>' +
+      '<div class="dashboard-hero-art" aria-hidden="true">' +
+        '<div class="hero-art-orbit orbit-one"></div><div class="hero-art-orbit orbit-two"></div>' +
+        '<div class="hero-art-card"><div class="hero-art-head"><span>ANALYST SKILL MAP</span><span class="live-indicator">● LIVE PROGRAM</span></div>' +
+          '<div class="hero-art-score"><div><small>CURRICULUM</small><strong>100<span> days</span></strong><em>One clear learning sequence</em></div><div class="hero-art-ring"><span>4</span><small>tracks</small></div></div>' +
+          '<div class="hero-art-bars"><div><span>SQL</span><i><b style="width:44%"></b></i><strong>01</strong></div><div><span>EXCEL</span><i><b style="width:0%"></b></i><strong>02</strong></div><div><span>POWER BI</span><i><b style="width:8%"></b></i><strong>03</strong></div><div><span>PYTHON</span><i><b style="width:8%"></b></i><strong>04</strong></div></div>' +
+          '<div class="hero-art-footer"><span>LEARN</span><b>→</b><span>APPLY</span><b>→</b><span>ANALYSE</span></div>' +
+        '</div><div class="hero-art-float"><span class="float-mark">↗</span><span><strong>Built around business</strong><small>Not disconnected tutorials</small></span></div>' +
+      '</div>' +
+    '</section>' +
+
+    '<div class="dashboard-metrics">' +
+      '<article class="dashboard-metric"><span class="metric-symbol metric-symbol-green">01</span><div><small>Published lessons</small><strong>' + published + '<span> / 100</span></strong><em>Available in the curriculum</em></div></article>' +
+      '<article class="dashboard-metric"><span class="metric-symbol metric-symbol-blue">02</span><div><small>Business exercises</small><strong>' + stats.publishedQuestions + '</strong><em>Realistic stakeholder requests</em></div></article>' +
+      '<article class="dashboard-metric"><span class="metric-symbol metric-symbol-amber">03</span><div><small>Days completed</small><strong>' + stats.completedDays + '<span> / 100</span></strong><em>Based on completed checkpoints</em></div></article>' +
+      '<article class="dashboard-metric"><span class="metric-symbol metric-symbol-violet">04</span><div><small>Requests reviewed</small><strong>' + stats.solvedQuestions + '</strong><em>Saved on this device</em></div></article>' +
+    '</div>' +
+
+    '<div class="dashboard-section-heading"><div><span class="eyebrow">PICK UP WHERE YOU LEFT OFF</span><h2>Your next learning session</h2><p>A clear next step, with your progress kept on this device.</p></div><button type="button" class="text-link" data-view="progress">View progress <span>→</span></button></div>' +
+    '<div class="dashboard-session-grid">' +
+      '<article class="continue-card"><div class="continue-card-top"><span class="continue-label"><i></i> READY TO CONTINUE</span><span class="continue-day">DAY ' + String(resumeDay).padStart(2, '0') + '</span></div>' +
+        '<span class="continue-track">' + escapeHTML(resumeMeta?.track || 'SQL') + ' · FOUNDATIONS</span><h3>' + escapeHTML(resumeMeta?.title?.replace(/^.*?—\s*/, '') || cleanTitle) + '</h3>' +
+        '<p>' + escapeHTML(resumeMeta?.description || currentDescription) + '</p>' +
+        '<div class="continue-card-footer"><span><b>45 min</b> typical session</span><button type="button" class="button continue-button" data-view="learn">Resume lesson <span>→</span></button></div></article>' +
+      '<article class="review-card"><div class="review-card-head"><div><span class="eyebrow">YOUR LEARNING RECORD</span><h3>Exercise review</h3></div><span class="review-period">PUBLISHED CONTENT</span></div>' +
+        '<div class="review-ring-wrap"><div class="review-ring" style="--review:' + reviewedPercent + '%"><div><strong>' + reviewedPercent + '%</strong><small>reviewed</small></div></div><div class="review-ring-copy"><strong>' + stats.solvedQuestions + ' of ' + stats.publishedQuestions + '</strong><span>business requests reviewed</span><small>Only your marked work is counted.</small></div></div>' +
+        '<div class="review-card-foot"><span>Learning activity is stored locally</span><button type="button" data-view="progress">View details ↗</button></div></article>' +
+    '</div>' +
+
+    '<div class="dashboard-section-heading track-heading"><div><span class="eyebrow">THE 100-DAY CURRICULUM</span><h2>Four tracks. One analyst skill set.</h2><p>Build capability in sequence, then apply it to practical business work.</p></div><span class="section-counter">01 <i>—</i> 04</span></div>' +
+    '<div class="track-grid">' + trackCards + '</div>' +
+
+    '<section class="learning-method"><div class="learning-method-intro"><span class="eyebrow">THE AHK LEARNING METHOD</span><h2>Understand it.<br>Apply it. <em>Prove it.</em></h2><p>Each lesson connects a technical skill to the kind of request an analyst receives at work.</p></div>' +
+      '<div class="method-step"><span class="method-number">01</span><div><strong>Learn the concept</strong><p>Focused explanations, worked examples and an analyst mindset.</p></div></div>' +
+      '<div class="method-step"><span class="method-number">02</span><div><strong>Respond to business requests</strong><p>Three realistic stakeholder tasks for each lesson topic.</p></div></div>' +
+      '<div class="method-step"><span class="method-number">03</span><div><strong>Practise with data</strong><p>Use the browser SQL workspace and registered learning datasets.</p></div></div>' +
+    '</section>' +
+    '<footer class="dashboard-footer"><span class="footer-brand">AHK <b>ACADEMY</b></span><span>Business-first data analyst training</span><span>Progress stays in this browser</span></footer>' +
+  '</section>';
+}
+
 function renderProjects() {
   const selected = PROJECTS.find(project => project.id === state.projectSelection);
   if (selected) {
@@ -417,11 +505,13 @@ function renderProgress() {
 
 function render() {
   const activeView = state.view === 'practice' ? 'learn' : state.view;
-  const viewContent = activeView === 'projects'
-    ? renderProjects()
-    : activeView === 'progress'
-      ? renderProgress()
-      : renderLesson();
+  const viewContent = activeView === 'dashboard'
+    ? renderDashboard()
+    : activeView === 'projects'
+      ? renderProjects()
+      : activeView === 'progress'
+        ? renderProgress()
+        : renderLesson();
 
   appRoot.innerHTML = '<div class="academy-shell">' + renderHeader() +
     '<main id="main" class="academy-main"><div class="view-panel" data-view-panel="' + activeView + '">' + viewContent + '</div></main>' +
@@ -643,11 +733,15 @@ async function handleClick(event) {
     const target = viewButton.dataset.view;
     if (target === 'practice') {
       state.view = 'practice';
+      history.replaceState(null, '', '#practice');
       render();
       window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     } else {
       state.view = target;
       state.projectSelection = null;
+      if (target === 'dashboard') history.replaceState(null, '', location.pathname + location.search);
+      else if (target === 'learn') updateHash(state.activeDay);
+      else history.replaceState(null, '', '#' + target);
       render();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -836,11 +930,18 @@ async function boot() {
 
     const published = publishedThrough();
     const hash = location.hash.match(/day-(\d+)/);
+    const route = ['projects', 'progress', 'practice'].includes(location.hash.slice(1)) ? location.hash.slice(1) : '';
     const requestedDay = hash ? Number(hash[1]) : progressStore.getState().activeDay;
     const firstUnlocked = Array.from({ length: published }, (_, index) => index + 1).find(day => isUnlocked(day)) || 1;
     const target = isUnlocked(requestedDay) ? requestedDay : firstUnlocked;
     state.activeDay = target;
-    await loadDay(target);
+    const hasLessonLink = Boolean(hash);
+    await loadDay(target, { updateUrl: hasLessonLink, render: hasLessonLink });
+    if (!hasLessonLink) {
+      state.view = route || 'dashboard';
+      render();
+      if (route === 'practice') window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'auto', block: 'start' }), 50);
+    }
   } catch (error) {
     renderFatal(error);
   }
