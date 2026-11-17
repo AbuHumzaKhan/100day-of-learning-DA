@@ -65,6 +65,63 @@
           ],
           "validation": "ship_mode = 'First Class'."
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d03-t01-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The regional sales manager wants all Technology orders. Return order ID, customer name, sales, and region.",
+          "prompt": "The regional sales manager wants all Technology orders. Return order ID, customer name, sales, and region.",
+          "hint": "Ask which records should remain before writing the SELECT list.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, sales, region FROM orders WHERE category = 'Technology';",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t01-c2",
+          "title": "Sales Manager request",
+          "difficulty": "Basic",
+          "scenario": "The manager is reviewing East-region transactions.",
+          "prompt": "Return order ID, customer name, sales, and profit for East-region orders only.",
+          "hint": "region = 'East'.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, sales, profit FROM orders WHERE region = 'East';",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t01-c3",
+          "title": "Category Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The manager is investigating Technology transactions.",
+          "prompt": "Return order ID, product name, sales, quantity, and profit for Technology orders.",
+          "hint": "category = 'Technology'.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, product_name, sales, quantity, profit FROM orders WHERE category = 'Technology';",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t01-c4",
+          "title": "Operations Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Operations wants all First Class shipments.",
+          "prompt": "Return order ID, customer name, sales, and ship mode for First Class orders.",
+          "hint": "ship_mode = 'First Class'.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, sales, ship_mode FROM orders WHERE ship_mode = 'First Class';",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t01-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return order ID, category, sales, and profit for South-region orders only.",
+          "prompt": "Return order ID, category, sales, and profit for South-region orders only.",
+          "hint": "Ask which records should remain before writing the SELECT list.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, category, region, sales FROM orders WHERE region = 'West';",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -122,6 +179,63 @@
             "sales"
           ],
           "validation": "quantity >= 10."
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d03-t02-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The commercial director defines a high-value order as sales of at least 1,500. Return those transactions.",
+          "prompt": "The commercial director defines a high-value order as sales of at least 1,500. Return those transactions.",
+          "hint": "Stakeholder thresholds are logic, not just numbers.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales, profit FROM orders WHERE sales >= 1500;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t02-c2",
+          "title": "Sales Manager request",
+          "difficulty": "Basic",
+          "scenario": "A high-value order is defined as at least 1,000 in sales.",
+          "prompt": "Return order ID, customer name, and sales for high-value orders.",
+          "hint": "sales >= 1000.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, sales FROM orders WHERE sales >= 1000;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t02-c3",
+          "title": "Finance Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "Finance is investigating transactions that lost money.",
+          "prompt": "Return order ID, category, sales, and profit where profit is below zero.",
+          "hint": "profit < 0.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, category, sales, profit FROM orders WHERE profit < 0;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t02-c4",
+          "title": "Inventory Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The inventory team wants unusually large order quantities.",
+          "prompt": "Return order ID, product name, quantity, and sales for orders containing at least 10 units.",
+          "hint": "quantity >= 10.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, product_name, quantity, sales FROM orders WHERE quantity >= 10;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t02-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return orders with sales below 750, showing order ID, sales, and quantity.",
+          "prompt": "Return orders with sales below 750, showing order ID, sales, and quantity.",
+          "hint": "Stakeholder thresholds are logic, not just numbers.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales, discount FROM orders WHERE discount > 0.20;",
+          "dataset": "orders"
         }
       ]
     },
@@ -182,6 +296,63 @@
           ],
           "validation": "sales > 500 AND category <> 'Furniture'."
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d03-t03-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The regional director wants Technology orders sold in the West.",
+          "prompt": "The regional director wants Technology orders sold in the West.",
+          "hint": "The hard part is business logic, not syntax.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, category, region, sales FROM orders WHERE region = 'West' AND category = 'Technology';",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t03-c2",
+          "title": "Regional Manager request",
+          "difficulty": "Basic",
+          "scenario": "The manager wants Technology orders from the West.",
+          "prompt": "Return order ID, product name, sales, and profit for records matching both conditions.",
+          "hint": "category='Technology' AND region='West'.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, product_name, sales, profit FROM orders WHERE category = 'Technology' AND region = 'West';",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t03-c3",
+          "title": "Commercial Director request",
+          "difficulty": "Intermediate",
+          "scenario": "The director wants either West Technology or East Furniture transactions.",
+          "prompt": "Return order ID, category, region, and sales for either business condition.",
+          "hint": "(West + Technology) OR (East + Furniture).",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, category, region, sales FROM orders WHERE (region = 'West' AND category = 'Technology') OR (region = 'East' AND category = 'Furniture');",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t03-c4",
+          "title": "Product Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The manager is excluding Furniture while reviewing orders above 500.",
+          "prompt": "Return order ID, category, sales, and profit for sales above 500 that are not Furniture.",
+          "hint": "sales > 500 AND category <> 'Furniture'.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, category, sales, profit FROM orders WHERE sales > 500 AND category <> 'Furniture';",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t03-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return Furniture orders from the East or South regions, showing order ID, region, category, and sales.",
+          "prompt": "Return Furniture orders from the East or South regions, showing order ID, region, category, and sales.",
+          "hint": "The hard part is business logic, not syntax.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, region, category, sales FROM orders WHERE region = 'South' AND (category = 'Technology' OR category = 'Office Supplies');",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -241,6 +412,63 @@
           ],
           "validation": "category IN the three requested categories."
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d03-t04-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "Sales operations is preparing a combined report for East, West, and South. Return order ID, customer name, region, and sales.",
+          "prompt": "Sales operations is preparing a combined report for East, West, and South. Return order ID, customer name, region, and sales.",
+          "hint": "Phrases like one of, either, between, and within a range are signals for these operators.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, region, sales FROM orders WHERE region IN ('East','West','South');",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t04-c2",
+          "title": "Regional Sales Manager request",
+          "difficulty": "Basic",
+          "scenario": "The manager is preparing a combined East and West report.",
+          "prompt": "Return order ID, customer name, region, and sales for East or West orders.",
+          "hint": "region IN ('East','West').",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, region, sales FROM orders WHERE region IN ('East','West');",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t04-c3",
+          "title": "Sales Operations Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "Standard-value transactions are defined as sales between 500 and 1500.",
+          "prompt": "Return order ID, customer name, sales, and category for orders in this band.",
+          "hint": "sales BETWEEN 500 AND 1500 inclusive.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, sales, category FROM orders WHERE sales BETWEEN 500 AND 1500;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t04-c4",
+          "title": "Commercial Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The team is reviewing three strategic categories.",
+          "prompt": "Return order ID, category, product name, and sales for Technology, Furniture, or Office Supplies.",
+          "hint": "category IN the three requested categories.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, category, product_name, sales FROM orders WHERE category IN ('Technology','Furniture','Office Supplies');",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t04-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return orders in the Technology or Furniture categories with sales between 300 and 1800.",
+          "prompt": "Return orders in the Technology or Furniture categories with sales between 300 and 1800.",
+          "hint": "Phrases like one of, either, between, and within a range are signals for these operators.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, sales FROM orders WHERE sales NOT BETWEEN 100 AND 500;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -299,6 +527,63 @@
             "region"
           ],
           "validation": "customer_name LIKE '%John%'."
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d03-t05-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The product manager wants transactions for products whose names contain Chair.",
+          "prompt": "The product manager wants transactions for products whose names contain Chair.",
+          "hint": "Translate 'starts with', 'ends with', and 'contains' into wildcard patterns.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, product_name, category, sales FROM orders WHERE product_name LIKE '%Chair%';",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t05-c2",
+          "title": "Customer Analytics Manager request",
+          "difficulty": "Basic",
+          "scenario": "The team wants customer names beginning with A.",
+          "prompt": "Return order ID, customer name, and sales for matching customers.",
+          "hint": "customer_name LIKE 'A%'.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, sales FROM orders WHERE customer_name LIKE 'A%';",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t05-c3",
+          "title": "Product Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The team is investigating chair-related products.",
+          "prompt": "Return order ID, product name, category, sales, and profit where product name contains Chair.",
+          "hint": "product_name LIKE '%Chair%'.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, product_name, category, sales, profit FROM orders WHERE product_name LIKE '%Chair%';",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t05-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "Customer review requires names containing John anywhere in the stored name.",
+          "prompt": "Return order ID, customer name, sales, and region for matching records.",
+          "hint": "customer_name LIKE '%John%'.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, sales, region FROM orders WHERE customer_name LIKE '%John%';",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d03-t05-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return products whose names end with Desk, showing order ID, product name, and sales.",
+          "prompt": "Return products whose names end with Desk, showing order ID, product name, and sales.",
+          "hint": "Translate 'starts with', 'ends with', and 'contains' into wildcard patterns.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, product_name, sales FROM orders WHERE product_name LIKE '%Table%';",
+          "dataset": "orders"
         }
       ]
     }
