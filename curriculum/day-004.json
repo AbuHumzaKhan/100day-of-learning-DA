@@ -13,13 +13,13 @@
       "title": "COUNT & COUNT DISTINCT",
       "business_skill": "Measure transaction volume and unique business entities.",
       "teaching": {
-        "teacher": "## COUNT\\nCOUNT(*) counts rows; COUNT(column) counts non-null values; COUNT(DISTINCT customer_id) counts unique customers.",
+        "teacher": "## COUNT\\nCOUNT(*) counts rows; COUNT(column) counts non-null values; COUNT(DISTINCT customer_name) counts unique customers.",
         "explain": "Choose the counting grain first: rows, populated values, or unique entities.",
         "detailedlearning": "A business request for orders, customers, products, or transactions implies a different counting unit.",
         "expose": "Never report a count until you can state exactly what one counted row represents.",
-        "example": "SELECT COUNT(*) AS order_rows, COUNT(DISTINCT customer_id) AS unique_customers FROM orders;",
+        "example": "SELECT COUNT(*) AS order_rows, COUNT(DISTINCT customer_name) AS unique_customers FROM orders;",
         "business_question": "The sales director wants total transaction rows and unique customers.",
-        "expected_sql": "SELECT COUNT(*) AS order_rows, COUNT(DISTINCT customer_id) AS unique_customers FROM orders;"
+        "expected_sql": "SELECT COUNT(*) AS order_rows, COUNT(DISTINCT customer_name) AS unique_customers FROM orders;"
       },
       "questions": [
         {
@@ -38,11 +38,11 @@
           "difficulty": "Medium",
           "role": "Customer Manager",
           "scenario": "The team wants the active customer population represented in the dataset.",
-          "request": "Return the number of distinct customer IDs.",
+          "request": "Return the number of distinct customer names.",
           "output": [
             "unique_customers"
           ],
-          "validation": "COUNT(DISTINCT customer_id)"
+          "validation": "COUNT(DISTINCT customer_name)"
         },
         {
           "id": "sql-d4-t1-q3",
@@ -323,9 +323,9 @@
           "scenario": "The director wants segment performance by region.",
           "prompt": "Return region, segment, total sales, and total profit for each region-segment combination.",
           "hint": "GROUP BY region, segment",
-          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
-          "expected_sql": "SELECT region, segment, SUM(sales) AS total_sales, SUM(profit) AS total_profit FROM orders GROUP BY region, segment;",
-          "dataset": "orders"
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  c.region,\n  c.segment,\n  SUM(o.sales) AS total_sales,\n  SUM(o.profit) AS total_profit\nFROM orders o\nJOIN customers c ON o.customer_name = c.customer_name\nGROUP BY c.region, c.segment;",
+          "expected_sql": "SELECT c.region, c.segment, SUM(o.sales) AS total_sales, SUM(o.profit) AS total_profit FROM orders o JOIN customers c ON o.customer_name = c.customer_name GROUP BY c.region, c.segment;",
+          "dataset": "customers + orders"
         },
         {
           "id": "sql-d04-t03-c5",
@@ -335,7 +335,7 @@
           "prompt": "Return category and average profit grouped by category.",
           "hint": "State the dimension before writing the aggregate.",
           "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
-          "expected_sql": "SELECT ship_mode, COUNT(*) AS order_count, SUM(sales) AS total_sales FROM orders GROUP BY ship_mode;",
+          "expected_sql": "SELECT category, AVG(profit) AS avg_profit FROM orders GROUP BY category;",
           "dataset": "orders"
         }
       ]
@@ -431,8 +431,8 @@
           "title": "Customer Manager request",
           "difficulty": "Intermediate",
           "scenario": "Management wants customer accounts generating more than 5,000 in sales.",
-          "prompt": "Return customer IDs with total sales above 5,000.",
-          "hint": "GROUP BY customer_id; HAVING SUM(sales) > 5000",
+          "prompt": "Return customer names with total sales above 5,000.",
+          "hint": "GROUP BY customer_name; HAVING SUM(sales) > 5000",
           "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
           "expected_sql": "SELECT customer_name, SUM(sales) AS total_sales FROM orders GROUP BY customer_name HAVING SUM(sales) > 5000;",
           "dataset": "orders"
@@ -445,7 +445,7 @@
           "prompt": "Return categories with average sales above 500.",
           "hint": "Do not replace HAVING with WHERE when the business rule is about a group KPI.",
           "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
-          "expected_sql": "SELECT ship_mode, SUM(sales) AS total_sales FROM orders GROUP BY ship_mode HAVING SUM(sales) > 20000;",
+          "expected_sql": "SELECT category, AVG(sales) AS avg_sales FROM orders GROUP BY category HAVING AVG(sales) > 500;",
           "dataset": "orders"
         }
       ]
@@ -563,7 +563,7 @@
           "prompt": "Return region, order count, total sales, and total profit, sorted by total sales descending.",
           "hint": "A technically valid query can still be a bad report if the grain is ambiguous.",
           "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
-          "expected_sql": "SELECT ship_mode, COUNT(*) AS orders, SUM(sales) AS sales, AVG(profit) AS avg_profit FROM orders GROUP BY ship_mode;",
+          "expected_sql": "SELECT region, COUNT(*) AS orders, SUM(sales) AS sales, SUM(profit) AS profit FROM orders GROUP BY region ORDER BY sales DESC;",
           "dataset": "orders"
         }
       ]
