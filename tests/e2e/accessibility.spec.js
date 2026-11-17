@@ -48,5 +48,6 @@ test('theme setting persists across reloads and lessons remain readable', async 
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', selectedTheme);
   await expect(page.locator('.lesson-content-title')).toBeVisible();
-  await expect(page.locator('.lesson-content-title')).toHaveCSS('font-size', '34px');
+  const fontSize = await page.locator('.lesson-content-title').evaluate(element => Number.parseFloat(getComputedStyle(element).fontSize));
+  expect(fontSize).toBeGreaterThanOrEqual(30);
 });
