@@ -13,7 +13,7 @@ async function completeCodingQuestions(page) {
     const day = await (await fetch('./curriculum/day-001.json')).json();
     return day.topics[0].coding_questions;
   });
-  await page.locator('[data-view="practice"]').click();
+  await page.locator('.academy-mode-nav [data-view="practice"]').click();
   for (const question of questions) {
     await page.locator('#codingSqlEditor').fill(question.expected_sql);
     await page.locator('[data-action="run-coding-question"]').click();
@@ -32,7 +32,7 @@ test('topic lesson screen has no automatically detectable critical or serious ac
 });
 
 test('coding practice screen has no automatically detectable critical or serious accessibility violations', async ({ page }) => {
-  await page.locator('[data-view="practice"]').click();
+  await page.locator('.academy-mode-nav [data-view="practice"]').click();
   await expectNoSeriousAxeViolations(page);
 });
 
