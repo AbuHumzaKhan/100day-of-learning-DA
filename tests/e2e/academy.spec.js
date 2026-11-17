@@ -29,6 +29,13 @@ test('does not unlock days when earlier days in the sequence are incomplete', as
   await expect(page.locator('.lesson-hero h1')).toContainText('Day 1');
 });
 
+test('teaching and practice tabs expose valid accessible tab relationships', async ({ page }) => {
+  await expect(page.locator('.mode-tabs [role="tab"]')).toHaveCount(4);
+  await expect(page.locator('#teaching-panel')).toHaveAttribute('aria-labelledby', 'teaching-tab-teacher');
+  await expect(page.locator('.practice-tabs [role="tab"]')).toHaveCount(3);
+  await expect(page.locator('#practice-pane-query')).toHaveAttribute('aria-labelledby', 'practice-tab-query');
+});
+
 test('renders all teaching modes and five topic navigation items', async ({ page }) => {
   await expect(page.locator('.topic-nav-button')).toHaveCount(5);
   await page.getByRole('tab', { name: /Explain/ }).click();
