@@ -16,6 +16,12 @@ test('clean visits open a professional overview with a transparent curriculum ro
   await expect(page.locator('.dashboard-hero')).not.toContainText('Content not published');
   await page.getByRole('button', { name: 'Learn', exact: true }).click();
   await expect(page.locator('.lesson-hero h1')).toBeVisible();
+  await page.reload();
+  await expect(page.locator('.lesson-hero h1')).toBeVisible();
+  await page.getByRole('button', { name: 'Overview', exact: true }).click();
+  await page.reload();
+  await expect(page.locator('.dashboard-hero')).toBeVisible();
+  await page.getByRole('button', { name: 'Learn', exact: true }).click();
   await expect(page.locator('.day-button')).toHaveCount(11);
   await expect(page.locator('.day-button[data-day="12"]')).toHaveCount(0);
 });
