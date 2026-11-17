@@ -9,6 +9,7 @@ const state = {
   activeDay: 1,
   activeTopic: 0,
   activeQuestion: 0,
+  examQuestionIndex: 0,
   view: 'dashboard',
   teachingMode: 'teacher',
   practiceTab: 'query',
@@ -20,7 +21,7 @@ const state = {
   searchResults: [],
   searchTimer: null,
   projectSelection: null,
-  theme: localStorage.getItem('ahk_academy_theme') || 'light'
+  theme: localStorage.getItem('ahk_academy_theme') || 'dark'
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -162,6 +163,33 @@ function currentQuestion() {
   return state.day?.topics?.[state.activeTopic]?.questions?.[state.activeQuestion] || null;
 }
 
+function buildExamQuestions(day) {
+  const topics = (day?.topics || []).slice(0, 5);
+  const statements = topics.map(topic => String(topic.teaching?.expected_sql || topic.teaching?.example || '').trim());
+  if (topics.length !== 5 || statements.some(statement => !statement)) return [];
+  return topics.map((topic, index) => {
+    const distractors = statements.filter((statement, statementIndex) => statementIndex !== index && statement !== statements[index]);
+    const correctOption = [1, 3, 0, 2, 1][index] ?? 0;
+    const options = distractors.slice(0, 3);
+    while (options.length < 3) options.push('SELECT * FROM orders;');
+    options.splice(correctOption, 0, statements[index]);
+    return {
+      id: topic.id || 'lesson-' + (index + 1),
+      title: topic.title || 'Lesson ' + (index + 1),
+      skill: topic.business_skill || 'Apply the lesson concept to a business request.',
+      prompt: topic.teaching?.business_question || topic.business_skill || 'Choose the SQL statement that best demonstrates this lesson.',
+      options,
+      correctOption
+    };
+  });
+}
+function completedLessonCount() {
+  return progressStore.getCompletedLessonCount(state.activeDay, state.day?.topics?.length || 5);
+}
+function areAllLessonsComplete() {
+  return progressStore.areLessonsCompleted(state.activeDay, state.day?.topics?.length || 5);
+}
+
 function isUnlocked(day) {
   return progressStore.isDayUnlocked(day, publishedThrough());
 }
@@ -187,31 +215,30 @@ function updateHash(day) {
 async function loadDay(day, options = {}) {
   const target = Number(day);
   if (!isUnlocked(target)) {
-    toast('Complete the previous published day to unlock this lesson.', 'warning');
+    toast('Complete the previous day exam to unlock this lesson.', 'warning');
     return;
   }
-
   const meta = dayMeta(target);
   if (!meta?.file) {
     toast('This curriculum resource is not available yet.', 'warning');
     return;
   }
-
   state.activeDay = target;
-  state.activeTopic = Number(options.topic || 0);
   state.activeQuestion = Number(options.question || 0);
+  state.examQuestionIndex = 0;
   state.teachingMode = 'teacher';
-  state.view = 'learn';
   progressStore.setActiveDay(target);
   setBusy(true);
   appRoot.innerHTML = '<div class="academy-loading"><span class="loading-mark">AHK</span><strong>Preparing your learning workspace</strong><span>Loading Day ' + target + ' curriculum…</span></div>';
-
   try {
     state.day = await fetchJSON('curriculum/' + meta.file);
     const topicCount = state.day.topics?.length || 0;
-    state.activeTopic = Math.min(state.activeTopic, Math.max(0, topicCount - 1));
+    const completed = progressStore.getCompletedLessonCount(target, topicCount);
+    state.activeTopic = Math.min(Number(options.topic ?? completed), Math.max(0, topicCount - 1));
+    if (state.activeTopic > completed) state.activeTopic = completed;
     const questionCount = state.day.topics?.[state.activeTopic]?.questions?.length || 0;
     state.activeQuestion = Math.min(state.activeQuestion, Math.max(0, questionCount - 1));
+    state.view = completed >= topicCount ? 'exam' : 'learn';
     if (options.render !== false) render();
     if (options.updateUrl !== false) updateHash(target);
     window.scrollTo({ top: 0, behavior: 'auto' });
@@ -230,20 +257,27 @@ function renderFatal(error) {
 }
 
 function renderHeader() {
-  const items = [
-    ['dashboard', 'Overview'],
-    ['learn', 'Learn'],
-    ['practice', 'Practice'],
-    ['projects', 'Projects'],
-    ['progress', 'Progress']
-  ];
+  const learningMode = state.view === 'learn' || state.view === 'exam';
+  const examUnlocked = state.day ? areAllLessonsComplete() : false;
+  const items = learningMode
+    ? [
+        { id: 'learn', label: 'Learn', detail: examUnlocked ? 'Lessons complete' : 'Five lessons', disabled: examUnlocked },
+        { id: 'exam', label: 'Exam', detail: examUnlocked ? 'Assessment unlocked' : 'Complete lessons', disabled: !examUnlocked }
+      ]
+    : [
+        { id: 'dashboard', label: 'Overview' },
+        { id: 'learn', label: 'Learn' },
+        { id: 'practice', label: 'Practice' },
+        { id: 'projects', label: 'Projects' },
+        { id: 'progress', label: 'Progress' }
+      ];
   return '<header class="academy-header"><div class="academy-header-inner">' +
     '<a class="academy-brand" href="./" aria-label="AHK Academy overview" data-view="dashboard"><span class="brand-mark">AHK</span><span class="brand-copy"><strong>AHK Academy</strong><small>Data Analyst Learning Hub</small></span></a>' +
-    '<button type="button" class="theme-toggle" data-action="toggle-theme" aria-label="Switch theme" aria-pressed="' + (state.theme === 'dark') + '"><span aria-hidden="true">' + (state.theme === 'dark' ? '☀' : '◐') + '</span><span class="theme-label">' + (state.theme === 'dark' ? 'Light' : 'Dark') + '</span></button>' +
-    '<nav class="academy-nav" aria-label="Main navigation">' +
-    items.map(([id, label]) => '<button type="button" class="nav-button ' + (state.view === id ? 'active' : '') + '" data-view="' + id + '">' + label + '</button>').join('') +
+    '<nav class="academy-nav ' + (learningMode ? 'academy-mode-nav' : '') + '" aria-label="Main navigation">' +
+    items.map(item => '<button type="button" class="nav-button ' + (state.view === item.id ? 'active' : '') + '" data-view="' + item.id + '" aria-label="' + item.label + '" ' + (item.disabled ? 'disabled aria-disabled="true"' : '') + '><span>' + item.label + '</span>' + (item.detail ? '<small>' + item.detail + '</small>' : '') + (item.id === 'exam' && !examUnlocked ? '<span class="nav-lock" aria-hidden="true">⌑</span>' : '') + '</button>').join('') +
     '</nav>' +
-    '<div class="academy-search-wrap"><label class="search-box"><span aria-hidden="true">⌕</span><input id="academySearch" type="search" value="' + escapeHTML(state.searchQuery) + '" placeholder="Search lessons and tasks" autocomplete="off" aria-label="Search lessons, topics and business requests"><kbd>Ctrl K</kbd></label><div id="academySearchResults" class="search-results" hidden></div></div>' +
+    '<div class="academy-search-wrap"><label class="search-box"><span aria-hidden="true">⌕</span><input id="academySearch" type="search" value="' + escapeHTML(state.searchQuery) + '" placeholder="Search lessons, topics..." autocomplete="off" aria-label="Search lessons, topics and business requests"><kbd>Ctrl K</kbd></label><div id="academySearchResults" class="search-results" hidden></div></div>' +
+    '<button type="button" class="theme-toggle" data-action="toggle-theme" aria-label="Switch theme" aria-pressed="' + (state.theme === 'dark') + '"><span aria-hidden="true">' + (state.theme === 'dark' ? '☀' : '◐') + '</span><span class="theme-label">' + (state.theme === 'dark' ? 'Light' : 'Dark') + '</span></button>' +
     '<div class="learner-chip"><span class="learner-avatar">AHK</span><span><strong>My workspace</strong><small>Personal progress · saved locally</small></span></div>' +
     '</div></header>';
 }
@@ -330,24 +364,116 @@ function renderTopic(topic, index) {
 function renderLesson() {
   const day = state.day;
   const topics = day?.topics || [];
-  const solved = progressStore.getSolvedCount(state.activeDay);
-  const total = dayQuestions(day);
-  const completed = progressStore.isDayCompleted(state.activeDay);
-  const question = currentQuestion();
-  const topic = topics[state.activeTopic];
-  return '<div class="page-grid">' + renderSidebar() + '<section class="lesson-column">' +
-    '<div class="lesson-breadcrumb"><span>Learning path</span><span>/</span><strong>' + escapeHTML(day.track) + '</strong><span>/</span><strong>Day ' + String(day.day).padStart(2, '0') + '</strong><span class="lesson-save-state">Saved locally</span></div>' +
-    '<section class="lesson-hero"><div class="hero-topline"><span class="eyebrow">' + escapeHTML(day.track) + ' · DAY ' + String(day.day).padStart(2, '0') + '</span><span class="release-pill">Published lesson</span></div><h1>' + escapeHTML(day.title) + '</h1><p>' + escapeHTML(day.description || day.learning_objectives?.[0] || 'Build practical analytical capability through guided business learning.') + '</p>' +
-    '<div class="hero-metrics"><div><strong>' + topics.length + '</strong><span>Topics</span></div><div><strong>' + total + '</strong><span>Business requests</span></div><div><strong>' + (day.estimated_time_minutes || 45) + ' min</strong><span>Estimated time</span></div><div><strong>' + solved + '/' + total + '</strong><span>Reviewed</span></div></div></section>' +
-    '<section class="topic-navigator panel"><div class="section-heading"><div><span class="eyebrow">LESSON PLAN</span><h2>Today’s topics</h2></div><span class="content-tag">Follow in sequence</span></div><div class="topic-nav-list">' +
-    topics.map((item, index) => {
-      const topicSolved = (item.questions || []).filter((question, qi) => progressStore.isSolved(state.activeDay, index, qi)).length;
-      return '<button type="button" class="topic-nav-button ' + (index === state.activeTopic ? 'active' : '') + '" data-topic="' + index + '" aria-current="' + (index === state.activeTopic ? 'step' : 'false') + '"><span class="topic-nav-number">' + String(index + 1).padStart(2, '0') + '</span><span class="topic-nav-copy"><strong>' + escapeHTML(item.title) + '</strong><small>' + topicSolved + '/' + (item.questions?.length || 0) + ' tasks reviewed</small></span><span class="topic-nav-arrow">›</span></button>';
-    }).join('') +
-    '</div></section>' +
-    renderTopic(topic, state.activeTopic) +
-    '<section class="day-checkpoint panel"><div><span class="eyebrow">DAILY CHECKPOINT</span><h3>' + (completed ? 'Day completed' : 'Finish this learning day') + '</h3><p>' + solved + ' of ' + total + ' business requests reviewed. Progress is stored locally on this device.</p></div><button type="button" class="button button-primary" data-action="complete-day" ' + (completed || solved < total ? 'disabled' : '') + '>' + (completed ? 'Completed ✓' : 'Complete day') + '</button></section>' +
-    '</section>' + renderRightRail(question) + '</div>';
+  if (!topics.length) return '<div class="empty-state">No lessons are available for this day.</div>';
+  const total = topics.length;
+  const completed = completedLessonCount();
+  if (completed >= total) {
+    state.view = 'exam';
+    return renderExam();
+  }
+  const topic = topics[state.activeTopic] || topics[completed];
+  const lessonIndex = topics.indexOf(topic);
+  const teaching = topic.teaching || {};
+  const lessonPosition = lessonIndex + 1;
+  const isCompleted = progressStore.isLessonCompleted(state.activeDay, lessonIndex);
+  const startedCount = Math.min(total, completed + 1);
+  const progressPercent = Math.round((startedCount / total) * 100);
+  const stepper = topics.map((item, index) => {
+    const done = progressStore.isLessonCompleted(state.activeDay, index);
+    const active = index === lessonIndex;
+    const locked = index > completed;
+    return '<button type="button" class="lesson-step ' + (active ? 'is-active ' : '') + (done ? 'is-complete ' : '') + (locked ? 'is-locked' : '') + '" data-lesson-index="' + index + '" ' + (locked ? 'disabled' : '') + ' aria-current="' + (active ? 'step' : 'false') + '">' +
+      '<span class="lesson-step-number">' + (done ? '✓' : String(index + 1).padStart(2, '0')) + '</span>' +
+      '<span class="lesson-step-copy"><strong>' + escapeHTML(item.title) + '</strong><small>' + (done ? 'Completed' : active ? 'In progress' : 'Locked') + '</small></span>' +
+      '<span class="lesson-step-state" aria-hidden="true">' + (done ? '✓' : locked ? '⌑' : active ? '●' : '○') + '</span></button>';
+  }).join('');
+  const businessTask = teaching.business_question || topic.questions?.[0]?.request || topic.business_skill || 'Apply the concept to a practical business request.';
+  const taskRequests = topic.questions || [];
+  const nextLabel = isCompleted
+    ? 'Continue to Lesson ' + String(Math.min(completed + 1, total)).padStart(2, '0')
+    : lessonIndex === total - 1
+      ? 'Complete lesson & unlock exam'
+      : 'Complete lesson & continue';
+  const nextHint = lessonIndex === total - 1
+    ? 'Complete this lesson to unlock your five-question assessment.'
+    : 'Complete this lesson to unlock ' + String(lessonIndex + 2).padStart(2, '0') + ': ' + (topics[lessonIndex + 1]?.title || 'the next lesson') + '.';
+
+  return '<section class="lesson-experience">' +
+    '<div class="learning-context"><div class="learning-breadcrumb"><span class="breadcrumb-track">' + escapeHTML(day.track) + ' FOUNDATIONS</span><span>/</span><strong>DAY ' + String(day.day).padStart(2, '0') + '</strong></div><span class="mode-label"><span>▣</span> LESSON MODE</span></div>' +
+    '<header class="learning-day-heading"><div><span class="eyebrow">' + escapeHTML(day.track) + ' FOUNDATIONS <span>/</span> DAY ' + String(day.day).padStart(2, '0') + '</span><h1>' + escapeHTML(day.title.replace(/^.*?—\s*/, '')) + '</h1><p>' + escapeHTML(day.description || 'Build practical analytical capability through guided lessons and business examples.') + '</p></div><span class="day-status-pill">LEARNING IN PROGRESS</span></header>' +
+    '<nav class="lesson-stepper" aria-label="Five lessons for this day">' + stepper + '</nav>' +
+    '<div class="lesson-progress-bar"><span>Lesson progress</span><div class="lesson-progress-track"><i style="width:' + progressPercent + '%"></i></div><strong>' + completed + ' of ' + total + ' completed</strong></div>' +
+    '<div class="lesson-main-grid">' +
+      '<main class="lesson-content-card">' +
+        '<div class="lesson-content-heading"><div><span class="eyebrow">LESSON ' + String(lessonPosition).padStart(2, '0') + ' / ' + escapeHTML(day.track) + ' BASICS</span><h2 class="lesson-content-title">' + escapeHTML(topic.title) + '</h2><p>' + escapeHTML(topic.business_skill || 'Apply the concept to a practical business request.') + '</p></div><span class="lesson-content-status ' + (isCompleted ? 'is-done' : '') + '">' + (isCompleted ? '✓ COMPLETED' : 'IN PROGRESS') + '</span></div>' +
+        renderTeaching(topic) +
+        '<section class="lesson-business-task"><div class="business-task-icon">▣</div><div><span class="eyebrow">BUSINESS TASK</span><p>' + escapeHTML(businessTask) + '</p><span class="business-task-note">Use the worked example above to understand the expected approach.</span></div></section>' +
+        '<details class="lesson-extra-practice"><summary>Explore the ' + taskRequests.length + ' additional business practice requests</summary><div class="lesson-extra-practice-list">' + taskRequests.map((question, questionIndex) => renderQuestionCard(question, lessonIndex, questionIndex)).join('') + '</div></details>' +
+        '<footer class="lesson-completion-footer"><div class="completion-message"><span class="completion-icon">◎</span><div><strong>' + (isCompleted ? 'Lesson completed' : 'Ready to continue?') + '</strong><small>' + escapeHTML(nextHint) + '</small></div></div><div class="lesson-footer-actions"><button type="button" class="button lesson-save-button" data-action="save-progress">▣ Save progress</button><button type="button" class="button lesson-complete-button" data-action="complete-lesson">' + escapeHTML(nextLabel) + ' <span>→</span></button></div></footer>' +
+      '</main>' +
+      '<aside class="lesson-side-column">' +
+        '<section class="lesson-side-card"><h3><span>☷</span> LESSON OUTLINE</h3><ol class="lesson-outline"><li class="is-current"><span></span><p>Understand the concept</p></li><li><span></span><p>Study the worked example</p></li><li><span></span><p>Apply it to a business request</p></li></ol></section>' +
+        '<section class="lesson-side-card"><h3><span>◎</span> LEARNING TARGET</h3><p class="lesson-learning-target">' + escapeHTML(topic.business_skill || 'Use the concept to produce a clear analytical output.') + '</p></section>' +
+        '<section class="lesson-side-card lesson-progress-card"><h3><span>▥</span> YOUR PROGRESS</h3><div class="lesson-progress-caption"><strong>Lesson ' + lessonPosition + ' of ' + total + '</strong><b>' + progressPercent + '%</b></div><div class="lesson-progress-track"><i style="width:' + progressPercent + '%"></i></div><p>' + completed + ' completed · ' + (total - completed) + ' remaining</p></section>' +
+      '</aside>' +
+    '</div>' +
+    (state.view === 'practice' ? renderPractice() : '') +
+  '</section>';
+}
+
+function renderExam() {
+  const day = state.day;
+  const questions = buildExamQuestions(day);
+  if (questions.length !== 5) return '<section class="exam-screen"><div class="exam-error"><h1>Assessment unavailable</h1><p>This day needs five complete lesson examples before an exam can be generated.</p><button class="button button-secondary" data-view="learn">Return to lessons</button></div></section>';
+
+  const exam = progressStore.getExamState(state.activeDay);
+  const questionIndex = Math.min(state.examQuestionIndex, questions.length - 1);
+  const question = questions[questionIndex];
+  const answered = Object.keys(exam.answers).length;
+  const remaining = questions.length - answered;
+  const progressPercent = Math.round((answered / questions.length) * 100);
+  const isSubmitted = exam.submitted;
+  const isPassed = exam.passed;
+  const questionNav = questions.map((item, index) => {
+    const hasAnswer = Object.prototype.hasOwnProperty.call(exam.answers, index);
+    const active = index === questionIndex;
+    const correct = isSubmitted && exam.answers[index] === item.correctOption;
+    return '<button type="button" class="exam-question-nav-item ' + (active ? 'is-current ' : '') + (hasAnswer ? 'is-answered ' : '') + (isSubmitted ? (correct ? 'is-correct ' : 'is-incorrect ') : '') + '" data-exam-question="' + index + '" aria-current="' + (active ? 'step' : 'false') + '">' +
+      '<span class="exam-nav-number">Q' + (index + 1) + '</span><span><strong>Question ' + (index + 1) + '</strong><small>' + (isSubmitted ? (correct ? 'Correct' : 'Review answer') : hasAnswer ? 'Answered' : active ? 'Current' : 'Not started') + '</small></span></button>';
+  }).join('');
+  const options = question.options.map((option, index) => {
+    const selected = Number(exam.answers[questionIndex]) === index;
+    const correct = isSubmitted && index === question.correctOption;
+    const incorrect = isSubmitted && selected && !correct;
+    return '<button type="button" class="exam-option ' + (selected ? 'is-selected ' : '') + (correct ? 'is-correct ' : '') + (incorrect ? 'is-incorrect ' : '') + '" data-exam-option="' + index + '" ' + (isSubmitted ? 'disabled' : '') + ' aria-pressed="' + selected + '">' +
+      '<span class="exam-option-radio">' + (selected ? '●' : '') + '</span><strong class="exam-option-letter">' + String.fromCharCode(65 + index) + '.</strong><code>' + escapeHTML(option) + '</code>' +
+      (correct ? '<span class="exam-answer-mark">Correct</span>' : incorrect ? '<span class="exam-answer-mark">Your answer</span>' : '') + '</button>';
+  }).join('');
+  const resultBanner = isSubmitted
+    ? '<div class="exam-result-banner ' + (isPassed ? 'is-passed' : 'needs-review') + '"><span class="exam-result-icon">' + (isPassed ? '✓' : '!') + '</span><div><strong>' + (isPassed ? 'Assessment passed' : 'Assessment not passed yet') + '</strong><small>You scored ' + exam.score + ' out of 5. ' + (isPassed ? 'The next published day is now unlocked.' : 'You need 4 correct answers to pass. Review the lessons and retry.') + '</small></div></div>'
+    : '';
+  const footerAction = isSubmitted
+    ? (isPassed
+      ? '<button type="button" class="button exam-next-button" data-action="continue-next-day">Continue <span>→</span></button>'
+      : '<button type="button" class="button exam-next-button" data-action="retry-exam">Retry exam <span>↻</span></button>')
+    : (questionIndex < questions.length - 1
+      ? '<button type="button" class="button exam-next-button" data-action="next-exam-question">Next question <span>→</span></button>'
+      : '<button type="button" class="button exam-next-button" data-action="submit-exam">Submit exam <span>✓</span></button>');
+
+  return '<section class="exam-screen">' +
+    '<div class="exam-breadcrumb"><span>' + escapeHTML(day.track) + ' FOUNDATIONS</span><span>/</span><strong>DAY ' + String(day.day).padStart(2, '0') + '</strong><span>/</span><b>FINAL CHECKPOINT</b></div>' +
+    '<header class="exam-heading"><div class="exam-trophy">♜</div><div><h1>Day ' + String(day.day).padStart(2, '0') + ' Knowledge Check</h1><p><span class="exam-unlocked-dot">✓</span> All five lessons completed. Your assessment is now unlocked.</p></div><span class="exam-completion-badge">✓ 5/5 LESSONS COMPLETE</span></header>' +
+    '<nav class="exam-question-nav" aria-label="Exam questions">' + questionNav + '</nav>' +
+    '<div class="exam-progress-row"><strong>Question ' + (questionIndex + 1) + ' of 5</strong><div class="exam-progress-track"><i style="width:' + progressPercent + '%"></i></div><span>' + answered + ' answered <b>|</b> ' + remaining + ' remaining</span></div>' +
+    '<div class="exam-main-grid"><main class="exam-question-card">' + resultBanner +
+      '<div class="exam-question-meta"><span>QUESTION ' + String(questionIndex + 1).padStart(2, '0') + '</span><span>' + escapeHTML(question.title) + '</span><span>● MULTIPLE CHOICE</span></div>' +
+      '<h2>Which SQL statement best fulfils this business requirement?</h2><p class="exam-business-prompt">' + escapeHTML(question.prompt) + '</p>' +
+      '<div class="exam-options" role="group" aria-label="Answer options for question ' + (questionIndex + 1) + '">' + options + '</div>' +
+      '<footer class="exam-question-footer"><button type="button" class="button exam-save-button" data-action="save-exit">↪ Save & exit</button>' + footerAction + '</footer>' +
+    '</main><aside class="exam-summary-card"><h2><span>▥</span> EXAM SUMMARY</h2><div class="exam-summary-row"><span>Total questions</span><strong>5</strong></div><div class="exam-summary-row"><span>Answered</span><strong>' + answered + '</strong></div><div class="exam-summary-row"><span>Remaining</span><strong>' + remaining + '</strong></div><div class="exam-summary-progress"><div><span>Progress</span><strong>' + progressPercent + '%</strong></div><div class="exam-progress-track"><i style="width:' + progressPercent + '%"></i></div></div>' +
+      (isSubmitted && isPassed ? '<div class="exam-guidance exam-success-guidance"><strong>Day completed</strong><p>You passed the knowledge check. Your next published day is ready.</p></div>' : '<div class="exam-guidance"><strong>One question at a time.</strong><p>Your selected answers are saved automatically. Answer all five questions before submitting.</p></div>') +
+      '<div class="exam-pass-rule">PASS MARK <strong>4 / 5</strong><span>80% required to unlock the next day</span></div></aside></div>' +
+  '</section>';
 }
 
 function renderRightRail(question) {
@@ -504,15 +630,16 @@ function renderProgress() {
 }
 
 function render() {
-  const activeView = state.view === 'practice' ? 'learn' : state.view;
+  const activeView = state.view;
   const viewContent = activeView === 'dashboard'
     ? renderDashboard()
     : activeView === 'projects'
       ? renderProjects()
       : activeView === 'progress'
         ? renderProgress()
-        : renderLesson();
-
+        : activeView === 'exam'
+          ? renderExam()
+          : renderLesson();
   appRoot.innerHTML = '<div class="academy-shell">' + renderHeader() +
     '<main id="main" class="academy-main"><div class="view-panel" data-view-panel="' + activeView + '">' + viewContent + '</div></main>' +
     '<div id="academyToast" class="academy-toast" role="status" aria-live="polite"></div></div>';
@@ -731,20 +858,27 @@ async function handleClick(event) {
   if (viewButton) {
     event.preventDefault();
     const target = viewButton.dataset.view;
-    if (target === 'practice') {
+    if (target === 'exam' && !areAllLessonsComplete()) {
+      toast('Complete all five lessons before opening the exam.', 'warning');
+      return;
+    }
+    if (target === 'learn' && areAllLessonsComplete()) {
+      state.view = 'exam';
+    } else if (target === 'practice') {
       state.view = 'practice';
       history.replaceState(null, '', '#practice');
       render();
       window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+      return;
     } else {
       state.view = target;
-      state.projectSelection = null;
-      if (target === 'dashboard') history.replaceState(null, '', location.pathname + location.search);
-      else if (target === 'learn') updateHash(state.activeDay);
-      else history.replaceState(null, '', '#' + target);
-      render();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    state.projectSelection = null;
+    if (target === 'dashboard') history.replaceState(null, '', '#overview');
+    else if (target === 'learn' || target === 'exam') updateHash(state.activeDay);
+    else history.replaceState(null, '', '#' + target);
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     return;
   }
 
@@ -762,8 +896,36 @@ async function handleClick(event) {
 
   const dayButton = event.target.closest('[data-day], [data-open-day]');
   if (dayButton) {
-    const day = Number(dayButton.dataset.day || dayButton.dataset.openDay);
-    await loadDay(day);
+    await loadDay(Number(dayButton.dataset.day || dayButton.dataset.openDay));
+    return;
+  }
+
+  const lessonButton = event.target.closest('[data-lesson-index]');
+  if (lessonButton) {
+    const lessonIndex = Number(lessonButton.dataset.lessonIndex);
+    if (lessonIndex > completedLessonCount()) {
+      toast('Complete the lessons in order to unlock this lesson.', 'warning');
+      return;
+    }
+    state.activeTopic = lessonIndex;
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  const examQuestionButton = event.target.closest('[data-exam-question]');
+  if (examQuestionButton && state.view === 'exam') {
+    state.examQuestionIndex = Number(examQuestionButton.dataset.examQuestion);
+    render();
+    return;
+  }
+
+  const examOptionButton = event.target.closest('[data-exam-option]');
+  if (examOptionButton && state.view === 'exam') {
+    const examState = progressStore.getExamState(state.activeDay);
+    if (examState.submitted) return;
+    progressStore.setExamAnswer(state.activeDay, state.examQuestionIndex, Number(examOptionButton.dataset.examOption));
+    render();
     return;
   }
 
@@ -817,6 +979,7 @@ async function handleClick(event) {
       state.activeTopic = topicIndex;
       state.activeQuestion = questionIndex;
       state.practiceTab = 'query';
+      state.view = 'practice';
       render();
       window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     }
@@ -840,6 +1003,65 @@ async function handleClick(event) {
     render();
   } else if (action === 'retry') {
     boot();
+  } else if (action === 'save-progress') {
+    progressStore.setActiveDay(state.activeDay);
+    toast('Lesson progress saved on this device.', 'success');
+  } else if (action === 'complete-lesson') {
+    const total = state.day?.topics?.length || 5;
+    const result = progressStore.completeLesson(state.activeDay, state.activeTopic, total);
+    if (!result.ok) {
+      toast(result.reason, 'warning');
+      return;
+    }
+    if (result.allCompleted) {
+      state.view = 'exam';
+      state.examQuestionIndex = 0;
+      toast('All five lessons completed. Your exam is now unlocked.', 'success');
+    } else {
+      state.activeTopic = result.completedCount;
+      state.view = 'learn';
+      toast('Lesson completed. Lesson ' + String(state.activeTopic + 1).padStart(2, '0') + ' is now unlocked.', 'success');
+    }
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (action === 'next-exam-question') {
+    const exam = progressStore.getExamState(state.activeDay);
+    if (!Object.prototype.hasOwnProperty.call(exam.answers, state.examQuestionIndex)) {
+      toast('Choose an answer before moving to the next question.', 'warning');
+      return;
+    }
+    state.examQuestionIndex = Math.min(4, state.examQuestionIndex + 1);
+    render();
+  } else if (action === 'submit-exam') {
+    const questions = buildExamQuestions(state.day);
+    const result = progressStore.submitExam(state.activeDay, questions.map(question => question.correctOption), 4);
+    if (!result.ok) {
+      toast(result.reason, 'warning');
+      return;
+    }
+    state.examQuestionIndex = 0;
+    render();
+    toast(result.passed ? 'Exam passed. The next published day is unlocked.' : 'Exam submitted. Review your answers and retry.', result.passed ? 'success' : 'warning');
+  } else if (action === 'retry-exam') {
+    if (progressStore.retryExam(state.activeDay)) {
+      state.examQuestionIndex = 0;
+      render();
+      toast('New exam attempt started. Your previous score remains in your learning record.', 'info');
+    }
+  } else if (action === 'continue-next-day') {
+    const nextDay = state.activeDay + 1;
+    if (nextDay <= publishedThrough() && isUnlocked(nextDay)) {
+      await loadDay(nextDay);
+    } else {
+      state.view = 'dashboard';
+      history.replaceState(null, '', location.pathname + location.search);
+      render();
+    }
+  } else if (action === 'save-exit') {
+    progressStore.setActiveDay(state.activeDay);
+    state.view = 'dashboard';
+    history.replaceState(null, '', location.pathname + location.search);
+    render();
   } else if (action === 'complete-day') {
     const result = progressStore.completeDay(state.activeDay, dayQuestions(state.day));
     if (!result.ok) {
@@ -847,8 +1069,6 @@ async function handleClick(event) {
       return;
     }
     render();
-    const next = state.activeDay + 1;
-    toast(next <= publishedThrough() ? 'Day completed. Day ' + next + ' is now unlocked.' : 'Day completed. Your progress is saved.', 'success');
   } else if (action === 'run-query') {
     runQuery();
   } else if (action === 'clear-query') {
@@ -930,18 +1150,16 @@ async function boot() {
 
     const published = publishedThrough();
     const hash = location.hash.match(/day-(\d+)/);
-    const route = ['projects', 'progress', 'practice'].includes(location.hash.slice(1)) ? location.hash.slice(1) : '';
+    const route = ['overview', 'projects', 'progress', 'practice'].includes(location.hash.slice(1)) ? location.hash.slice(1) : '';
     const requestedDay = hash ? Number(hash[1]) : progressStore.getState().activeDay;
     const firstUnlocked = Array.from({ length: published }, (_, index) => index + 1).find(day => isUnlocked(day)) || 1;
     const target = isUnlocked(requestedDay) ? requestedDay : firstUnlocked;
     state.activeDay = target;
     const hasLessonLink = Boolean(hash);
-    await loadDay(target, { updateUrl: hasLessonLink, render: hasLessonLink });
-    if (!hasLessonLink) {
-      state.view = route || 'dashboard';
-      render();
-      if (route === 'practice') window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'auto', block: 'start' }), 50);
-    }
+    await loadDay(target, { updateUrl: hasLessonLink, render: false });
+    if (!hasLessonLink) state.view = route === 'overview' ? 'dashboard' : route || (areAllLessonsComplete() ? 'exam' : 'learn');
+    render();
+    if (route === 'practice') window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'auto', block: 'start' }), 50);
   } catch (error) {
     renderFatal(error);
   }
