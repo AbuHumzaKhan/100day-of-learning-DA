@@ -161,7 +161,7 @@ test('lesson, coding, exam and full workspace fit mobile and desktop viewports',
   for (const width of [320, 390, 768, 1024, 1280, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     for (const view of ['learn', 'practice']) {
-      await page.locator('[data-view="' + view + '"]').click();
+      await page.locator('.academy-mode-nav [data-view="' + view + '"]').click();
       await expect(page.locator(view === 'learn' ? '.lesson-content-title' : '#codingSqlEditor')).toBeVisible();
       const dimensions = await page.evaluate(() => ({
         viewport: document.documentElement.clientWidth,
