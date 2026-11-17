@@ -60,6 +60,63 @@
           ],
           "validation": "Correlated or layered subquery by market"
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d09-t01-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The manager wants orders above the overall average sales value.",
+          "prompt": "The manager wants orders above the overall average sales value.",
+          "hint": "Nested SQL should have a clear reason; do not add subqueries when a simpler query is sufficient.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales FROM orders WHERE sales > (SELECT AVG(sales) FROM orders);",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d09-t01-c2",
+          "title": "Sales Manager request",
+          "difficulty": "Basic",
+          "scenario": "Management wants orders above the overall average order value.",
+          "prompt": "Return order ID, customer name, and sales for orders above the overall average sales.",
+          "hint": "Scalar subquery AVG(sales)",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, sales FROM orders WHERE sales > (SELECT AVG(sales) FROM orders);",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d09-t01-c3",
+          "title": "Finance Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Finance wants orders above average profit.",
+          "prompt": "Return order ID, sales, and profit for orders whose profit exceeds the overall average profit.",
+          "hint": "Subquery AVG(profit)",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales, profit FROM orders WHERE profit > (SELECT AVG(profit) FROM orders);",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d09-t01-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "The regional manager wants orders above the average sales for their own region.",
+          "prompt": "Return order ID, region, and sales for orders whose sales exceed the average sales in that region.",
+          "hint": "Correlate the inner query to the outer row using region.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, o.region, o.sales FROM orders o WHERE o.sales > (SELECT AVG(o2.sales) FROM orders o2 WHERE o2.region = o.region);",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d09-t01-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return orders whose sales are above the average sales for their category.",
+          "prompt": "Return orders whose sales are above the average sales for their category.",
+          "hint": "Correlate the category in the inner query with the category of the current order.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, o.category, o.sales FROM orders o WHERE o.sales > (SELECT AVG(o2.sales) FROM orders o2 WHERE o2.category = o.category);",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -113,6 +170,63 @@
           ],
           "validation": "Nested aggregation"
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d09-t02-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The director defines high-value orders relative to the overall average.",
+          "prompt": "The director defines high-value orders relative to the overall average.",
+          "hint": "If the inner query returns multiple rows, scalar comparison will fail.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales FROM orders WHERE sales > (SELECT AVG(sales) FROM orders);",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d09-t02-c2",
+          "title": "Commercial Director request",
+          "difficulty": "Basic",
+          "scenario": "High-value means above average sales.",
+          "prompt": "Return high-value orders.",
+          "hint": "Scalar AVG subquery",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales FROM orders WHERE sales > (SELECT AVG(sales) FROM orders);",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d09-t02-c3",
+          "title": "Finance Director request",
+          "difficulty": "Intermediate",
+          "scenario": "The director wants orders above maximum discount's benchmark? Actually use average discount as benchmark.",
+          "prompt": "Return orders with discount above the overall average discount.",
+          "hint": "Scalar AVG(discount) subquery",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, discount FROM orders WHERE discount > (SELECT AVG(discount) FROM orders);",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d09-t02-c4",
+          "title": "Sales Director request",
+          "difficulty": "Intermediate",
+          "scenario": "Leadership wants regions whose sales exceed the average regional sales.",
+          "prompt": "Calculate regional totals and keep regions above the average of those regional totals.",
+          "hint": "Nested aggregation",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT region, SUM(sales) AS regional_sales FROM orders GROUP BY region HAVING SUM(sales) > (SELECT AVG(regional_sales) FROM (SELECT SUM(sales) AS regional_sales FROM orders GROUP BY region));",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d09-t02-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return categories whose total profit is above the average category profit.",
+          "prompt": "Return categories whose total profit is above the average category profit.",
+          "hint": "Aggregate profit at category grain, then compare each category with the average of those category totals.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT category, SUM(profit) AS total_profit FROM orders GROUP BY category HAVING SUM(profit) > (SELECT AVG(category_profit) FROM (SELECT SUM(profit) AS category_profit FROM orders GROUP BY category));",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -125,9 +239,9 @@
         "explain": "Use IN when the business population is defined by another query.",
         "detailedlearning": "Prefer NOT EXISTS when NULL behavior could make NOT IN misleading.",
         "expose": "Membership logic is about set comparison, not text matching.",
-        "example": "SELECT * FROM orders WHERE customer_id IN (SELECT customer_id FROM customers WHERE segment='Corporate');",
+        "example": "SELECT o.order_id, o.customer_name, o.sales FROM orders o WHERE o.customer_name IN (SELECT c.customer_name FROM customers c WHERE c.segment='Corporate');",
         "business_question": "The sales manager wants orders belonging to Corporate customers.",
-        "expected_sql": "SELECT o.order_id, o.customer_id, o.sales FROM orders o WHERE o.customer_id IN (SELECT customer_id FROM customers WHERE segment='Corporate');"
+        "expected_sql": "SELECT o.order_id, o.customer_name, o.sales FROM orders o WHERE o.customer_name IN (SELECT c.customer_name FROM customers c WHERE c.segment='Corporate');"
       },
       "questions": [
         {
@@ -135,7 +249,7 @@
           "difficulty": "Basic",
           "role": "Sales Manager",
           "scenario": "Management wants orders from Corporate customers.",
-          "request": "Return order ID, customer ID, and sales for customers in the Corporate segment.",
+          "request": "Return order ID, customer name, and sales for customers in the Corporate segment.",
           "output": [
             "order_id",
             "customer_id",
@@ -161,13 +275,70 @@
           "difficulty": "Intermediate",
           "role": "Finance Analyst",
           "scenario": "Finance wants transactions belonging to customers above a defined sales population.",
-          "request": "Return orders for customer IDs whose customer-level sales exceed 5000.",
+          "request": "Return orders for customer names whose customer-level sales exceed 5,000.",
           "output": [
             "order_id",
             "customer_id",
             "sales"
           ],
           "validation": "Subquery with GROUP BY/HAVING"
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d09-t03-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The sales manager wants orders belonging to Corporate customers.",
+          "prompt": "The sales manager wants orders belonging to Corporate customers.",
+          "hint": "Membership logic is about set comparison, not text matching.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, o.customer_name, o.sales FROM orders o WHERE o.customer_name IN (SELECT c.customer_name FROM customers c WHERE c.segment = 'Corporate');",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d09-t03-c2",
+          "title": "Sales Manager request",
+          "difficulty": "Basic",
+          "scenario": "Management wants orders from Corporate customers.",
+          "prompt": "Return order ID, customer name, and sales for customers in the Corporate segment.",
+          "hint": "IN subquery using the customers table's segment field.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, o.customer_name, o.sales FROM orders o WHERE o.customer_name IN (SELECT c.customer_name FROM customers c WHERE c.segment = 'Corporate');",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d09-t03-c3",
+          "title": "Customer Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The team wants orders from customers in selected segments.",
+          "prompt": "Return orders for customers in Corporate or Consumer segments.",
+          "hint": "IN over subquery",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, o.customer_name, o.sales FROM orders o WHERE o.customer_name IN (SELECT c.customer_name FROM customers c WHERE c.segment IN ('Corporate','Consumer'));",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d09-t03-c4",
+          "title": "Finance Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "Finance wants transactions belonging to customers above a defined sales population.",
+          "prompt": "Return orders for customer names whose customer-level sales exceed 5,000.",
+          "hint": "GROUP BY customer_name; HAVING SUM(sales) > 5000",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, o.customer_name, o.sales FROM orders o WHERE o.customer_name IN (SELECT customer_name FROM orders GROUP BY customer_name HAVING SUM(sales) > 5000);",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d09-t03-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return orders for customers in the Home Office segment.",
+          "prompt": "Return orders for customers in the Home Office segment.",
+          "hint": "Membership logic is about set comparison, not text matching.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT o.order_id, o.customer_name, o.sales FROM orders o WHERE o.customer_name IN (SELECT c.customer_name FROM customers c WHERE c.segment = 'Home Office');",
+          "dataset": "orders"
         }
       ]
     },
@@ -181,9 +352,9 @@
         "explain": "It is useful for relationship-based business rules such as customers who have orders.",
         "detailedlearning": "Correlate the inner query to the outer row using a key.",
         "expose": "EXISTS asks 'does at least one related record exist?', not 'how many?'.",
-        "example": "SELECT c.customer_id FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id=c.customer_id);",
+        "example": "SELECT c.customer_id FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_name=c.customer_name);",
         "business_question": "Customer management wants customers who have placed at least one order.",
-        "expected_sql": "SELECT c.customer_id, c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id=c.customer_id);"
+        "expected_sql": "SELECT c.customer_id, c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_name=c.customer_name);"
       },
       "questions": [
         {
@@ -221,6 +392,63 @@
             "customer_name"
           ],
           "validation": "NOT EXISTS correlated subquery"
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d09-t04-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "Customer management wants customers who have placed at least one order.",
+          "prompt": "Customer management wants customers who have placed at least one order.",
+          "hint": "EXISTS asks 'does at least one related record exist?', not 'how many?'.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM customers;",
+          "expected_sql": "SELECT c.customer_id, c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_name=c.customer_name);",
+          "dataset": "customers"
+        },
+        {
+          "id": "sql-d09-t04-c2",
+          "title": "Customer Manager request",
+          "difficulty": "Basic",
+          "scenario": "The team wants customers with at least one order.",
+          "prompt": "Return customer ID and customer name for customers who have orders.",
+          "hint": "EXISTS correlated on customer_id",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM customers;",
+          "expected_sql": "SELECT c.customer_id, c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_name=c.customer_name);",
+          "dataset": "customers"
+        },
+        {
+          "id": "sql-d09-t04-c3",
+          "title": "Sales Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The manager wants customers who have purchased Technology products.",
+          "prompt": "Return customers for whom at least one Technology order exists.",
+          "hint": "EXISTS with category condition",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM customers;",
+          "expected_sql": "SELECT c.customer_id, c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_name=c.customer_name AND o.category='Technology');",
+          "dataset": "customers"
+        },
+        {
+          "id": "sql-d09-t04-c4",
+          "title": "Data Quality Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The customer master contains records that have never generated an order.",
+          "prompt": "Return customers with no orders.",
+          "hint": "NOT EXISTS correlated subquery",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM customers;",
+          "expected_sql": "SELECT c.customer_id, c.customer_name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_name=c.customer_name);",
+          "dataset": "customers"
+        },
+        {
+          "id": "sql-d09-t04-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return customers who have at least one order with sales above 1000.",
+          "prompt": "Return customers who have at least one order with sales above 1000.",
+          "hint": "Use the customer's name to correlate to orders, then add the order-level sales condition.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM customers;",
+          "expected_sql": "SELECT c.customer_id, c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_name=c.customer_name AND o.sales > 1000);",
+          "dataset": "customers"
         }
       ]
     },
@@ -275,6 +503,63 @@
             "total_sales"
           ],
           "validation": "Customer aggregate benchmark plus customer join"
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d09-t05-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The director wants regions whose sales are above the average regional sales.",
+          "prompt": "The director wants regions whose sales are above the average regional sales.",
+          "hint": "Complexity becomes manageable when each layer has one responsibility.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT region, total_sales FROM (SELECT region, SUM(sales) AS total_sales FROM orders GROUP BY region) regional_totals WHERE total_sales > (SELECT AVG(total_sales) FROM (SELECT SUM(sales) AS total_sales FROM orders GROUP BY region)) ORDER BY total_sales DESC;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d09-t05-c2",
+          "title": "Regional Director request",
+          "difficulty": "Basic",
+          "scenario": "The director wants above-average regions.",
+          "prompt": "Return regions whose total sales exceed the average regional total.",
+          "hint": "Aggregate then benchmark",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT region, total_sales FROM (SELECT region, SUM(sales) AS total_sales FROM orders GROUP BY region) regional_totals WHERE total_sales > (SELECT AVG(total_sales) FROM (SELECT SUM(sales) AS total_sales FROM orders GROUP BY region));",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d09-t05-c3",
+          "title": "Finance Director request",
+          "difficulty": "Intermediate",
+          "scenario": "Finance wants categories above average category profit.",
+          "prompt": "Return categories whose total profit exceeds the average category profit.",
+          "hint": "Nested category aggregation",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT category, total_profit FROM (SELECT category, SUM(profit) AS total_profit FROM orders GROUP BY category) category_totals WHERE total_profit > (SELECT AVG(total_profit) FROM (SELECT SUM(profit) AS total_profit FROM orders GROUP BY category));",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d09-t05-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "The executive review compares customer performance to the average customer.",
+          "prompt": "Return customers whose total sales exceed the average customer total sales, including customer name.",
+          "hint": "Customer aggregate benchmark plus customer join",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM customers;",
+          "expected_sql": "SELECT c.customer_name, customer_totals.total_sales FROM customers c JOIN (SELECT customer_name, SUM(sales) AS total_sales FROM orders GROUP BY customer_name) customer_totals ON c.customer_name = customer_totals.customer_name WHERE customer_totals.total_sales > (SELECT AVG(total_sales) FROM (SELECT SUM(sales) AS total_sales FROM orders GROUP BY customer_name));",
+          "dataset": "customers"
+        },
+        {
+          "id": "sql-d09-t05-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return categories whose total sales are higher than the average category sales.",
+          "prompt": "Return categories whose total sales are higher than the average category sales.",
+          "hint": "Complexity becomes manageable when each layer has one responsibility.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT category, total_sales FROM (SELECT category, SUM(sales) AS total_sales FROM orders GROUP BY category) category_totals WHERE total_sales > (SELECT AVG(category_sales) FROM (SELECT SUM(sales) AS category_sales FROM orders GROUP BY category)) ORDER BY total_sales DESC;",
+          "dataset": "orders"
         }
       ]
     }

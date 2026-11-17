@@ -17,9 +17,9 @@
         "explain": "A NULL is not the same as zero, empty text, or false.",
         "detailedlearning": "Always decide whether missing data should be excluded, flagged, or replaced before calculating KPIs.",
         "expose": "Missing values can silently change counts and averages.",
-        "example": "SELECT COUNT(*) FROM orders WHERE postal_code IS NULL;",
-        "business_question": "Data quality wants the number of orders without postal codes.",
-        "expected_sql": "SELECT COUNT(*) AS missing_postal_codes FROM orders WHERE postal_code IS NULL;"
+        "example": "SELECT COUNT(*) AS missing_customer_names FROM orders WHERE customer_name IS NULL;",
+        "business_question": "The data quality analyst wants to measure how many order records have no customer name.",
+        "expected_sql": "SELECT COUNT(*) AS missing_customer_names FROM orders WHERE customer_name IS NULL;"
       },
       "questions": [
         {
@@ -27,23 +27,23 @@
           "difficulty": "Basic",
           "role": "Data Quality Analyst",
           "scenario": "The team suspects missing customer identifiers.",
-          "request": "Return the number of rows where customer_id is NULL.",
+          "request": "Return the number of rows where customer_name is NULL.",
           "output": [
-            "missing_customer_ids"
+            "missing_customer_names"
           ],
-          "validation": "customer_id IS NULL"
+          "validation": "customer_name IS NULL"
         },
         {
           "id": "sql-d6-t1-q2",
           "difficulty": "Medium",
           "role": "Operations Manager",
-          "scenario": "Shipping records may have missing ship dates.",
-          "request": "Return order ID and customer name for rows with a missing ship date.",
+          "scenario": "Shipping records may have missing order dates.",
+          "request": "Return order ID and customer name for rows with a missing order date.",
           "output": [
             "order_id",
             "customer_name"
           ],
-          "validation": "ship_date IS NULL"
+          "validation": "order_date IS NULL"
         },
         {
           "id": "sql-d6-t1-q3",
@@ -57,6 +57,63 @@
           ],
           "validation": "NULL count divided by total rows"
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d06-t01-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The data quality analyst wants to measure how many order records have no customer name.",
+          "prompt": "The data quality analyst wants to measure how many order records have no customer name.",
+          "hint": "Missing values can silently change counts and averages.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(*) AS missing_customer_names FROM orders WHERE customer_name IS NULL;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t01-c2",
+          "title": "Data Quality Analyst request",
+          "difficulty": "Basic",
+          "scenario": "The team suspects missing customer identifiers.",
+          "prompt": "Return the number of rows where customer_name is NULL.",
+          "hint": "customer_name IS NULL",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(*) AS missing_customers FROM orders WHERE customer_name IS NULL;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t01-c3",
+          "title": "Operations Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Shipping records may have missing ship dates.",
+          "prompt": "Return order ID and customer name for rows with a missing order date.",
+          "hint": "order_date IS NULL",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name FROM orders WHERE order_date IS NULL;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t01-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "Finance wants to know whether any profit values are missing.",
+          "prompt": "Return the count and percentage of rows where profit is NULL.",
+          "hint": "NULL count divided by total rows",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(*) AS missing_profit, ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM orders), 2) AS missing_profit_pct FROM orders WHERE profit IS NULL;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t01-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return order IDs where the region value is missing.",
+          "prompt": "Return order IDs where the region value is missing.",
+          "hint": "Missing values can silently change counts and averages.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id FROM orders WHERE region IS NULL;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -69,8 +126,8 @@
         "explain": "It is useful when a report requires a display or calculation default.",
         "detailedlearning": "Do not blindly convert NULL to zero; only do so when zero is a valid business interpretation.",
         "expose": "A default value is a business decision, not merely a SQL convenience.",
-        "example": "SELECT COALESCE(postal_code, 0) AS postal_code FROM orders;",
-        "business_question": "The reporting team wants missing discount values treated as zero for a calculation.",
+        "example": "SELECT COALESCE(customer_name,'Unknown Customer') AS customer_name FROM orders;",
+        "business_question": "The reporting team needs a visible fallback for missing customer names.",
         "expected_sql": "SELECT AVG(COALESCE(discount,0)) AS avg_discount FROM orders;"
       },
       "questions": [
@@ -107,6 +164,63 @@
             "total_profit"
           ],
           "validation": "SUM(COALESCE(profit,0))"
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d06-t02-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The reporting team wants missing discount values treated as zero for a calculation.",
+          "prompt": "The reporting team wants missing discount values treated as zero for a calculation.",
+          "hint": "A default value is a business decision, not merely a SQL convenience.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT AVG(COALESCE(discount,0)) AS avg_discount FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t02-c2",
+          "title": "Finance Analyst request",
+          "difficulty": "Basic",
+          "scenario": "Missing discount is defined as zero for this report.",
+          "prompt": "Return average discount using zero when discount is NULL.",
+          "hint": "AVG(COALESCE(discount,0))",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT AVG(COALESCE(discount,0)) AS avg_discount FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t02-c3",
+          "title": "Customer Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Some customer names are missing and the report needs a visible fallback.",
+          "prompt": "Return order ID and customer name, replacing NULL customer names with 'Unknown Customer'.",
+          "hint": "COALESCE(customer_name,'Unknown Customer')",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, COALESCE(customer_name,'Unknown Customer') AS customer_name FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t02-c4",
+          "title": "Finance Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Profit data has occasional NULLs and the reporting rule treats them as zero only for this KPI.",
+          "prompt": "Return total profit using zero for NULL profit values.",
+          "hint": "SUM(COALESCE(profit,0))",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT SUM(COALESCE(profit,0)) AS total_profit FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t02-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return order ID and discount, replacing a missing discount with zero.",
+          "prompt": "Return order ID and discount, replacing a missing discount with zero.",
+          "hint": "A default value is a business decision, not merely a SQL convenience.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, COALESCE(discount,0) AS discount FROM orders;",
+          "dataset": "orders"
         }
       ]
     },
@@ -160,6 +274,63 @@
             "missing_sales_rows"
           ],
           "validation": "Conditional COUNT"
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d06-t03-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "Finance wants missing profit clearly separated from losses.",
+          "prompt": "Finance wants missing profit clearly separated from losses.",
+          "hint": "Do not let ELSE accidentally hide missing-data problems.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, CASE WHEN profit IS NULL THEN 'Missing' WHEN profit < 0 THEN 'Loss' ELSE 'Profit' END AS profit_status FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t03-c2",
+          "title": "Finance Analyst request",
+          "difficulty": "Basic",
+          "scenario": "Finance needs missing profit distinguished from loss.",
+          "prompt": "Create Missing, Loss, and Profit labels.",
+          "hint": "NULL-aware CASE",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, CASE WHEN profit IS NULL THEN 'Missing' WHEN profit < 0 THEN 'Loss' ELSE 'Profit' END AS profit_status FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t03-c3",
+          "title": "Data Quality Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Orders missing region must be flagged before regional reporting.",
+          "prompt": "Create a region status of Missing Region or Assigned Region.",
+          "hint": "CASE region IS NULL",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, CASE WHEN region IS NULL THEN 'Missing Region' ELSE 'Assigned Region' END AS region_status FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t03-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "A KPI population must exclude rows with missing sales.",
+          "prompt": "Return the count of valid sales rows and missing sales rows separately.",
+          "hint": "Conditional COUNT",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT SUM(CASE WHEN sales IS NOT NULL THEN 1 ELSE 0 END) AS valid_sales_rows, SUM(CASE WHEN sales IS NULL THEN 1 ELSE 0 END) AS missing_sales_rows FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t03-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Create a status for each order that identifies missing sales, high sales (at least 1500), or regular sales.",
+          "prompt": "Create a status for each order that identifies missing sales, high sales (at least 1500), or regular sales.",
+          "hint": "Do not let ELSE accidentally hide missing-data problems.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, CASE WHEN sales IS NULL THEN 'Missing Sales' WHEN sales >= 1500 THEN 'High Sales' ELSE 'Regular Sales' END AS sales_status FROM orders;",
+          "dataset": "orders"
         }
       ]
     },
@@ -215,6 +386,63 @@
           ],
           "validation": "COUNT(discount)/COUNT(*)"
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d06-t04-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The manager wants discount completeness and average discount.",
+          "prompt": "The manager wants discount completeness and average discount.",
+          "hint": "An average over populated values is not necessarily an average over all records.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(*) AS rows, COUNT(discount) AS discount_rows, AVG(discount) AS avg_discount FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t04-c2",
+          "title": "Data Quality Analyst request",
+          "difficulty": "Basic",
+          "scenario": "The team needs total rows versus rows with a discount value.",
+          "prompt": "Return both counts.",
+          "hint": "COUNT(*) versus COUNT(discount)",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(*) AS total_rows, COUNT(discount) AS populated_discount_rows FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t04-c3",
+          "title": "Finance Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "Finance needs average discount based only on populated discount records.",
+          "prompt": "Return count of discount records and average discount.",
+          "hint": "COUNT(discount), AVG(discount)",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(discount) AS discount_records, AVG(discount) AS avg_discount FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t04-c4",
+          "title": "BI Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The dashboard needs a discount completeness rate.",
+          "prompt": "Return total rows, populated discount rows, and discount completeness percentage.",
+          "hint": "COUNT(discount)/COUNT(*)",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(*) AS total_rows, COUNT(discount) AS populated_discount_rows, ROUND(100.0 * COUNT(discount) / COUNT(*), 2) AS discount_completeness_pct FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t04-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return COUNT(*), COUNT(profit), and AVG(profit) for the order table.",
+          "prompt": "Return COUNT(*), COUNT(profit), and AVG(profit) for the order table.",
+          "hint": "An average over populated values is not necessarily an average over all records.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(*) AS total_rows, COUNT(profit) AS populated_profit_rows, AVG(profit) AS avg_profit FROM orders;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -227,9 +455,9 @@
         "explain": "A quality query should make the size of the issue measurable.",
         "detailedlearning": "Choose critical columns based on business impact rather than checking every field indiscriminately.",
         "expose": "Data quality is part of analysis, not an afterthought.",
-        "example": "SELECT COUNT(*) AS rows, SUM(CASE WHEN customer_id IS NULL THEN 1 ELSE 0 END) AS missing_customer_ids FROM orders;",
-        "business_question": "The analytics lead wants a quality snapshot for customer ID, region, and profit.",
-        "expected_sql": "SELECT COUNT(*) AS rows, SUM(CASE WHEN customer_id IS NULL THEN 1 ELSE 0 END) AS missing_customer_ids, SUM(CASE WHEN region IS NULL THEN 1 ELSE 0 END) AS missing_regions, SUM(CASE WHEN profit IS NULL THEN 1 ELSE 0 END) AS missing_profit FROM orders;"
+        "example": "SELECT COUNT(*) AS rows, SUM(CASE WHEN customer_name IS NULL THEN 1 ELSE 0 END) AS missing_customer_names, SUM(CASE WHEN region IS NULL THEN 1 ELSE 0 END) AS missing_regions, SUM(CASE WHEN profit IS NULL THEN 1 ELSE 0 END) AS missing_profit FROM orders;",
+        "business_question": "The analytics lead wants a quality snapshot for customer names, region, and profit.",
+        "expected_sql": "SELECT COUNT(*) AS total_rows, SUM(CASE WHEN customer_name IS NULL THEN 1 ELSE 0 END) AS missing_customer_names, SUM(CASE WHEN region IS NULL THEN 1 ELSE 0 END) AS missing_regions, SUM(CASE WHEN profit IS NULL THEN 1 ELSE 0 END) AS missing_profit FROM orders;"
       },
       "questions": [
         {
@@ -237,12 +465,12 @@
           "difficulty": "Basic",
           "role": "Analytics Lead",
           "scenario": "Before publishing the report, the team needs missing-field counts.",
-          "request": "Return total rows and missing customer IDs.",
+          "request": "Return total rows and missing customer names.",
           "output": [
             "rows",
-            "missing_customer_ids"
+            "missing_customer_names"
           ],
-          "validation": "Quality count"
+          "validation": "COUNT(*) and customer_name IS NULL"
         },
         {
           "id": "sql-d6-t5-q2",
@@ -262,7 +490,7 @@
           "difficulty": "Advanced",
           "role": "Senior Analyst",
           "scenario": "The release gate checks three critical fields.",
-          "request": "Return total rows and missing counts for customer_id, region, and profit in one result.",
+          "request": "Return total rows and missing counts for customer_name, region, and profit in one result.",
           "output": [
             "rows",
             "missing_customer_ids",
@@ -270,6 +498,63 @@
             "missing_profit"
           ],
           "validation": "Three conditional missing counts"
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d06-t05-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The analytics lead wants a quality snapshot for customer names, region, and profit.",
+          "prompt": "The analytics lead wants a quality snapshot for customer names, region, and profit.",
+          "hint": "Data quality is part of analysis, not an afterthought.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(*) AS rows, SUM(CASE WHEN customer_name IS NULL THEN 1 ELSE 0 END) AS missing_customers, SUM(CASE WHEN region IS NULL THEN 1 ELSE 0 END) AS missing_regions, SUM(CASE WHEN profit IS NULL THEN 1 ELSE 0 END) AS missing_profit FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t05-c2",
+          "title": "Analytics Lead request",
+          "difficulty": "Basic",
+          "scenario": "Before publishing the report, the team needs missing-field counts.",
+          "prompt": "Return total rows and missing customer names.",
+          "hint": "Quality count",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(*) AS total_rows, SUM(CASE WHEN customer_name IS NULL THEN 1 ELSE 0 END) AS missing_customer_names FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t05-c3",
+          "title": "BI Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "The dashboard owner wants completeness for region.",
+          "prompt": "Return total rows, populated regions, and region completeness percentage.",
+          "hint": "COUNT(region)/COUNT(*)",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(*) AS total_rows, COUNT(region) AS populated_regions, ROUND(100.0 * COUNT(region) / COUNT(*), 2) AS region_completeness_pct FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t05-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "The release gate checks three critical fields.",
+          "prompt": "Return total rows and missing counts for customer_id, region, and profit in one result.",
+          "hint": "Three conditional missing counts",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(*) AS total_rows, SUM(CASE WHEN customer_name IS NULL THEN 1 ELSE 0 END) AS missing_customers, SUM(CASE WHEN region IS NULL THEN 1 ELSE 0 END) AS missing_regions, SUM(CASE WHEN profit IS NULL THEN 1 ELSE 0 END) AS missing_profit FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d06-t05-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return total rows and missing-value counts for customer name, sales, and discount.",
+          "prompt": "Return total rows and missing-value counts for customer name, sales, and discount.",
+          "hint": "Data quality is part of analysis, not an afterthought.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT COUNT(*) AS total_rows, SUM(CASE WHEN customer_name IS NULL THEN 1 ELSE 0 END) AS missing_customer_names, SUM(CASE WHEN sales IS NULL THEN 1 ELSE 0 END) AS missing_sales, SUM(CASE WHEN discount IS NULL THEN 1 ELSE 0 END) AS missing_discounts FROM orders;",
+          "dataset": "orders"
         }
       ]
     }

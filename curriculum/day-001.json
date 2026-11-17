@@ -65,6 +65,63 @@
           ],
           "validation": "Return exactly the six requested fields."
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d01-t01-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The sales manager needs a transaction review showing the order ID, customer name, sales, and profit. Return only those fields.",
+          "prompt": "The sales manager needs a transaction review showing the order ID, customer name, sales, and profit. Return only those fields.",
+          "hint": "Think in two questions: Where is the data? Which fields does the stakeholder need?",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, sales, profit FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t01-c2",
+          "title": "Sales Manager request",
+          "difficulty": "Basic",
+          "scenario": "The manager is reviewing this week's transactions.",
+          "prompt": "Return order ID, customer name, and sales.",
+          "hint": "Return exactly the requested columns from orders.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, sales FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t01-c3",
+          "title": "Finance Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "Finance needs transaction-level profitability.",
+          "prompt": "Return order ID, sales, profit, and discount.",
+          "hint": "Return the four requested fields.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales, profit, discount FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t01-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "A regional review requires customer, product, geography, and financial fields.",
+          "prompt": "Return order ID, customer name, product name, region, sales, and profit.",
+          "hint": "Return exactly the six requested fields.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, product_name, region, sales, profit FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t01-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return order ID, customer name, quantity, sales, and profit for a transaction-level analyst extract.",
+          "prompt": "Return order ID, customer name, quantity, sales, and profit for a transaction-level analyst extract.",
+          "hint": "Think in two questions: Where is the data? Which fields does the stakeholder need?",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, category, quantity, sales, profit FROM orders;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -126,6 +183,63 @@
           ],
           "validation": "Return all seven requested fields in the requested order."
         }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d01-t02-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The category manager wants a product-performance view containing product name, category, quantity, sales, and profit.",
+          "prompt": "The category manager wants a product-performance view containing product name, category, quantity, sales, and profit.",
+          "hint": "Treat the SELECT list as the output contract.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT product_name, category, quantity, sales, profit FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t02-c2",
+          "title": "Category Manager request",
+          "difficulty": "Basic",
+          "scenario": "The manager wants a category performance snapshot.",
+          "prompt": "Return category, sales, and profit.",
+          "hint": "Return the three requested fields.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT category, sales, profit FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t02-c3",
+          "title": "Operations Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Operations is reviewing shipment-related transactions.",
+          "prompt": "Return order ID, order date, ship mode, and region.",
+          "hint": "Return the four requested fields.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, order_date, ship_mode, region FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t02-c4",
+          "title": "Commercial Director request",
+          "difficulty": "Intermediate",
+          "scenario": "Leadership wants a compact transaction view for commercial review.",
+          "prompt": "Return order ID, customer name, category, sales, discount, profit, and region.",
+          "hint": "Return all seven requested fields in the requested order.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, category, sales, discount, profit, region FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t02-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return product name, category, region, sales, and profit as a reusable transaction view.",
+          "prompt": "Return product name, category, region, sales, and profit as a reusable transaction view.",
+          "hint": "Treat the SELECT list as the output contract.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, product_name, quantity, discount, profit FROM orders;",
+          "dataset": "orders"
+        }
       ]
     },
     {
@@ -179,6 +293,63 @@
             "Discount_Rate"
           ],
           "validation": "Use aliases for all three measures."
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d01-t03-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "Finance wants the result labels to clearly identify sales as Revenue and profit as Profit.",
+          "prompt": "Finance wants the result labels to clearly identify sales as Revenue and profit as Profit.",
+          "hint": "Separate source field names from presentation names. The database column stays unchanged.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT sales AS Revenue, profit AS Profit FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t03-c2",
+          "title": "Finance Manager request",
+          "difficulty": "Basic",
+          "scenario": "Finance wants a cleaner report header.",
+          "prompt": "Return sales as Revenue and profit as Profit.",
+          "hint": "Use aliases for the requested result labels.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT sales AS Revenue, profit AS Profit FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t03-c3",
+          "title": "Sales Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "A dashboard dataset requires consistent field names.",
+          "prompt": "Return order ID as Order_ID and customer name as Customer.",
+          "hint": "Use aliases matching the requested names.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id AS Order_ID, customer_name AS Customer FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t03-c4",
+          "title": "BI Developer request",
+          "difficulty": "Intermediate",
+          "scenario": "The BI layer needs semantic names for transaction metrics.",
+          "prompt": "Return sales as Total_Sales, quantity as Units, and discount as Discount_Rate.",
+          "hint": "Use aliases for all three measures.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT sales AS Total_Sales, quantity AS Units, discount AS Discount_Rate FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t03-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return transaction ID as Transaction_ID, product as Product_Name, and sales as Revenue.",
+          "prompt": "Return transaction ID as Transaction_ID, product as Product_Name, and sales as Revenue.",
+          "hint": "Separate source field names from presentation names. The database column stays unchanged.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id AS Transaction_ID, product_name AS Product, region AS Sales_Region FROM orders;",
+          "dataset": "orders"
         }
       ]
     },
@@ -236,6 +407,63 @@
             "discount_amount"
           ],
           "validation": "Calculate sales * discount and alias it Discount_Amount."
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d01-t04-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "The finance analyst wants an estimated non-profit portion of each order using sales minus profit.",
+          "prompt": "The finance analyst wants an estimated non-profit portion of each order using sales minus profit.",
+          "hint": "Ask: What business metric can be derived from the available fields?",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales, profit, sales - profit AS estimated_cost FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t04-c2",
+          "title": "Finance Analyst request",
+          "difficulty": "Basic",
+          "scenario": "Finance wants to see the portion of sales not represented by profit.",
+          "prompt": "Return order ID and sales minus profit as Estimated_Cost.",
+          "hint": "Calculate sales - profit and alias it Estimated_Cost.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales - profit AS Estimated_Cost FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t04-c3",
+          "title": "Commercial Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "Management wants to compare order economics.",
+          "prompt": "Return order ID, sales, profit, and profit as a percentage of sales.",
+          "hint": "Calculate profit / sales and expose it as Profit_Margin.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales, profit, (profit * 100.0) / NULLIF(sales, 0) AS Profit_Margin FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t04-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "A margin review needs a derived discount impact indicator.",
+          "prompt": "Return order ID, sales, discount, and sales multiplied by discount as Discount_Amount.",
+          "hint": "Calculate sales * discount and alias it Discount_Amount.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales, discount, sales * discount AS Discount_Amount FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t04-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return order ID, sales, profit, and profit margin as a percentage, with division by zero handled safely.",
+          "prompt": "Return order ID, sales, profit, and profit margin as a percentage, with division by zero handled safely.",
+          "hint": "Ask: What business metric can be derived from the available fields?",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales, quantity, sales / NULLIF(quantity, 0) AS Sales_Per_Unit FROM orders;",
+          "dataset": "orders"
         }
       ]
     },
@@ -299,6 +527,63 @@
             "profit_margin"
           ],
           "validation": "Return all requested fields and calculate profit divided by sales."
+        }
+      ],
+      "coding_questions": [
+        {
+          "id": "sql-d01-t05-c1",
+          "title": "Core lesson challenge",
+          "difficulty": "Basic",
+          "scenario": "A senior analyst is preparing a transaction-level profitability extract. Return order ID, customer, category, sales, profit, and estimated cost (sales minus profit).",
+          "prompt": "A senior analyst is preparing a transaction-level profitability extract. Return order ID, customer, category, sales, profit, and estimated cost (sales minus profit).",
+          "hint": "SQL is a translation layer between business language and data structures.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, category, sales, profit, sales - profit AS estimated_cost FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t05-c2",
+          "title": "Sales Manager request",
+          "difficulty": "Basic",
+          "scenario": "The manager needs a transaction list for a morning review.",
+          "prompt": "Return order ID, customer name, category, sales, and profit.",
+          "hint": "Return the requested fields.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, category, sales, profit FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t05-c3",
+          "title": "Finance Manager request",
+          "difficulty": "Intermediate",
+          "scenario": "Finance needs an order-level profitability extract.",
+          "prompt": "Return order ID, sales, profit, and sales minus profit as Estimated_Cost.",
+          "hint": "Include the requested calculation and alias.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, sales, profit, sales - profit AS Estimated_Cost FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t05-c4",
+          "title": "Senior Analyst request",
+          "difficulty": "Intermediate",
+          "scenario": "Leadership needs a compact commercial extract for downstream reporting.",
+          "prompt": "Return order ID, customer, category, region, sales, profit, and profit/sales as Profit_Margin.",
+          "hint": "Return all requested fields and calculate profit divided by sales.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, category, region, sales, profit, (profit * 100.0) / NULLIF(sales, 0) AS Profit_Margin FROM orders;",
+          "dataset": "orders"
+        },
+        {
+          "id": "sql-d01-t05-c5",
+          "title": "Independent analyst challenge",
+          "difficulty": "Challenge",
+          "scenario": "Return category, number of orders, sales, and profit for each category.",
+          "prompt": "Return category, number of orders, sales, and profit for each category.",
+          "hint": "SQL is a translation layer between business language and data structures.",
+          "starter_sql": "-- Write your SQL query below\nSELECT\n  -- Add the columns and calculations required by the task\nFROM orders;",
+          "expected_sql": "SELECT order_id, customer_name, product_name, quantity, sales, profit, discount FROM orders;",
+          "dataset": "orders"
         }
       ]
     }
