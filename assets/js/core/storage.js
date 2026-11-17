@@ -154,7 +154,11 @@ export const progressStore = {
     const target = Number(day);
     const published = Number(publishedThrough);
     if (!Number.isInteger(target) || target < 1 || target > published) return false;
-    return target === 1 || state.completedDays.includes(target - 1);
+    if (target === 1) return true;
+    for (let previousDay = 1; previousDay < target; previousDay += 1) {
+      if (!state.completedDays.includes(previousDay)) return false;
+    }
+    return true;
   },
   getStats(publishedThrough, questionsPerDay = 15) {
     const published = Math.max(0, Number(publishedThrough) || 0);

@@ -189,7 +189,7 @@ function renderHeader() {
   return '<header class="academy-header"><div class="academy-header-inner">' +
     '<a class="academy-brand" href="./" aria-label="AHK Academy home" data-view="learn"><span class="brand-mark">AHK</span><span class="brand-copy"><strong>AHK Academy</strong><small>Data Analyst Learning Hub</small></span></a>' +
     '<nav class="academy-nav" aria-label="Main navigation">' +
-    items.map(([id, label]) => '<button type="button" class="nav-button ' + (state.view === id || (id === 'learn' && state.view === 'practice') ? 'active' : '') + '" data-view="' + id + '">' + label + '</button>').join('') +
+    items.map(([id, label]) => '<button type="button" class="nav-button ' + (state.view === id ? 'active' : '') + '" data-view="' + id + '">' + label + '</button>').join('') +
     '</nav>' +
     '<div class="academy-search-wrap"><label class="search-box"><span aria-hidden="true">⌕</span><input id="academySearch" type="search" value="' + escapeHTML(state.searchQuery) + '" placeholder="Search lessons and tasks" autocomplete="off" aria-label="Search lessons, topics and business requests"><kbd>Ctrl K</kbd></label><div id="academySearchResults" class="search-results" hidden></div></div>' +
     '<div class="learner-chip"><span class="learner-avatar">AK</span><span><strong>Learner workspace</strong><small>Progress saved on this device</small></span></div>' +
@@ -560,7 +560,7 @@ async function handleClick(event) {
     event.preventDefault();
     const target = viewButton.dataset.view;
     if (target === 'practice') {
-      state.view = 'learn';
+      state.view = 'practice';
       render();
       window.setTimeout(() => $('#practice')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     } else {
