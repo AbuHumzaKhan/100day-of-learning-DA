@@ -1,27 +1,15 @@
 {
   "name": "100day-of-learning-DA",
-  "version": "3.2.0",
-  "description": "AHK Academy runtime content manifest — premium 100-Day Data Analyst Business Trainer.",
+  "version": "3.3.0",
+  "description": "AHK Academy runtime content manifest — business-first 100-Day Data Analyst Business Trainer.",
   "owner": "AbuHumzaKhan",
   "release_control": {
     "mode": "sequential",
     "published_through_day": 11,
-    "open_days": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11
-    ],
+    "open_days": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
     "next_day": 12,
     "unlock_rule": "A day becomes available only when its curriculum resource is published and the previous day is completed locally.",
-    "learner_progress_storage": "local",
+    "learner_progress_storage": "versioned-local",
     "note": "Days 1-11 are published. Day 12 onward remains locked until its curriculum resource is published."
   },
   "learning_sequence": {
@@ -34,30 +22,14 @@
     "topics_per_day": 5,
     "business_questions_per_topic": 3,
     "total_questions": 1500,
-    "learning_modes": [
-      "teacher",
-      "explain",
-      "detailedlearning",
-      "expose"
-    ],
+    "learning_modes": ["teacher", "explain", "detailedlearning", "expose"],
     "progression": "topic-by-topic"
   },
   "coding_arena": {
     "questions_per_day": 10,
     "range": "10-20",
-    "difficulty_levels": [
-      "Basic",
-      "Medium",
-      "Intermediate",
-      "Advanced",
-      "Expert"
-    ],
-    "execution_targets": [
-      "SQL",
-      "Excel",
-      "PowerBI-DAX",
-      "Python"
-    ],
+    "difficulty_levels": ["Basic", "Medium", "Intermediate", "Advanced", "Expert"],
+    "execution_targets": ["SQL", "Excel", "PowerBI-DAX", "Python"],
     "business_scenario_contract": true
   },
   "datasets": {
@@ -85,27 +57,22 @@
     "purpose": "Discover approved external data-analysis learning repositories without making external content authoritative."
   },
   "runtime_engines": {
-    "architecture": "modular-engine-matrix",
+    "architecture": "modular-browser-runtime",
     "manager": "engines/engine-manager.js",
     "engines": {
-      "content": "GitHub JSON runtime loader",
+      "content": "Version-aware GitHub JSON loader",
       "release": "Sequential published-day control",
-      "progress": "Local learner state",
-      "sql": "Browser-local read-only SQLite"
+      "progress": "Versioned local learner state",
+      "sql": "Browser-local read-only SQLite with registered datasets"
     },
-    "extension_targets": [
-      "Excel",
-      "PowerBI-DAX",
-      "Python"
-    ],
-    "lazy_loading": true,
-    "release": "Sequential published-day control"
+    "extension_targets": ["Excel", "PowerBI-DAX", "Python"],
+    "lazy_loading": true
   },
-  "release": "Premium learning UX",
   "ui": {
     "learning_navigation": "learning-hub",
-    "settings_progress": true,
-    "practice": "integrated-workspace",
-    "mobile": "learning-first"
+    "projects": "business-project-library",
+    "progress": "learner-progress-dashboard",
+    "practice": "multi-dataset-sql-workspace",
+    "mobile": "single-column-learning-first"
   }
 }

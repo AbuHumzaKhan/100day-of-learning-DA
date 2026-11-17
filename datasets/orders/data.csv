@@ -1,1 +1,151 @@
-row_no,order_id,order_date,customer_name,category,product_name,sales,quantity,discount,profit,region,ship_mode\n1,ORD-00001,2026-01-02,John Carter,Furniture,Office Chair,387,2,0.05,39.67,West,Second Class\n2,ORD-00002,2026-01-03,Maya Singh,Office Supplies,Desk,524,3,0.1,81.22,South,First Class\n3,ORD-00003,2026-01-04,Omar Ali,Technology,Printer,661,4,0.15,137.16,North,Standard Class\n4,ORD-00004,2026-01-05,Sara Ahmed,Furniture,Monitor,798,5,0.2,7.98,East,Second Class\n5,ORD-00005,2026-01-06,David Miller,Office Supplies,Bookcase,935,6,0.25,58.44,West,First Class\n6,ORD-00006,2026-01-07,Priya Shah,Technology,Tablet,1072,7,0,235.84,South,Standard Class\n7,ORD-00007,2026-01-08,John Smith,Furniture,Storage Cabinet,1209,8,0.05,329.45,North,Second Class\n8,ORD-00008,2026-01-09,Noor Fatima,Office Supplies,Conference Chair,1346,9,0.1,100.95,East,First Class\n9,ORD-00009,2026-01-10,Arjun Verma,Technology,Notebook,1483,10,0.15,189.08,West,Standard Class\n10,ORD-00010,2026-01-11,Aisha Khan,Furniture,Laptop,1620,11,0.2,291.6,South,Second Class\n11,ORD-00011,2026-01-12,John Carter,Office Supplies,Office Chair,1757,12,0.25,-30.75,North,First Class\n12,ORD-00012,2026-01-13,Maya Singh,Technology,Desk,1894,1,0,265.16,East,Standard Class\n13,ORD-00013,2026-01-14,Omar Ali,Furniture,Printer,2031,2,0.05,390.97,West,Second Class\n14,ORD-00014,2026-01-15,Sara Ahmed,Office Supplies,Monitor,2168,3,0.1,531.16,South,First Class\n15,ORD-00015,2026-01-16,David Miller,Technology,Bookcase,2305,4,0.15,109.49,North,Standard Class\n16,ORD-00016,2026-01-17,Priya Shah,Furniture,Tablet,2442,5,0.2,244.2,East,Second Class\n17,ORD-00017,2026-01-18,John Smith,Office Supplies,Storage Cabinet,2579,6,0.25,393.3,West,First Class\n18,ORD-00018,2026-01-19,Noor Fatima,Technology,Conference Chair,2716,7,0,162.96,South,Standard Class\n19,ORD-00019,2026-01-20,Arjun Verma,Furniture,Notebook,2853,8,0.05,320.96,North,Second Class\n20,ORD-00020,2026-01-21,Aisha Khan,Office Supplies,Laptop,2990,9,0.1,493.35,East,First Class\n21,ORD-00021,2026-01-22,John Carter,Technology,Office Chair,3127,10,0.15,680.12,West,Standard Class\n22,ORD-00022,2026-01-23,Maya Singh,Furniture,Desk,3264,11,0.2,65.28,South,Second Class\n23,ORD-00023,2026-01-24,Omar Ali,Office Supplies,Printer,3401,12,0.25,246.57,North,First Class\n24,ORD-00024,2026-01-25,Sara Ahmed,Technology,Monitor,3538,1,0,813.74,East,Standard Class\n25,ORD-00025,2026-01-26,David Miller,Furniture,Bookcase,3675,2,0.05,119.44,West,Second Class\n26,ORD-00026,2026-01-27,Priya Shah,Office Supplies,Tablet,3812,3,0.1,324.02,South,First Class\n27,ORD-00027,2026-01-28,John Smith,Technology,Storage Cabinet,3949,4,0.15,542.99,North,Standard Class\n28,ORD-00028,2026-01-29,Noor Fatima,Furniture,Conference Chair,4086,5,0.2,776.34,East,Second Class\n29,ORD-00029,2026-01-30,Arjun Verma,Office Supplies,Notebook,4223,6,0.25,-31.67,West,First Class\n30,ORD-00030,2026-01-31,Aisha Khan,Technology,Laptop,4360,7,0,654,South,Standard Class\n31,ORD-00031,2026-02-01,John Carter,Furniture,Office Chair,297,8,0.05,60.14,North,Second Class\n32,ORD-00032,2026-02-02,Maya Singh,Office Supplies,Desk,434,9,0.1,110.67,East,First Class\n33,ORD-00033,2026-02-03,Omar Ali,Technology,Printer,571,10,0.15,32.83,West,Standard Class\n34,ORD-00034,2026-02-04,Sara Ahmed,Furniture,Monitor,708,11,0.2,77.88,South,Second Class\n35,ORD-00035,2026-02-05,David Miller,Office Supplies,Bookcase,845,12,0.25,137.31,North,First Class\n36,ORD-00036,2026-02-06,Priya Shah,Technology,Tablet,982,1,0,68.74,East,Standard Class\n37,ORD-00037,2026-02-07,John Smith,Furniture,Storage Cabinet,1119,2,0.05,137.08,West,Second Class\n38,ORD-00038,2026-02-08,Noor Fatima,Office Supplies,Conference Chair,1256,3,0.1,219.8,South,First Class\n39,ORD-00039,2026-02-09,Arjun Verma,Technology,Notebook,1393,4,0.15,316.91,North,Standard Class\n40,ORD-00040,2026-02-10,Aisha Khan,Furniture,Laptop,1530,5,0.2,45.9,East,Second Class\n41,ORD-00041,2026-02-11,John Carter,Office Supplies,Office Chair,1667,6,0.25,137.53,West,First Class\n42,ORD-00042,2026-02-12,Maya Singh,Technology,Desk,1804,7,0,432.96,South,Standard Class\n43,ORD-00043,2026-02-13,Omar Ali,Furniture,Printer,1941,8,0.05,82.49,North,Second Class\n44,ORD-00044,2026-02-14,Sara Ahmed,Office Supplies,Monitor,2078,9,0.1,197.41,East,First Class\n45,ORD-00045,2026-02-15,David Miller,Technology,Bookcase,2215,10,0.15,326.71,West,Standard Class\n46,ORD-00046,2026-02-16,Priya Shah,Furniture,Tablet,2352,11,0.2,470.4,South,Second Class\n47,ORD-00047,2026-02-17,John Smith,Office Supplies,Storage Cabinet,2489,12,0.25,6.22,North,First Class\n48,ORD-00048,2026-02-18,Noor Fatima,Technology,Conference Chair,2626,1,0,420.16,East,Standard Class\n49,ORD-00049,2026-02-19,Arjun Verma,Furniture,Notebook,2763,2,0.05,587.14,West,Second Class\n50,ORD-00050,2026-02-20,Aisha Khan,Office Supplies,Laptop,2900,3,0.1,43.5,South,First Class\n51,ORD-00051,2026-02-21,John Carter,Technology,Office Chair,3037,4,0.15,205,North,Standard Class\n52,ORD-00052,2026-02-22,Maya Singh,Furniture,Desk,3174,5,0.2,380.88,East,Second Class\n53,ORD-00053,2026-02-23,Omar Ali,Office Supplies,Printer,3311,6,0.25,571.15,West,First Class\n54,ORD-00054,2026-02-24,Sara Ahmed,Technology,Monitor,3448,7,0,275.84,South,Standard Class\n55,ORD-00055,2026-02-25,David Miller,Furniture,Bookcase,3585,8,0.05,475.01,North,Second Class\n56,ORD-00056,2026-02-26,Priya Shah,Office Supplies,Tablet,3722,9,0.1,688.57,East,First Class\n57,ORD-00057,2026-02-27,John Smith,Technology,Storage Cabinet,3859,10,0.15,916.51,West,Standard Class\n58,ORD-00058,2026-02-28,Noor Fatima,Furniture,Conference Chair,3996,11,0.2,159.84,South,Second Class\n59,ORD-00059,2026-03-01,Arjun Verma,Office Supplies,Notebook,4133,12,0.25,382.3,North,First Class\n60,ORD-00060,2026-03-02,Aisha Khan,Technology,Laptop,4270,1,0,1067.5,East,Standard Class\n61,ORD-00061,2026-03-03,John Carter,Furniture,Office Chair,4407,2,0.05,231.37,West,Second Class\n62,ORD-00062,2026-03-04,Maya Singh,Office Supplies,Desk,344,3,0.1,36.12,South,First Class\n63,ORD-00063,2026-03-05,Omar Ali,Technology,Printer,481,4,0.15,75.76,North,Standard Class\n64,ORD-00064,2026-03-06,Sara Ahmed,Furniture,Monitor,618,5,0.2,129.78,East,Second Class\n65,ORD-00065,2026-03-07,David Miller,Office Supplies,Bookcase,755,6,0.25,9.44,West,First Class\n66,ORD-00066,2026-03-08,Priya Shah,Technology,Tablet,892,7,0,151.64,South,Standard Class\n67,ORD-00067,2026-03-09,John Smith,Furniture,Storage Cabinet,1029,8,0.05,228.95,North,Second Class\n68,ORD-00068,2026-03-10,Noor Fatima,Office Supplies,Conference Chair,1166,9,0.1,29.15,East,First Class\n69,ORD-00069,2026-03-11,Arjun Verma,Technology,Notebook,1303,10,0.15,100.98,West,Standard Class\n70,ORD-00070,2026-03-12,Aisha Khan,Furniture,Laptop,1440,11,0.2,187.2,South,Second Class\n71,ORD-00071,2026-03-13,John Carter,Office Supplies,Office Chair,1577,12,0.25,287.8,North,First Class\n72,ORD-00072,2026-03-14,Maya Singh,Technology,Desk,1714,1,0,154.26,East,Standard Class\n73,ORD-00073,2026-03-15,Omar Ali,Furniture,Printer,1851,2,0.05,263.77,West,Second Class\n74,ORD-00074,2026-03-16,Sara Ahmed,Office Supplies,Monitor,1988,3,0.1,387.66,South,First Class\n75,ORD-00075,2026-03-17,David Miller,Technology,Bookcase,2125,4,0.15,-5.31,North,Standard Class\n76,ORD-00076,2026-03-18,Priya Shah,Furniture,Tablet,2262,5,0.2,113.1,East,Second Class\n77,ORD-00077,2026-03-19,John Smith,Office Supplies,Storage Cabinet,2399,6,0.25,245.9,West,First Class\n78,ORD-00078,2026-03-20,Noor Fatima,Technology,Conference Chair,2536,7,0,659.36,South,Standard Class\n79,ORD-00079,2026-03-21,Arjun Verma,Furniture,Notebook,2673,8,0.05,167.06,North,Second Class\n80,ORD-00080,2026-03-22,Aisha Khan,Office Supplies,Laptop,2810,9,0.1,323.15,East,First Class\n81,ORD-00081,2026-03-23,John Carter,Technology,Office Chair,2947,10,0.15,493.62,West,Standard Class\n82,ORD-00082,2026-03-24,Maya Singh,Furniture,Desk,3084,11,0.2,678.48,South,Second Class\n83,ORD-00083,2026-03-25,Omar Ali,Office Supplies,Printer,3221,12,0.25,72.47,North,First Class\n84,ORD-00084,2026-03-26,Sara Ahmed,Technology,Monitor,3358,1,0,604.44,East,Standard Class\n85,ORD-00085,2026-03-27,David Miller,Furniture,Bookcase,3495,2,0.05,812.59,West,Second Class\n86,ORD-00086,2026-03-28,Priya Shah,Office Supplies,Tablet,3632,3,0.1,127.12,South,First Class\n87,ORD-00087,2026-03-29,John Smith,Technology,Storage Cabinet,3769,4,0.15,329.79,North,Standard Class\n88,ORD-00088,2026-03-30,Noor Fatima,Furniture,Conference Chair,3906,5,0.2,546.84,East,Second Class\n89,ORD-00089,2026-03-31,Arjun Verma,Office Supplies,Notebook,4043,6,0.25,778.28,West,First Class\n90,ORD-00090,2026-04-01,Aisha Khan,Technology,Laptop,4180,7,0,418,South,Standard Class\n91,ORD-00091,2026-04-02,John Carter,Furniture,Office Chair,4317,8,0.05,658.34,North,Second Class\n92,ORD-00092,2026-04-03,Maya Singh,Office Supplies,Desk,254,9,0.1,52.07,East,First Class\n93,ORD-00093,2026-04-04,Omar Ali,Technology,Printer,391,10,0.15,2.93,West,Standard Class\n94,ORD-00094,2026-04-05,Sara Ahmed,Furniture,Monitor,528,11,0.2,31.68,South,Second Class\n95,ORD-00095,2026-04-06,David Miller,Office Supplies,Bookcase,665,12,0.25,74.81,North,First Class\n96,ORD-00096,2026-04-07,Priya Shah,Technology,Tablet,802,1,0,216.54,East,Standard Class\n97,ORD-00097,2026-04-08,John Smith,Furniture,Storage Cabinet,939,2,0.05,68.08,West,Second Class\n98,ORD-00098,2026-04-09,Noor Fatima,Office Supplies,Conference Chair,1076,3,0.1,134.5,South,First Class\n99,ORD-00099,2026-04-10,Arjun Verma,Technology,Notebook,1213,4,0.15,215.31,North,Standard Class\n100,ORD-00100,2026-04-11,Aisha Khan,Furniture,Laptop,1350,5,0.2,-27,East,Second Class\n101,ORD-00101,2026-04-12,John Carter,Office Supplies,Office Chair,1487,6,0.25,48.33,West,First Class\n102,ORD-00102,2026-04-13,Maya Singh,Technology,Desk,1624,7,0,308.56,South,Standard Class\n103,ORD-00103,2026-04-14,Omar Ali,Furniture,Printer,1761,8,0.05,427.04,North,Second Class\n104,ORD-00104,2026-04-15,Sara Ahmed,Office Supplies,Monitor,1898,9,0.1,85.41,East,First Class\n105,ORD-00105,2026-04-16,David Miller,Technology,Bookcase,2035,10,0.15,198.41,West,Standard Class\n106,ORD-00106,2026-04-17,Priya Shah,Furniture,Tablet,2172,11,0.2,325.8,South,Second Class\n107,ORD-00107,2026-04-18,John Smith,Office Supplies,Storage Cabinet,2309,12,0.25,467.57,North,First Class\n108,ORD-00108,2026-04-19,Noor Fatima,Technology,Conference Chair,2446,1,0,269.06,East,Standard Class\n109,ORD-00109,2026-04-20,Arjun Verma,Furniture,Notebook,2583,2,0.05,419.74,West,Second Class\n110,ORD-00110,2026-04-21,Aisha Khan,Office Supplies,Laptop,2720,3,0.1,584.8,South,First Class\n111,ORD-00111,2026-04-22,John Carter,Technology,Office Chair,2857,4,0.15,50,North,Standard Class\n112,ORD-00112,2026-04-23,Maya Singh,Furniture,Desk,2994,5,0.2,209.58,East,Second Class\n113,ORD-00113,2026-04-24,Omar Ali,Office Supplies,Printer,3131,6,0.25,383.55,West,First Class\n114,ORD-00114,2026-04-25,Sara Ahmed,Technology,Monitor,3268,7,0,915.04,South,Standard Class\n115,ORD-00115,2026-04-26,David Miller,Furniture,Bookcase,3405,8,0.05,280.91,North,Second Class\n116,ORD-00116,2026-04-27,Priya Shah,Office Supplies,Tablet,3542,9,0.1,478.17,East,First Class\n117,ORD-00117,2026-04-28,John Smith,Technology,Storage Cabinet,3679,10,0.15,689.81,West,Standard Class\n118,ORD-00118,2026-04-29,Noor Fatima,Furniture,Conference Chair,3816,11,0.2,-38.16,South,Second Class\n119,ORD-00119,2026-04-30,Arjun Verma,Office Supplies,Notebook,3953,12,0.25,168,North,First Class\n120,ORD-00120,2026-05-01,Aisha Khan,Technology,Laptop,4090,1,0,818,East,Standard Class\n121,ORD-00121,2026-05-02,John Carter,Furniture,Office Chair,4227,2,0.05,1067.32,West,Second Class\n122,ORD-00122,2026-05-03,Maya Singh,Office Supplies,Desk,4364,3,0.1,240.02,South,First Class\n123,ORD-00123,2026-05-04,Omar Ali,Technology,Printer,301,4,0.15,32.36,North,Standard Class\n124,ORD-00124,2026-05-05,Sara Ahmed,Furniture,Monitor,438,5,0.2,70.08,East,Second Class\n125,ORD-00125,2026-05-06,David Miller,Office Supplies,Bookcase,575,6,0.25,-21.56,West,First Class\n126,ORD-00126,2026-05-07,Priya Shah,Technology,Tablet,712,7,0,85.44,South,Standard Class\n127,ORD-00127,2026-05-08,John Smith,Furniture,Storage Cabinet,849,8,0.05,146.45,North,Second Class\n128,ORD-00128,2026-05-09,Noor Fatima,Office Supplies,Conference Chair,986,9,0.1,221.85,East,First Class\n129,ORD-00129,2026-05-10,Arjun Verma,Technology,Notebook,1123,10,0.15,30.88,West,Standard Class\n130,ORD-00130,2026-05-11,Aisha Khan,Furniture,Laptop,1260,11,0.2,100.8,South,Second Class\n131,ORD-00131,2026-05-12,John Carter,Office Supplies,Office Chair,1397,12,0.25,185.1,North,First Class\n132,ORD-00132,2026-05-13,Maya Singh,Technology,Desk,1534,1,0,444.86,East,Standard Class\n133,ORD-00133,2026-05-14,Omar Ali,Furniture,Printer,1671,2,0.05,154.57,West,Second Class\n134,ORD-00134,2026-05-15,Sara Ahmed,Office Supplies,Monitor,1808,3,0.1,262.16,South,First Class\n135,ORD-00135,2026-05-16,David Miller,Technology,Bookcase,1945,4,0.15,384.14,North,Standard Class\n136,ORD-00136,2026-05-17,Priya Shah,Furniture,Tablet,2082,5,0.2,0,East,Second Class\n137,ORD-00137,2026-05-18,John Smith,Office Supplies,Storage Cabinet,2219,6,0.25,116.5,West,First Class\n138,ORD-00138,2026-05-19,Noor Fatima,Technology,Conference Chair,2356,7,0,494.76,South,Standard Class\n139,ORD-00139,2026-05-20,Arjun Verma,Furniture,Notebook,2493,8,0.05,654.41,North,Second Class\n140,ORD-00140,2026-05-21,Aisha Khan,Office Supplies,Laptop,2630,9,0.1,170.95,East,First Class\n141,ORD-00141,2026-05-22,John Carter,Technology,Office Chair,2767,10,0.15,325.12,West,Standard Class\n142,ORD-00142,2026-05-23,Maya Singh,Furniture,Desk,2904,11,0.2,493.68,South,Second Class\n143,ORD-00143,2026-05-24,Omar Ali,Office Supplies,Printer,3041,12,0.25,-83.63,North,First Class\n144,ORD-00144,2026-05-25,Sara Ahmed,Technology,Monitor,3178,1,0,413.14,East,Standard Class\n145,ORD-00145,2026-05-26,David Miller,Furniture,Bookcase,3315,2,0.05,604.99,West,Second Class\n146,ORD-00146,2026-05-27,Priya Shah,Office Supplies,Tablet,3452,3,0.1,811.22,South,First Class\n147,ORD-00147,2026-05-28,John Smith,Technology,Storage Cabinet,3589,4,0.15,134.59,North,Standard Class\n148,ORD-00148,2026-05-29,Noor Fatima,Furniture,Conference Chair,3726,5,0.2,335.34,East,Second Class\n149,ORD-00149,2026-05-30,Arjun Verma,Office Supplies,Notebook,3863,6,0.25,550.48,West,First Class\n150,ORD-00150,2026-05-31,Aisha Khan,Technology,Laptop,4000,7,0,200,South,Standard Class
+row_no,order_id,order_date,customer_name,category,product_name,sales,quantity,discount,profit,region,ship_mode
+1,ORD-00001,2026-01-02,John Carter,Furniture,Office Chair,387,2,0.05,39.67,West,Second Class
+2,ORD-00002,2026-01-03,Maya Singh,Office Supplies,Desk,524,3,0.1,81.22,South,First Class
+3,ORD-00003,2026-01-04,Omar Ali,Technology,Printer,661,4,0.15,137.16,North,Standard Class
+4,ORD-00004,2026-01-05,Sara Ahmed,Furniture,Monitor,798,5,0.2,7.98,East,Second Class
+5,ORD-00005,2026-01-06,David Miller,Office Supplies,Bookcase,935,6,0.25,58.44,West,First Class
+6,ORD-00006,2026-01-07,Priya Shah,Technology,Tablet,1072,7,0,235.84,South,Standard Class
+7,ORD-00007,2026-01-08,John Smith,Furniture,Storage Cabinet,1209,8,0.05,329.45,North,Second Class
+8,ORD-00008,2026-01-09,Noor Fatima,Office Supplies,Conference Chair,1346,9,0.1,100.95,East,First Class
+9,ORD-00009,2026-01-10,Arjun Verma,Technology,Notebook,1483,10,0.15,189.08,West,Standard Class
+10,ORD-00010,2026-01-11,Aisha Khan,Furniture,Laptop,1620,11,0.2,291.6,South,Second Class
+11,ORD-00011,2026-01-12,John Carter,Office Supplies,Office Chair,1757,12,0.25,-30.75,North,First Class
+12,ORD-00012,2026-01-13,Maya Singh,Technology,Desk,1894,1,0,265.16,East,Standard Class
+13,ORD-00013,2026-01-14,Omar Ali,Furniture,Printer,2031,2,0.05,390.97,West,Second Class
+14,ORD-00014,2026-01-15,Sara Ahmed,Office Supplies,Monitor,2168,3,0.1,531.16,South,First Class
+15,ORD-00015,2026-01-16,David Miller,Technology,Bookcase,2305,4,0.15,109.49,North,Standard Class
+16,ORD-00016,2026-01-17,Priya Shah,Furniture,Tablet,2442,5,0.2,244.2,East,Second Class
+17,ORD-00017,2026-01-18,John Smith,Office Supplies,Storage Cabinet,2579,6,0.25,393.3,West,First Class
+18,ORD-00018,2026-01-19,Noor Fatima,Technology,Conference Chair,2716,7,0,162.96,South,Standard Class
+19,ORD-00019,2026-01-20,Arjun Verma,Furniture,Notebook,2853,8,0.05,320.96,North,Second Class
+20,ORD-00020,2026-01-21,Aisha Khan,Office Supplies,Laptop,2990,9,0.1,493.35,East,First Class
+21,ORD-00021,2026-01-22,John Carter,Technology,Office Chair,3127,10,0.15,680.12,West,Standard Class
+22,ORD-00022,2026-01-23,Maya Singh,Furniture,Desk,3264,11,0.2,65.28,South,Second Class
+23,ORD-00023,2026-01-24,Omar Ali,Office Supplies,Printer,3401,12,0.25,246.57,North,First Class
+24,ORD-00024,2026-01-25,Sara Ahmed,Technology,Monitor,3538,1,0,813.74,East,Standard Class
+25,ORD-00025,2026-01-26,David Miller,Furniture,Bookcase,3675,2,0.05,119.44,West,Second Class
+26,ORD-00026,2026-01-27,Priya Shah,Office Supplies,Tablet,3812,3,0.1,324.02,South,First Class
+27,ORD-00027,2026-01-28,John Smith,Technology,Storage Cabinet,3949,4,0.15,542.99,North,Standard Class
+28,ORD-00028,2026-01-29,Noor Fatima,Furniture,Conference Chair,4086,5,0.2,776.34,East,Second Class
+29,ORD-00029,2026-01-30,Arjun Verma,Office Supplies,Notebook,4223,6,0.25,-31.67,West,First Class
+30,ORD-00030,2026-01-31,Aisha Khan,Technology,Laptop,4360,7,0,654,South,Standard Class
+31,ORD-00031,2026-02-01,John Carter,Furniture,Office Chair,297,8,0.05,60.14,North,Second Class
+32,ORD-00032,2026-02-02,Maya Singh,Office Supplies,Desk,434,9,0.1,110.67,East,First Class
+33,ORD-00033,2026-02-03,Omar Ali,Technology,Printer,571,10,0.15,32.83,West,Standard Class
+34,ORD-00034,2026-02-04,Sara Ahmed,Furniture,Monitor,708,11,0.2,77.88,South,Second Class
+35,ORD-00035,2026-02-05,David Miller,Office Supplies,Bookcase,845,12,0.25,137.31,North,First Class
+36,ORD-00036,2026-02-06,Priya Shah,Technology,Tablet,982,1,0,68.74,East,Standard Class
+37,ORD-00037,2026-02-07,John Smith,Furniture,Storage Cabinet,1119,2,0.05,137.08,West,Second Class
+38,ORD-00038,2026-02-08,Noor Fatima,Office Supplies,Conference Chair,1256,3,0.1,219.8,South,First Class
+39,ORD-00039,2026-02-09,Arjun Verma,Technology,Notebook,1393,4,0.15,316.91,North,Standard Class
+40,ORD-00040,2026-02-10,Aisha Khan,Furniture,Laptop,1530,5,0.2,45.9,East,Second Class
+41,ORD-00041,2026-02-11,John Carter,Office Supplies,Office Chair,1667,6,0.25,137.53,West,First Class
+42,ORD-00042,2026-02-12,Maya Singh,Technology,Desk,1804,7,0,432.96,South,Standard Class
+43,ORD-00043,2026-02-13,Omar Ali,Furniture,Printer,1941,8,0.05,82.49,North,Second Class
+44,ORD-00044,2026-02-14,Sara Ahmed,Office Supplies,Monitor,2078,9,0.1,197.41,East,First Class
+45,ORD-00045,2026-02-15,David Miller,Technology,Bookcase,2215,10,0.15,326.71,West,Standard Class
+46,ORD-00046,2026-02-16,Priya Shah,Furniture,Tablet,2352,11,0.2,470.4,South,Second Class
+47,ORD-00047,2026-02-17,John Smith,Office Supplies,Storage Cabinet,2489,12,0.25,6.22,North,First Class
+48,ORD-00048,2026-02-18,Noor Fatima,Technology,Conference Chair,2626,1,0,420.16,East,Standard Class
+49,ORD-00049,2026-02-19,Arjun Verma,Furniture,Notebook,2763,2,0.05,587.14,West,Second Class
+50,ORD-00050,2026-02-20,Aisha Khan,Office Supplies,Laptop,2900,3,0.1,43.5,South,First Class
+51,ORD-00051,2026-02-21,John Carter,Technology,Office Chair,3037,4,0.15,205,North,Standard Class
+52,ORD-00052,2026-02-22,Maya Singh,Furniture,Desk,3174,5,0.2,380.88,East,Second Class
+53,ORD-00053,2026-02-23,Omar Ali,Office Supplies,Printer,3311,6,0.25,571.15,West,First Class
+54,ORD-00054,2026-02-24,Sara Ahmed,Technology,Monitor,3448,7,0,275.84,South,Standard Class
+55,ORD-00055,2026-02-25,David Miller,Furniture,Bookcase,3585,8,0.05,475.01,North,Second Class
+56,ORD-00056,2026-02-26,Priya Shah,Office Supplies,Tablet,3722,9,0.1,688.57,East,First Class
+57,ORD-00057,2026-02-27,John Smith,Technology,Storage Cabinet,3859,10,0.15,916.51,West,Standard Class
+58,ORD-00058,2026-02-28,Noor Fatima,Furniture,Conference Chair,3996,11,0.2,159.84,South,Second Class
+59,ORD-00059,2026-03-01,Arjun Verma,Office Supplies,Notebook,4133,12,0.25,382.3,North,First Class
+60,ORD-00060,2026-03-02,Aisha Khan,Technology,Laptop,4270,1,0,1067.5,East,Standard Class
+61,ORD-00061,2026-03-03,John Carter,Furniture,Office Chair,4407,2,0.05,231.37,West,Second Class
+62,ORD-00062,2026-03-04,Maya Singh,Office Supplies,Desk,344,3,0.1,36.12,South,First Class
+63,ORD-00063,2026-03-05,Omar Ali,Technology,Printer,481,4,0.15,75.76,North,Standard Class
+64,ORD-00064,2026-03-06,Sara Ahmed,Furniture,Monitor,618,5,0.2,129.78,East,Second Class
+65,ORD-00065,2026-03-07,David Miller,Office Supplies,Bookcase,755,6,0.25,9.44,West,First Class
+66,ORD-00066,2026-03-08,Priya Shah,Technology,Tablet,892,7,0,151.64,South,Standard Class
+67,ORD-00067,2026-03-09,John Smith,Furniture,Storage Cabinet,1029,8,0.05,228.95,North,Second Class
+68,ORD-00068,2026-03-10,Noor Fatima,Office Supplies,Conference Chair,1166,9,0.1,29.15,East,First Class
+69,ORD-00069,2026-03-11,Arjun Verma,Technology,Notebook,1303,10,0.15,100.98,West,Standard Class
+70,ORD-00070,2026-03-12,Aisha Khan,Furniture,Laptop,1440,11,0.2,187.2,South,Second Class
+71,ORD-00071,2026-03-13,John Carter,Office Supplies,Office Chair,1577,12,0.25,287.8,North,First Class
+72,ORD-00072,2026-03-14,Maya Singh,Technology,Desk,1714,1,0,154.26,East,Standard Class
+73,ORD-00073,2026-03-15,Omar Ali,Furniture,Printer,1851,2,0.05,263.77,West,Second Class
+74,ORD-00074,2026-03-16,Sara Ahmed,Office Supplies,Monitor,1988,3,0.1,387.66,South,First Class
+75,ORD-00075,2026-03-17,David Miller,Technology,Bookcase,2125,4,0.15,-5.31,North,Standard Class
+76,ORD-00076,2026-03-18,Priya Shah,Furniture,Tablet,2262,5,0.2,113.1,East,Second Class
+77,ORD-00077,2026-03-19,John Smith,Office Supplies,Storage Cabinet,2399,6,0.25,245.9,West,First Class
+78,ORD-00078,2026-03-20,Noor Fatima,Technology,Conference Chair,2536,7,0,659.36,South,Standard Class
+79,ORD-00079,2026-03-21,Arjun Verma,Furniture,Notebook,2673,8,0.05,167.06,North,Second Class
+80,ORD-00080,2026-03-22,Aisha Khan,Office Supplies,Laptop,2810,9,0.1,323.15,East,First Class
+81,ORD-00081,2026-03-23,John Carter,Technology,Office Chair,2947,10,0.15,493.62,West,Standard Class
+82,ORD-00082,2026-03-24,Maya Singh,Furniture,Desk,3084,11,0.2,678.48,South,Second Class
+83,ORD-00083,2026-03-25,Omar Ali,Office Supplies,Printer,3221,12,0.25,72.47,North,First Class
+84,ORD-00084,2026-03-26,Sara Ahmed,Technology,Monitor,3358,1,0,604.44,East,Standard Class
+85,ORD-00085,2026-03-27,David Miller,Furniture,Bookcase,3495,2,0.05,812.59,West,Second Class
+86,ORD-00086,2026-03-28,Priya Shah,Office Supplies,Tablet,3632,3,0.1,127.12,South,First Class
+87,ORD-00087,2026-03-29,John Smith,Technology,Storage Cabinet,3769,4,0.15,329.79,North,Standard Class
+88,ORD-00088,2026-03-30,Noor Fatima,Furniture,Conference Chair,3906,5,0.2,546.84,East,Second Class
+89,ORD-00089,2026-03-31,Arjun Verma,Office Supplies,Notebook,4043,6,0.25,778.28,West,First Class
+90,ORD-00090,2026-04-01,Aisha Khan,Technology,Laptop,4180,7,0,418,South,Standard Class
+91,ORD-00091,2026-04-02,John Carter,Furniture,Office Chair,4317,8,0.05,658.34,North,Second Class
+92,ORD-00092,2026-04-03,Maya Singh,Office Supplies,Desk,254,9,0.1,52.07,East,First Class
+93,ORD-00093,2026-04-04,Omar Ali,Technology,Printer,391,10,0.15,2.93,West,Standard Class
+94,ORD-00094,2026-04-05,Sara Ahmed,Furniture,Monitor,528,11,0.2,31.68,South,Second Class
+95,ORD-00095,2026-04-06,David Miller,Office Supplies,Bookcase,665,12,0.25,74.81,North,First Class
+96,ORD-00096,2026-04-07,Priya Shah,Technology,Tablet,802,1,0,216.54,East,Standard Class
+97,ORD-00097,2026-04-08,John Smith,Furniture,Storage Cabinet,939,2,0.05,68.08,West,Second Class
+98,ORD-00098,2026-04-09,Noor Fatima,Office Supplies,Conference Chair,1076,3,0.1,134.5,South,First Class
+99,ORD-00099,2026-04-10,Arjun Verma,Technology,Notebook,1213,4,0.15,215.31,North,Standard Class
+100,ORD-00100,2026-04-11,Aisha Khan,Furniture,Laptop,1350,5,0.2,-27,East,Second Class
+101,ORD-00101,2026-04-12,John Carter,Office Supplies,Office Chair,1487,6,0.25,48.33,West,First Class
+102,ORD-00102,2026-04-13,Maya Singh,Technology,Desk,1624,7,0,308.56,South,Standard Class
+103,ORD-00103,2026-04-14,Omar Ali,Furniture,Printer,1761,8,0.05,427.04,North,Second Class
+104,ORD-00104,2026-04-15,Sara Ahmed,Office Supplies,Monitor,1898,9,0.1,85.41,East,First Class
+105,ORD-00105,2026-04-16,David Miller,Technology,Bookcase,2035,10,0.15,198.41,West,Standard Class
+106,ORD-00106,2026-04-17,Priya Shah,Furniture,Tablet,2172,11,0.2,325.8,South,Second Class
+107,ORD-00107,2026-04-18,John Smith,Office Supplies,Storage Cabinet,2309,12,0.25,467.57,North,First Class
+108,ORD-00108,2026-04-19,Noor Fatima,Technology,Conference Chair,2446,1,0,269.06,East,Standard Class
+109,ORD-00109,2026-04-20,Arjun Verma,Furniture,Notebook,2583,2,0.05,419.74,West,Second Class
+110,ORD-00110,2026-04-21,Aisha Khan,Office Supplies,Laptop,2720,3,0.1,584.8,South,First Class
+111,ORD-00111,2026-04-22,John Carter,Technology,Office Chair,2857,4,0.15,50,North,Standard Class
+112,ORD-00112,2026-04-23,Maya Singh,Furniture,Desk,2994,5,0.2,209.58,East,Second Class
+113,ORD-00113,2026-04-24,Omar Ali,Office Supplies,Printer,3131,6,0.25,383.55,West,First Class
+114,ORD-00114,2026-04-25,Sara Ahmed,Technology,Monitor,3268,7,0,915.04,South,Standard Class
+115,ORD-00115,2026-04-26,David Miller,Furniture,Bookcase,3405,8,0.05,280.91,North,Second Class
+116,ORD-00116,2026-04-27,Priya Shah,Office Supplies,Tablet,3542,9,0.1,478.17,East,First Class
+117,ORD-00117,2026-04-28,John Smith,Technology,Storage Cabinet,3679,10,0.15,689.81,West,Standard Class
+118,ORD-00118,2026-04-29,Noor Fatima,Furniture,Conference Chair,3816,11,0.2,-38.16,South,Second Class
+119,ORD-00119,2026-04-30,Arjun Verma,Office Supplies,Notebook,3953,12,0.25,168,North,First Class
+120,ORD-00120,2026-05-01,Aisha Khan,Technology,Laptop,4090,1,0,818,East,Standard Class
+121,ORD-00121,2026-05-02,John Carter,Furniture,Office Chair,4227,2,0.05,1067.32,West,Second Class
+122,ORD-00122,2026-05-03,Maya Singh,Office Supplies,Desk,4364,3,0.1,240.02,South,First Class
+123,ORD-00123,2026-05-04,Omar Ali,Technology,Printer,301,4,0.15,32.36,North,Standard Class
+124,ORD-00124,2026-05-05,Sara Ahmed,Furniture,Monitor,438,5,0.2,70.08,East,Second Class
+125,ORD-00125,2026-05-06,David Miller,Office Supplies,Bookcase,575,6,0.25,-21.56,West,First Class
+126,ORD-00126,2026-05-07,Priya Shah,Technology,Tablet,712,7,0,85.44,South,Standard Class
+127,ORD-00127,2026-05-08,John Smith,Furniture,Storage Cabinet,849,8,0.05,146.45,North,Second Class
+128,ORD-00128,2026-05-09,Noor Fatima,Office Supplies,Conference Chair,986,9,0.1,221.85,East,First Class
+129,ORD-00129,2026-05-10,Arjun Verma,Technology,Notebook,1123,10,0.15,30.88,West,Standard Class
+130,ORD-00130,2026-05-11,Aisha Khan,Furniture,Laptop,1260,11,0.2,100.8,South,Second Class
+131,ORD-00131,2026-05-12,John Carter,Office Supplies,Office Chair,1397,12,0.25,185.1,North,First Class
+132,ORD-00132,2026-05-13,Maya Singh,Technology,Desk,1534,1,0,444.86,East,Standard Class
+133,ORD-00133,2026-05-14,Omar Ali,Furniture,Printer,1671,2,0.05,154.57,West,Second Class
+134,ORD-00134,2026-05-15,Sara Ahmed,Office Supplies,Monitor,1808,3,0.1,262.16,South,First Class
+135,ORD-00135,2026-05-16,David Miller,Technology,Bookcase,1945,4,0.15,384.14,North,Standard Class
+136,ORD-00136,2026-05-17,Priya Shah,Furniture,Tablet,2082,5,0.2,0,East,Second Class
+137,ORD-00137,2026-05-18,John Smith,Office Supplies,Storage Cabinet,2219,6,0.25,116.5,West,First Class
+138,ORD-00138,2026-05-19,Noor Fatima,Technology,Conference Chair,2356,7,0,494.76,South,Standard Class
+139,ORD-00139,2026-05-20,Arjun Verma,Furniture,Notebook,2493,8,0.05,654.41,North,Second Class
+140,ORD-00140,2026-05-21,Aisha Khan,Office Supplies,Laptop,2630,9,0.1,170.95,East,First Class
+141,ORD-00141,2026-05-22,John Carter,Technology,Office Chair,2767,10,0.15,325.12,West,Standard Class
+142,ORD-00142,2026-05-23,Maya Singh,Furniture,Desk,2904,11,0.2,493.68,South,Second Class
+143,ORD-00143,2026-05-24,Omar Ali,Office Supplies,Printer,3041,12,0.25,-83.63,North,First Class
+144,ORD-00144,2026-05-25,Sara Ahmed,Technology,Monitor,3178,1,0,413.14,East,Standard Class
+145,ORD-00145,2026-05-26,David Miller,Furniture,Bookcase,3315,2,0.05,604.99,West,Second Class
+146,ORD-00146,2026-05-27,Priya Shah,Office Supplies,Tablet,3452,3,0.1,811.22,South,First Class
+147,ORD-00147,2026-05-28,John Smith,Technology,Storage Cabinet,3589,4,0.15,134.59,North,Standard Class
+148,ORD-00148,2026-05-29,Noor Fatima,Furniture,Conference Chair,3726,5,0.2,335.34,East,Second Class
+149,ORD-00149,2026-05-30,Arjun Verma,Office Supplies,Notebook,3863,6,0.25,550.48,West,First Class
+150,ORD-00150,2026-05-31,Aisha Khan,Technology,Laptop,4000,7,0,200,South,Standard Class
